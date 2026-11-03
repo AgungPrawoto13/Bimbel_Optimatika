@@ -1,0 +1,3 @@
+# Opsional untuk Python backend jika ingin menghubungkan langsung ke Neon PostgreSQL:
+psycopg2-binary>=2.9.0
+python-dotenv>=1.0.0

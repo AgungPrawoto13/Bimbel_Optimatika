@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optimatika · Catat Pembayaran</title>
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+ 
+<div class="d-flex flex-column flex-lg-row">
+    <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
+    <div id="sidebar-container"></div>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-wrapper flex-grow-1">
+
+      <!-- TOP HEADER (Title & Database Connection Badge) -->
+      <div class="top-header">
+        <div>
+          <h1 class="page-title" id="pageTitle">Data Program Belajar</h1>
+          <p class="page-subtitle" id="pageSubtitle">Tarif tiap program ditetapkan pengelola di menu Tarif.</p>
+        </div>
+        
+        <!-- Status Database Neon PostgreSQL -->
+        <div>
+          <button class="db-status-badge" data-bs-toggle="modal" data-bs-target="#neonConfigModal" title="Klik untuk atur koneksi database Neon PostgreSQL">
+            <span class="status-dot" id="dbStatusDot"></span>
+            <span id="dbStatusText">Neon PostgreSQL</span>
+            <i class="bi bi-gear-fill text-muted ms-1" style="font-size: 11px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- ========================================================
+           VIEW 1: PROGRAM BELAJAR (SESUAI GAMBAR PERSIS)
+      ======================================================== -->
+      <section id="view-program" class="content-section">
+        <!-- Card 1: Tambah Program -->
+        <div class="custom-card">
+          <div class="card-heading">Tambah program</div>
+          <form id="formAddProgram">
+            <div class="row g-3 align-items-end">
+              <!-- Nama program -->
+              <div class="col-12 col-md-5">
+                <label for="programName" class="form-label-custom">Nama program</label>
+                <input type="text" class="form-control-custom" id="programName" placeholder="contoh: Matematika Dasar" required>
+              </div>
+
+              <!-- Jenjang -->
+              <div class="col-12 col-md-3">
+                <label for="programLevel" class="form-label-custom">Jenjang</label>
+                <select class="form-select-custom" id="programLevel">
+                  <option value="SD" selected>SD</option>
+                  <option value="SMP">SMP</option>
+                  <option value="SMA">SMA</option>
+                  <option value="UMUM">UMUM / UTBK</option>
+                </select>
+              </div>
+
+              <!-- Pertemuan per bulan -->
+              <div class="col-12 col-md-2">
+                <label for="programSessions" class="form-label-custom">Pertemuan per bulan</label>
+                <input type="number" class="form-control-custom" id="programSessions" value="8" min="1" max="31" required>
+              </div>
+
+              <!-- Tombol Simpan -->
+              <div class="col-12 col-md-2">
+                <button type="submit" class="btn-primary-custom w-100" id="btnSaveProgram">
+                  Simpan
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Card 2: Tabel Program -->
+        <div class="custom-card p-0 overflow-hidden">
+          <div class="table-responsive-custom">
+            <table class="custom-table" id="tablePrograms">
+              <thead>
+                <tr>
+                  <th style="width: 45%;">PROGRAM</th>
+                  <th style="width: 25%;">JENJANG</th>
+                  <th style="width: 20%;">PERTEMUAN / BULAN</th>
+                  <th style="width: 10%; text-align: right; padding-right: 28px;"></th>
+                </tr>
+              </thead>
+              <tbody id="programListBody">
+                <!-- Data akan dimuat otomatis oleh JavaScript dari Database Neon/SQLite -->
+                <tr>
+                  <td><strong>Calistung</strong></td>
+                  <td><span class="badge-level">SD</span></td>
+                  <td><span class="session-count">8×</span></td>
+                  <td class="text-end pe-4"><button class="btn-delete-pill" onclick="handleDeleteProgram(1)">Hapus</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Matematika SD</strong></td>
+                  <td><span class="badge-level">SD</span></td>
+                  <td><span class="session-count">8×</span></td>
+                  <td class="text-end pe-4"><button class="btn-delete-pill" onclick="handleDeleteProgram(2)">Hapus</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Matematika SMP</strong></td>
+                  <td><span class="badge-level badge-smp">SMP</span></td>
+                  <td><span class="session-count">8×</span></td>
+                  <td class="text-end pe-4"><button class="btn-delete-pill" onclick="handleDeleteProgram(3)">Hapus</button></td>
+                </tr>
+                <tr>
+                  <td><strong>IPA Terpadu</strong></td>
+                  <td><span class="badge-level badge-smp">SMP</span></td>
+                  <td><span class="session-count">8×</span></td>
+                  <td class="text-end pe-4"><button class="btn-delete-pill" onclick="handleDeleteProgram(4)">Hapus</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Persiapan UTBK</strong></td>
+                  <td><span class="badge-level badge-sma">SMA</span></td>
+                  <td><span class="session-count">12×</span></td>
+                  <td class="text-end pe-4"><button class="btn-delete-pill" onclick="handleDeleteProgram(5)">Hapus</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           VIEW 2: SISWA DAN WALI
+      ======================================================== -->
+      <section id="view-siswa" class="content-section d-none">
+        <div class="custom-card">
+          <div class="card-heading">Tambah Siswa Baru</div>
+          <form id="formAddStudent">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label-custom">Nama Lengkap Siswa</label>
+                <input type="text" class="form-control-custom" id="studentName" placeholder="Contoh: Muhammad Rizki" required>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label-custom">Gender</label>
+                <select class="form-select-custom" id="studentGender">
+                  <option value="L">Laki-laki</option>
+                  <option value="P">Perempuan</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label-custom">Nama Orang Tua / Wali</label>
+                <input type="text" class="form-control-custom" id="studentGuardian" placeholder="Contoh: Bpk. Gunawan" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label-custom">No. WhatsApp / HP</label>
+                <input type="tel" class="form-control-custom" id="studentPhone" placeholder="08123456789" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label-custom">Pilihan Program Belajar</label>
+                <select class="form-select-custom" id="studentProgramSelect">
+                  <!-- Dimuat dinamis dari daftar program -->
+                </select>
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn-primary-custom w-100">Simpan Siswa</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="custom-card p-0 overflow-hidden">
+          <div class="table-responsive-custom">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>NIS</th>
+                  <th>NAMA SISWA</th>
+                  <th>GENDER</th>
+                  <th>NAMA WALI</th>
+                  <th>KONTAK WA</th>
+                  <th>PROGRAM</th>
+                  <th>STATUS</th>
+                  <th class="text-end pe-4">AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="studentListBody">
+                <!-- Dimuat dinamis -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           VIEW 3: TUTOR
+      ======================================================== -->
+      <section id="view-tutor" class="content-section d-none">
+        <div class="custom-card">
+          <div class="card-heading">Tambah Data Tutor</div>
+          <form id="formAddTutor">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label-custom">Nama Tutor & Gelar</label>
+                <input type="text" class="form-control-custom" id="tutorName" placeholder="Contoh: Kak Dedi, S.Mat." required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label-custom">Bidang Keahlian / Mapel</label>
+                <input type="text" class="form-control-custom" id="tutorSpecialty" placeholder="Contoh: Matematika Saintek" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label-custom">No. HP / WhatsApp</label>
+                <input type="tel" class="form-control-custom" id="tutorPhone" placeholder="081299998888" required>
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn-primary-custom w-100">Simpan Tutor</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="custom-card p-0 overflow-hidden">
+          <div class="table-responsive-custom">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>NAMA TUTOR</th>
+                  <th>BIDANG MAPEL</th>
+                  <th>NO. KONTAK</th>
+                  <th>EMAIL</th>
+                  <th>STATUS</th>
+                  <th class="text-end pe-4">AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="tutorListBody">
+                <!-- Dimuat dinamis -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           VIEW 4: RUANG BELAJAR
+      ======================================================== -->
+      <section id="view-ruang" class="content-section d-none">
+        <div class="custom-card">
+          <div class="card-heading">Tambah Ruang Belajar</div>
+          <form id="formAddRoom">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label-custom">Nama Ruangan</label>
+                <input type="text" class="form-control-custom" id="roomName" placeholder="Contoh: Ruang Delta (Lt. 2)" required>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label-custom">Kapasitas (Siswa)</label>
+                <input type="number" class="form-control-custom" id="roomCapacity" value="10" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label-custom">Fasilitas</label>
+                <input type="text" class="form-control-custom" id="roomFacilities" placeholder="AC, Smart TV, Whiteboard">
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn-primary-custom w-100">Simpan Ruang</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="custom-card p-0 overflow-hidden">
+          <div class="table-responsive-custom">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>NAMA RUANG</th>
+                  <th>KAPASITAS</th>
+                  <th>FASILITAS</th>
+                  <th class="text-end pe-4">AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="roomListBody">
+                <!-- Dimuat dinamis -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           VIEW 5: KELOMPOK BELAJAR
+      ======================================================== -->
+      <section id="view-kelompok" class="content-section d-none">
+        <div class="custom-card">
+          <div class="card-heading">Kelompok Belajar Bimbel</div>
+          <p class="text-muted mb-4">Pengelompokan siswa ke dalam kelas bimbingan terpadu.</p>
+          <div class="table-responsive-custom">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>NAMA KELAS</th>
+                  <th>PROGRAM</th>
+                  <th>TUTOR PENGAMPU</th>
+                  <th>RUANGAN</th>
+                  <th class="text-end pe-4">AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="groupListBody">
+                <tr>
+                  <td><strong>Kelas Reguler SD A</strong></td>
+                  <td><span class="badge-level">Matematika SD</span></td>
+                  <td>Kak Budi Santoso, S.Pd.</td>
+                  <td>Ruang Alpha (Lt. 1)</td>
+                  <td class="text-end pe-4"><button class="btn-delete-pill" onclick="Swal.fire('Info', 'Fitur kelas siap digunakan', 'info')">Detail</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Intensif UTBK Saintek 1</strong></td>
+                  <td><span class="badge-level badge-sma">Persiapan UTBK</span></td>
+                  <td>Kak Rizky Pratama, S.Si.</td>
+                  <td>Ruang Gamma (Lt. 2)</td>
+                  <td class="text-end pe-4"><button class="btn-delete-pill" onclick="Swal.fire('Info', 'Fitur kelas siap digunakan', 'info')">Detail</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           VIEW 6: JADWAL
+      ======================================================== -->
+      <section id="view-jadwal" class="content-section d-none">
+        <div class="custom-card">
+          <div class="card-heading">Jadwal Sesi Bimbel</div>
+          <div class="table-responsive-custom">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>HARI</th>
+                  <th>JAM</th>
+                  <th>KELOMPOK BELAJAR</th>
+                  <th>STATUS SESI</th>
+                </tr>
+              </thead>
+              <tbody id="scheduleListBody">
+                <tr>
+                  <td><strong>Senin & Rabu</strong></td>
+                  <td>15:30 - 17:00 WIB</td>
+                  <td>Kelas Reguler SD A</td>
+                  <td><span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Berjalan Rutin</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Selasa & Kamis</strong></td>
+                  <td>16:00 - 17:30 WIB</td>
+                  <td>Intensif SMP Juara</td>
+                  <td><span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Berjalan Rutin</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Sabtu & Minggu</strong></td>
+                  <td>09:00 - 12:00 WIB</td>
+                  <td>Intensif UTBK Saintek 1</td>
+                  <td><span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">Weekend Camp</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           VIEW 7: TAGIHAN
+      ======================================================== -->
+      <section id="view-tagihan" class="content-section d-none">
+        <div class="custom-card">
+          <div class="card-heading">Data Tagihan SPP & Modul Siswa</div>
+          <div class="table-responsive-custom">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>NO. INVOICE</th>
+                  <th>NAMA SISWA</th>
+                  <th>JUMLAH TAGIHAN</th>
+                  <th>JATUH TEMPO</th>
+                  <th>STATUS</th>
+                  <th class="text-end pe-4">AKSI</th>
+                </tr>
+              </thead>
+              <tbody id="billListBody">
+                <tr>
+                  <td><code>INV/2026/11/001</code></td>
+                  <td><strong>Ahmad Farhan</strong></td>
+                  <td>Rp 450.000</td>
+                  <td>10 Nov 2026</td>
+                  <td><span class="badge bg-warning-subtle text-warning-emphasis px-3 py-1 rounded-pill">Belum Lunas</span></td>
+                  <td class="text-end pe-4"><button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="Swal.fire('Kirim Pengingat', 'Pesan tagihan dikirim ke WhatsApp wali murid.', 'success')">Kirim WA</button></td>
+                </tr>
+                <tr>
+                  <td><code>INV/2026/11/002</code></td>
+                  <td><strong>Nabila Putri</strong></td>
+                  <td>Rp 500.000</td>
+                  <td>10 Nov 2026</td>
+                  <td><span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill">Lunas</span></td>
+                  <td class="text-end pe-4"><button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="Swal.fire('Invoice', 'Invoice #002 tercatat lunas.', 'info')">Lihat Bukti</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           VIEW 8: PEMBAYARAN
+      ======================================================== -->
+      <section id="view-pembayaran" class="content-section d-none">
+        <div class="custom-card">
+          <div class="card-heading">Riwayat Pembayaran Masuk</div>
+          <div class="table-responsive-custom">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>NO. KUITANSI</th>
+                  <th>REF INVOICE</th>
+                  <th>TOTAL BAYAR</th>
+                  <th>TANGGAL BAYAR</th>
+                  <th>METODE</th>
+                  <th>CATATAN</th>
+                </tr>
+              </thead>
+              <tbody id="paymentListBody">
+                <tr>
+                  <td><code>KWT-20261103-01</code></td>
+                  <td>INV/2026/11/002</td>
+                  <td><strong>Rp 500.000</strong></td>
+                  <td>03 Nov 2026</td>
+                  <td><span class="badge bg-info-subtle text-info-emphasis px-3 py-1 rounded-pill">QRIS</span></td>
+                  <td>Pembayaran SPP Bulan November 2026</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ========================================================
+       MODAL KONFIGURASI DATABASE NEON POSTGRESQL
+  ======================================================== -->
+  <div class="modal fade" id="neonConfigModal" tabindex="-1" aria-labelledby="neonConfigModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-bottom-0 pb-0">
+          <div class="d-flex align-items-center gap-2">
+            <div class="p-2 bg-primary bg-opacity-10 text-primary rounded-3">
+              <i class="bi bi-database-fill-gear fs-4"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold" id="neonConfigModalLabel">Koneksi Database Neon PostgreSQL</h5>
+              <p class="text-muted small mb-0">Kelola koneksi cloud database PostgreSQL gratis dari Neon.tech</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body py-4">
+          
+          <div class="alert alert-light border rounded-3 mb-4">
+            <h6 class="fw-bold mb-2"><i class="bi bi-info-circle-fill text-primary me-1"></i> Cara Mendapatkan Connection String Neon Gratis:</h6>
+            <ol class="small text-muted ps-3 mb-0">
+              <li>Daftar akun gratis di <a href="https://console.neon.tech" target="_blank" class="fw-bold text-decoration-none">console.neon.tech</a>.</li>
+              <li>Buat project baru (misal: <code>optimatika-bimbel</code>).</li>
+              <li>Salin <strong>Connection details</strong> (format: <code>postgresql://user:pass@ep-xyz.aws.neon.tech/neondb?sslmode=require</code>).</li>
+              <li>Tempelkan ke kolom di bawah ini lalu klik <strong>Simpan & Sambungkan</strong>.</li>
+            </ol>
+          </div>
+
+          <form id="formNeonConfig">
+            <div class="mb-3">
+              <label for="neonDatabaseUrl" class="form-label-custom">DATABASE_URL (Connection String)</label>
+              <textarea class="form-control-custom" id="neonDatabaseUrl" rows="2" style="height: auto;" placeholder="postgresql://username:password@ep-sample-123456.us-east-2.aws.neon.tech/neondb?sslmode=require"></textarea>
+              <div class="form-text mt-1 text-muted">
+                Koneksi menggunakan SSL terenkripsi yang sesuai dengan spesifikasi Neon PostgreSQL.
+              </div>
+            </div>
+
+            <div id="dbAlertContainer"></div>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+              <div class="small text-muted">
+                Status saat ini: <strong id="modalDbStatus">Memeriksa...</strong>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-light rounded-3 px-3" data-bs-dismiss="modal">Tutup</button>
+                <button type="submit" class="btn btn-primary rounded-3 px-4 fw-semibold" id="btnSaveDbConfig">
+                  Simpan & Sambungkan
+                </button>
+              </div>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
