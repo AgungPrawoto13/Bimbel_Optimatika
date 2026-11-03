@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Optimatika · Catat Pembayaran</title>
+  <title>Optimatika · Data Ruang Belajar</title>
   <!-- Bootstrap 5 & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -11,60 +11,148 @@
 </head>
 <body>
 
-<div class="d-flex flex-column flex-lg-row">
-  <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
-  <div id="sidebar-container"></div>
+  <div class="d-flex flex-column flex-lg-row">
+    <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
+    <div id="sidebar-container"></div>
 
-  <!-- 2. KONTEN UTAMA HALAMAN -->
-  <main class="main-wrapper flex-grow-1">
-    <div class="custom-card">
-      <div class="card-heading">Tambah Ruang Belajar</div>
-      <form id="formAddRoom">
-        <div class="row g-3">
-          <div class="col-md-4">
-            <label class="form-label-custom">Nama Ruangan</label>
-            <input type="text" class="form-control-custom" id="roomName" placeholder="Contoh: Ruang Delta (Lt. 2)" required>
+    <!-- 2. KONTEN UTAMA HALAMAN -->
+    <main class="main-wrapper flex-grow-1">
+      
+      <!-- TOP HEADER (Judul & Subjudul persis gambar) -->
+      <div class="top-header">
+        <div>
+          <h1 class="page-title">Data Ruang Belajar</h1>
+          <p class="page-subtitle">Kapasitas ruang dipakai untuk memeriksa jadwal dan jumlah anggota kelompok.</p>
+        </div>
+      </div>
+
+      <!-- CARD 1: FORM TAMBAH RUANG -->
+      <div class="custom-card mb-4">
+        <div class="card-heading">Tambah ruang</div>
+        <form id="formAddRoom" onsubmit="event.preventDefault(); handleSimpanRuang();">
+          <div class="row g-3 align-items-end">
+            <!-- Nama ruang -->
+            <div class="col-12 col-md-5">
+              <label for="inputNamaRuang" class="form-label-custom">Nama ruang</label>
+              <input type="text" class="form-control-custom" id="inputNamaRuang" placeholder="contoh: Ruang C" required>
+            </div>
+
+            <!-- Kapasitas (siswa) -->
+            <div class="col-12 col-md-4">
+              <label for="inputKapasitas" class="form-label-custom">Kapasitas (siswa)</label>
+              <input type="number" class="form-control-custom" id="inputKapasitas" value="5" min="1" required>
+            </div>
+
+            <!-- Tombol Simpan -->
+            <div class="col-12 col-md-3">
+              <button type="submit" class="btn-primary-custom w-100">
+                Simpan
+              </button>
+            </div>
           </div>
-          <div class="col-md-2">
-            <label class="form-label-custom">Kapasitas (Siswa)</label>
-            <input type="number" class="form-control-custom" id="roomCapacity" value="10" required>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label-custom">Fasilitas</label>
-            <input type="text" class="form-control-custom" id="roomFacilities" placeholder="AC, Smart TV, Whiteboard">
-          </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button type="submit" class="btn-primary-custom w-100">Simpan Ruang</button>
+        </form>
+      </div>
+
+      <!-- GRID KARTU DAFTAR RUANG BELAJAR -->
+      <div class="row g-4" id="roomCardContainer">
+        <!-- Kartu 1: Ruang A -->
+        <div class="col-12 col-md-4 col-lg-3">
+          <div class="custom-card mb-0 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <h5 class="fw-bold mb-2 text-dark">Ruang A</h5>
+              <p class="text-muted mb-3" style="font-size: 14.5px;">
+                Kapasitas <strong>5</strong> siswa
+              </p>
+            </div>
+            <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, 'Ruang A')">
+              Hapus
+            </button>
           </div>
         </div>
-      </form>
-    </div>
 
-    <div class="custom-card p-0 overflow-hidden">
-      <div class="table-responsive-custom">
-        <table class="custom-table">
-          <thead>
-            <tr>
-              <th>NAMA RUANG</th>
-              <th>KAPASITAS</th>
-              <th>FASILITAS</th>
-              <th class="text-end pe-4">AKSI</th>
-            </tr>
-          </thead>
-          <tbody id="roomListBody">
-            <!-- Dimuat dinamis -->
-          </tbody>
-        </table>
+        <!-- Kartu 2: Ruang B -->
+        <div class="col-12 col-md-4 col-lg-3">
+          <div class="custom-card mb-0 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <h5 class="fw-bold mb-2 text-dark">Ruang B</h5>
+              <p class="text-muted mb-3" style="font-size: 14.5px;">
+                Kapasitas <strong>5</strong> siswa
+              </p>
+            </div>
+            <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, 'Ruang B')">
+              Hapus
+            </button>
+          </div>
+        </div>
+
+        <!-- Kartu 3: Ruang Privat -->
+        <div class="col-12 col-md-4 col-lg-3">
+          <div class="custom-card mb-0 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <h5 class="fw-bold mb-2 text-dark">Ruang Privat</h5>
+              <p class="text-muted mb-3" style="font-size: 14.5px;">
+                Kapasitas <strong>2</strong> siswa
+              </p>
+            </div>
+            <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, 'Ruang Privat')">
+              Hapus
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  </main>
-</div>
 
-  <!-- Panggil JavaScript Sidebar -->
+    </main>
+  </div>
+
+  <!-- Panggil JavaScript Sidebar Reusable -->
   <script src="js/sidebar.js"></script>
   <script>
-    // Panggil fungsi renderSidebar dengan nama menu yang aktif
+    // 1. Aktifkan menu 'Ruang Belajar' di sidebar otomatis
     renderSidebar('ruang');
+
+    // 2. Fungsi Simpan Ruang Baru (Simulasi UI Ramah Skripsi)
+    function handleSimpanRuang() {
+      const nama = document.getElementById('inputNamaRuang').value.trim();
+      const kapasitas = document.getElementById('inputKapasitas').value;
+
+      if (!nama) {
+        alert('Nama ruang wajib diisi!');
+        return;
+      }
+
+      // Buat kartu baru di dalam Grid
+      const container = document.getElementById('roomCardContainer');
+      const newCardCol = document.createElement('div');
+      newCardCol.className = 'col-12 col-md-4 col-lg-3';
+      newCardCol.innerHTML = `
+        <div class="custom-card mb-0 h-100 d-flex flex-column justify-content-between">
+          <div>
+            <h5 class="fw-bold mb-2 text-dark">${nama}</h5>
+            <p class="text-muted mb-3" style="font-size: 14.5px;">
+              Kapasitas <strong>${kapasitas}</strong> siswa
+            </p>
+          </div>
+          <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, '${nama}')">
+            Hapus
+          </button>
+        </div>
+      `;
+      container.appendChild(newCardCol);
+
+      // Reset form input
+      document.getElementById('inputNamaRuang').value = '';
+      document.getElementById('inputKapasitas').value = '5';
+
+      alert(`Ruang "${nama}" berhasil ditambahkan!`);
+    }
+
+    // 3. Fungsi Hapus Ruang
+    function hapusRuang(buttonElement, namaRuang) {
+      if (confirm(`Apakah Anda yakin ingin menghapus "${namaRuang}"?`)) {
+        const cardCol = buttonElement.closest('.col-12');
+        cardCol.remove();
+      }
+    }
   </script>
 </body>
 </html>

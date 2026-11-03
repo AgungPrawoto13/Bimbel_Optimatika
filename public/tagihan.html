@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Optimatika · Tagihan Siswa</title>
+  <title>Optimatika · Terbitkan Tagihan</title>
   <!-- Bootstrap 5 & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -17,61 +17,115 @@
 
     <!-- 2. KONTEN UTAMA HALAMAN -->
     <main class="main-wrapper flex-grow-1">
-      <!-- Header Judul Halaman -->
+      
+      <!-- TOP HEADER (Judul & Subjudul persis gambar) -->
       <div class="top-header">
         <div>
-          <h1 class="page-title">Data Tagihan SPP & Modul</h1>
-          <p class="page-subtitle">Rekapitulasi tagihan biaya belajar bulanan dan modul siswa.</p>
+          <h1 class="page-title">Terbitkan Tagihan</h1>
+          <p class="page-subtitle">Nominal diambil dari tarif program yang diikuti tiap siswa.</p>
         </div>
       </div>
 
-      <!-- Tabel Tagihan -->
+      <!-- CARD 1: FORM PERIODE & TOMBOL TERBITKAN -->
+      <div class="custom-card mb-4">
+        <form onsubmit="event.preventDefault(); terbitkanTagihan();">
+          <div class="row g-3 align-items-end">
+            <!-- Pilihan Periode Tagihan -->
+            <div class="col-12 col-md-7 col-lg-6">
+              <label for="selectPeriode" class="form-label-custom">Periode tagihan</label>
+              <select class="form-select-custom" id="selectPeriode" onchange="gantiPeriode()">
+                <option value="Oktober 2026" selected>Oktober 2026</option>
+                <option value="November 2026">November 2026</option>
+                <option value="Desember 2026">Desember 2026</option>
+              </select>
+            </div>
+
+            <!-- Tombol Terbitkan Untuk Semua Siswa -->
+            <div class="col-12 col-md-auto">
+              <button type="submit" class="btn-primary-custom" id="btnTerbitkan">
+                Terbitkan untuk semua siswa
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- CARD 2: TABEL DAFTAR TAGIHAN PERIODE -->
       <div class="custom-card p-0 overflow-hidden">
         <div class="table-responsive-custom">
-          <table class="custom-table">
+          <table class="custom-table" id="tableTagihan">
             <thead>
               <tr>
-                <th>NO. INVOICE</th>
-                <th>NAMA SISWA</th>
-                <th>JUMLAH TAGIHAN</th>
-                <th>JATUH TEMPO</th>
-                <th>STATUS</th>
-                <th class="text-end pe-4">AKSI</th>
+                <th style="width: 25%;">NO. TAGIHAN</th>
+                <th style="width: 25%;">SISWA</th>
+                <th style="width: 20%;">PROGRAM</th>
+                <th style="width: 15%;">PERIODE</th>
+                <th style="width: 15%; text-align: right; padding-right: 28px;">NOMINAL</th>
               </tr>
             </thead>
-            <tbody id="billListBody">
-              <tr>
-                <td><code>INV/2026/11/001</code></td>
-                <td><strong>Ahmad Farhan</strong></td>
-                <td>Rp 450.000</td>
-                <td>10 Nov 2026</td>
-                <td><span class="badge bg-warning-subtle text-warning-emphasis px-3 py-1 rounded-pill">Belum Lunas</span></td>
-                <td class="text-end pe-4">
-                  <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="alert('Pesan tagihan dikirim ke WhatsApp wali murid.')">Kirim WA</button>
-                </td>
-              </tr>
-              <tr>
-                <td><code>INV/2026/11/002</code></td>
-                <td><strong>Nabila Putri</strong></td>
-                <td>Rp 500.000</td>
-                <td>10 Nov 2026</td>
-                <td><span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill">Lunas</span></td>
-                <td class="text-end pe-4">
-                  <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="alert('Invoice #002 tercatat lunas.')">Lihat Bukti</button>
+            <tbody id="tagihanListBody">
+              <!-- Default Kosong Sesuai Gambar: "Belum ada tagihan pada periode ini." -->
+              <tr id="emptyRow">
+                <td colspan="5" class="text-center py-5 text-muted" style="font-size: 14.5px;">
+                  Belum ada tagihan pada periode ini.
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
+
     </main>
   </div>
 
-  <!-- Panggil JavaScript Sidebar -->
+  <!-- Panggil JavaScript Sidebar Reusable -->
   <script src="js/sidebar.js"></script>
   <script>
-    // Aktifkan menu Tagihan
+    // 1. Aktifkan menu 'Tagihan' di sidebar otomatis
     renderSidebar('tagihan');
+
+    // 2. Data Siswa & Tarif Tagihan per Program
+    const dataSiswaTagihan = [
+      { no: 'TGH-202610-001', nama: 'Alya Putri', program: 'Calistung', nominal: 'Rp 200.000' },
+      { no: 'TGH-202610-002', nama: 'Bagas Pratama', program: 'Matematika SMP', nominal: 'Rp 300.000' },
+      { no: 'TGH-202610-003', nama: 'Citra Maharani', program: 'Persiapan UTBK', nominal: 'Rp 450.000' },
+      { no: 'TGH-202610-004', nama: 'Dimas Aditya', program: 'Matematika SMP', nominal: 'Rp 300.000' },
+      { no: 'TGH-202610-005', nama: 'Eka Lestari', program: 'Matematika SD', nominal: 'Rp 250.000' }
+    ];
+
+    // 3. Fungsi Terbitkan Tagihan Massal
+    function terbitkanTagihan() {
+      const periode = document.getElementById('selectPeriode').value;
+      const tbody = document.getElementById('tagihanListBody');
+
+      // Tampilkan notifikasi konfirmasi
+      if (confirm(`Apakah Anda yakin ingin menerbitkan tagihan untuk seluruh siswa aktif pada periode ${periode}?`)) {
+        // Render baris data tagihan yang telah terbit
+        tbody.innerHTML = dataSiswaTagihan.map(item => `
+          <tr>
+            <td><code>${item.no}</code></td>
+            <td><strong>${item.nama}</strong></td>
+            <td>${item.program}</td>
+            <td>${periode}</td>
+            <td class="text-end pe-4"><strong>${item.nominal}</strong></td>
+          </tr>
+        `).join('');
+
+        alert(`✅ Sukses! Tagihan periode ${periode} berhasil diterbitkan untuk 5 siswa aktif.`);
+      }
+    }
+
+    // 4. Fungsi saat Periode Diubah (Bisa kembali ke tampilan default kosong)
+    function gantiPeriode() {
+      const tbody = document.getElementById('tagihanListBody');
+      tbody.innerHTML = `
+        <tr id="emptyRow">
+          <td colspan="5" class="text-center py-5 text-muted" style="font-size: 14.5px;">
+            Belum ada tagihan pada periode ini.
+          </td>
+        </tr>
+      `;
+    }
   </script>
 </body>
 </html>

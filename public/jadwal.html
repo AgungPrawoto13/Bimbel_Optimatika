@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Optimatika · Catat Pembayaran</title>
+  <title>Optimatika · Jadwal Belajar</title>
   <!-- Bootstrap 5 & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -11,55 +11,234 @@
 </head>
 <body>
 
-<div class="d-flex flex-column flex-lg-row">
-  <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
-  <div id="sidebar-container"></div>
+  <div class="d-flex flex-column flex-lg-row">
+    <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
+    <div id="sidebar-container"></div>
 
-  <!-- 2. KONTEN UTAMA HALAMAN -->
-  <main class="main-wrapper flex-grow-1">
-    <div class="custom-card">
-      <div class="card-heading">Jadwal Sesi Bimbel</div>
-      <div class="table-responsive-custom">
-        <table class="custom-table">
-          <thead>
-            <tr>
-              <th>HARI</th>
-              <th>JAM</th>
-              <th>KELOMPOK BELAJAR</th>
-              <th>STATUS SESI</th>
-            </tr>
-          </thead>
-          <tbody id="scheduleListBody">
-            <tr>
-              <td><strong>Senin & Rabu</strong></td>
-              <td>15:30 - 17:00 WIB</td>
-              <td>Kelas Reguler SD A</td>
-              <td><span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Berjalan Rutin</span></td>
-            </tr>
-            <tr>
-              <td><strong>Selasa & Kamis</strong></td>
-              <td>16:00 - 17:30 WIB</td>
-              <td>Intensif SMP Juara</td>
-              <td><span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">Berjalan Rutin</span></td>
-            </tr>
-            <tr>
-              <td><strong>Sabtu & Minggu</strong></td>
-              <td>09:00 - 12:00 WIB</td>
-              <td>Intensif UTBK Saintek 1</td>
-              <td><span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">Weekend Camp</span></td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- 2. KONTEN UTAMA HALAMAN -->
+    <main class="main-wrapper flex-grow-1">
+      
+      <!-- TOP HEADER (Judul & Subjudul Deteksi Bentrok) -->
+      <div class="top-header">
+        <div>
+          <h1 class="page-title">Jadwal Belajar</h1>
+          <p class="page-subtitle">Sebelum disimpan, sistem memeriksa bentrok ruang dan tutor pada hari yang sama.</p>
+        </div>
       </div>
-    </div>
-  </main>
-</div>
 
-  <!-- Panggil JavaScript Sidebar -->
+      <!-- CARD 1: FORM TAMBAH JADWAL -->
+      <div class="custom-card mb-4">
+        <div class="card-heading">Tambah jadwal</div>
+        <form id="formAddSchedule" onsubmit="event.preventDefault(); handleSimpanJadwal();">
+          <!-- Baris 1 Input (5 Kolom: Kelompok, Tutor, Ruang, Hari, Mulai) -->
+          <div class="row row-cols-1 row-cols-md-5 g-3 mb-3">
+            <!-- Kelompok -->
+            <div class="col">
+              <label for="selectKelompok" class="form-label-custom">Kelompok</label>
+              <select class="form-select-custom" id="selectKelompok">
+                <option value="Matematika SMP 1" selected>Matematika SMP 1</option>
+                <option value="Calistung 1">Calistung 1</option>
+                <option value="IPA Terpadu 1">IPA Terpadu 1</option>
+              </select>
+            </div>
+
+            <!-- Tutor -->
+            <div class="col">
+              <label for="selectTutor" class="form-label-custom">Tutor</label>
+              <select class="form-select-custom" id="selectTutor">
+                <option value="Kak Rina" selected>Kak Rina</option>
+                <option value="Kak Dewi">Kak Dewi</option>
+                <option value="Kak Fajar">Kak Fajar</option>
+                <option value="Kak Yoga">Kak Yoga</option>
+              </select>
+            </div>
+
+            <!-- Ruang -->
+            <div class="col">
+              <label for="selectRuang" class="form-label-custom">Ruang</label>
+              <select class="form-select-custom" id="selectRuang">
+                <option value="Ruang A" selected>Ruang A</option>
+                <option value="Ruang B">Ruang B</option>
+                <option value="Ruang Privat">Ruang Privat</option>
+              </select>
+            </div>
+
+            <!-- Hari -->
+            <div class="col">
+              <label for="selectHari" class="form-label-custom">Hari</label>
+              <select class="form-select-custom" id="selectHari">
+                <option value="Senin" selected>Senin</option>
+                <option value="Selasa">Selasa</option>
+                <option value="Rabu">Rabu</option>
+                <option value="Kamis">Kamis</option>
+                <option value="Jumat">Jumat</option>
+                <option value="Sabtu">Sabtu</option>
+                <option value="Minggu">Minggu</option>
+              </select>
+            </div>
+
+            <!-- Jam Mulai -->
+            <div class="col">
+              <label for="timeMulai" class="form-label-custom">Mulai</label>
+              <input type="time" class="form-control-custom" id="timeMulai" value="15:00" required>
+            </div>
+          </div>
+
+          <!-- Baris 2 Input (Jam Selesai) -->
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-2" style="max-width: 20%;">
+              <label for="timeSelesai" class="form-label-custom">Selesai</label>
+              <input type="time" class="form-control-custom" id="timeSelesai" value="16:30" required>
+            </div>
+          </div>
+
+          <!-- Tombol Periksa dan Simpan (Berada di Bawah Selesai) -->
+          <div>
+            <button type="submit" class="btn-primary-custom" style="padding: 10px 28px;">
+              Periksa dan simpan
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- CARD 2: TABEL DATA JADWAL -->
+      <div class="custom-card p-0 overflow-hidden">
+        <div class="table-responsive-custom">
+          <table class="custom-table" id="tableJadwal">
+            <thead>
+              <tr>
+                <th style="width: 15%;">HARI</th>
+                <th style="width: 20%;">WAKTU</th>
+                <th style="width: 25%;">KELOMPOK</th>
+                <th style="width: 20%;">TUTOR</th>
+                <th style="width: 10%;">RUANG</th>
+                <th style="width: 10%; text-align: right; padding-right: 28px;"></th>
+              </tr>
+            </thead>
+            <tbody id="scheduleListBody">
+              <!-- Baris 1: Senin Matematika SMP 1 -->
+              <tr data-hari="Senin" data-ruang="Ruang A" data-tutor="Kak Rina" data-waktu="15:00–16:30">
+                <td><strong>Senin</strong></td>
+                <td>15:00–16:30</td>
+                <td>Matematika SMP 1</td>
+                <td>Kak Rina</td>
+                <td>Ruang A</td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, 'Senin - Matematika SMP 1')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 2: Senin Calistung 1 -->
+              <tr data-hari="Senin" data-ruang="Ruang B" data-tutor="Kak Dewi" data-waktu="16:30–18:00">
+                <td><strong>Senin</strong></td>
+                <td>16:30–18:00</td>
+                <td>Calistung 1</td>
+                <td>Kak Dewi</td>
+                <td>Ruang B</td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, 'Senin - Calistung 1')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 3: Rabu IPA Terpadu 1 -->
+              <tr data-hari="Rabu" data-ruang="Ruang A" data-tutor="Kak Fajar" data-waktu="15:00–16:30">
+                <td><strong>Rabu</strong></td>
+                <td>15:00–16:30</td>
+                <td>IPA Terpadu 1</td>
+                <td>Kak Fajar</td>
+                <td>Ruang A</td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, 'Rabu - IPA Terpadu 1')">Hapus</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Panggil JavaScript Sidebar Reusable -->
   <script src="js/sidebar.js"></script>
   <script>
-    // Panggil fungsi renderSidebar dengan nama menu yang aktif
+    // 1. Aktifkan menu 'Jadwal' di sidebar
     renderSidebar('jadwal');
+
+    // 2. Fungsi Pemeriksaan Bentrok & Simpan Jadwal (Fitur Unggulan Skripsi!)
+    function handleSimpanJadwal() {
+      const kelompok = document.getElementById('selectKelompok').value;
+      const tutor = document.getElementById('selectTutor').value;
+      const ruang = document.getElementById('selectRuang').value;
+      const hari = document.getElementById('selectHari').value;
+      const mulai = document.getElementById('timeMulai').value;
+      const selesai = document.getElementById('timeSelesai').value;
+
+      if (!mulai || !selesai) {
+        alert('Jam mulai dan selesai wajib diisi!');
+        return;
+      }
+
+      if (mulai >= selesai) {
+        alert('Jam selesai harus lebih akhir dari jam mulai!');
+        return;
+      }
+
+      const rentangWaktu = `${mulai}–${selesai}`;
+
+      // PERIKSA BENTROK JADWAL SECARA OTOMATIS
+      const rows = document.querySelectorAll('#scheduleListBody tr');
+      for (const row of rows) {
+        const rowHari = row.getAttribute('data-hari');
+        const rowRuang = row.getAttribute('data-ruang');
+        const rowTutor = row.getAttribute('data-tutor');
+        const rowWaktu = row.getAttribute('data-waktu');
+
+        // Jika hari dan waktunya bersamaan
+        if (rowHari === hari && rowWaktu === rentangWaktu) {
+          // Bentrok Ruangan
+          if (rowRuang === ruang) {
+            alert(`⚠️ JADWAL BENTROK!\n${ruang} sudah digunakan pada hari ${hari} pukul ${rentangWaktu}.\nSistem membatalkan penyimpanan.`);
+            return;
+          }
+          // Bentrok Pengajar / Tutor
+          if (rowTutor === tutor) {
+            alert(`⚠️ TUTOR BENTROK!\n${tutor} sudah memiliki jadwal mengajar lain pada hari ${hari} pukul ${rentangWaktu}.\nSistem membatalkan penyimpanan.`);
+            return;
+          }
+        }
+      }
+
+      // JIKA TIDAK ADA BENTROK, TAMBAHKAN KE TABEL
+      const tbody = document.getElementById('scheduleListBody');
+      const newRow = document.createElement('tr');
+      newRow.setAttribute('data-hari', hari);
+      newRow.setAttribute('data-ruang', ruang);
+      newRow.setAttribute('data-tutor', tutor);
+      newRow.setAttribute('data-waktu', rentangWaktu);
+
+      newRow.innerHTML = `
+        <td><strong>${hari}</strong></td>
+        <td>${rentangWaktu}</td>
+        <td>${kelompok}</td>
+        <td>${tutor}</td>
+        <td>${ruang}</td>
+        <td class="text-end pe-4">
+          <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, '${hari} - ${kelompok}')">Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(newRow);
+
+      alert(`✅ Berhasil! Tidak ada jadwal bentrok.\nJadwal ${kelompok} (${hari}, ${rentangWaktu}) berhasil disimpan!`);
+    }
+
+    // 3. Fungsi Hapus Jadwal
+    function hapusJadwal(buttonElement, infoJadwal) {
+      if (confirm(`Apakah Anda yakin ingin menghapus jadwal "${infoJadwal}"?`)) {
+        const row = buttonElement.closest('tr');
+        row.remove();
+      }
+    }
   </script>
 </body>
 </html>

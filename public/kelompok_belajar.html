@@ -3,61 +3,274 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Optimatika · Catat Pembayaran</title>
+  <title>Optimatika · Kelompok Belajar</title>
   <!-- Bootstrap 5 & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Styling khusus kartu anggota kelompok */
+    .member-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid #f1f5f9;
+      font-size: 14.5px;
+    }
+    .member-item:first-child {
+      border-top: none;
+    }
+    .btn-keluarkan {
+      color: #dc2626;
+      font-size: 13px;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .btn-keluarkan:hover {
+      text-decoration: underline;
+      color: #991b1b;
+    }
+    .badge-quota-full {
+      background-color: #fee2e2;
+      color: #dc2626;
+      border-radius: 9999px;
+      font-weight: 700;
+      padding: 3px 10px;
+      font-size: 12px;
+    }
+    .badge-quota-available {
+      background-color: #e0f2fe;
+      color: #0284c7;
+      border-radius: 9999px;
+      font-weight: 700;
+      padding: 3px 10px;
+      font-size: 12px;
+    }
+  </style>
 </head>
 <body>
 
-<div class="d-flex flex-column flex-lg-row">
-  <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
-  <div id="sidebar-container"></div>
+  <div class="d-flex flex-column flex-lg-row">
+    <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
+    <div id="sidebar-container"></div>
 
-  <!-- 2. KONTEN UTAMA HALAMAN -->
-  <main class="main-wrapper flex-grow-1">
-    <div class="custom-card">
-      <div class="card-heading">Kelompok Belajar Bimbel</div>
-      <p class="text-muted mb-4">Pengelompokan siswa ke dalam kelas bimbingan terpadu.</p>
-      <div class="table-responsive-custom">
-        <table class="custom-table">
-          <thead>
-            <tr>
-              <th>NAMA KELAS</th>
-              <th>PROGRAM</th>
-              <th>TUTOR PENGAMPU</th>
-              <th>RUANGAN</th>
-              <th class="text-end pe-4">AKSI</th>
-            </tr>
-          </thead>
-          <tbody id="groupListBody">
-            <tr>
-              <td><strong>Kelas Reguler SD A</strong></td>
-              <td><span class="badge-level">Matematika SD</span></td>
-              <td>Kak Budi Santoso, S.Pd.</td>
-              <td>Ruang Alpha (Lt. 1)</td>
-              <td class="text-end pe-4"><button class="btn-delete-pill" onclick="Swal.fire('Info', 'Fitur kelas siap digunakan', 'info')">Detail</button></td>
-            </tr>
-            <tr>
-              <td><strong>Intensif UTBK Saintek 1</strong></td>
-              <td><span class="badge-level badge-sma">Persiapan UTBK</span></td>
-              <td>Kak Rizky Pratama, S.Si.</td>
-              <td>Ruang Gamma (Lt. 2)</td>
-              <td class="text-end pe-4"><button class="btn-delete-pill" onclick="Swal.fire('Info', 'Fitur kelas siap digunakan', 'info')">Detail</button></td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- 2. KONTEN UTAMA HALAMAN -->
+    <main class="main-wrapper flex-grow-1">
+      
+      <!-- TOP HEADER (Judul & Aturan Kuota Maksimal 5 Siswa) -->
+      <div class="top-header">
+        <div>
+          <h1 class="page-title">Kelompok Belajar</h1>
+          <p class="page-subtitle">Satu kelompok berisi paling banyak 5 siswa. Sistem menolak penambahan anggota ke-6.</p>
+        </div>
       </div>
-    </div>
-  </main>
-</div>
 
-  <!-- Panggil JavaScript Sidebar -->
+      <!-- CARD 1: FORM TAMBAH SISWA KE KELOMPOK -->
+      <div class="custom-card mb-4">
+        <form id="formAddMember" onsubmit="event.preventDefault(); handleTambahSiswa();">
+          <div class="row g-3 align-items-end">
+            <!-- Dropdown Pilihan Kelompok -->
+            <div class="col-12 col-md-5">
+              <label for="selectKelompok" class="form-label-custom">Kelompok</label>
+              <select class="form-select-custom" id="selectKelompok">
+                <option value="group-matematika" selected>Matematika SMP · Kelompok 1</option>
+                <option value="group-calistung">Calistung · Kelompok 1</option>
+                <option value="group-ipa">IPA Terpadu · Kelompok 1</option>
+              </select>
+            </div>
+
+            <!-- Dropdown Tambah Siswa -->
+            <div class="col-12 col-md-5">
+              <label for="selectSiswa" class="form-label-custom">Tambah siswa</label>
+              <select class="form-select-custom" id="selectSiswa">
+                <option value="Hana Salsabila" selected>Hana Salsabila</option>
+                <option value="Rizky Fauzi">Rizky Fauzi</option>
+                <option value="Zahra Amelia">Zahra Amelia</option>
+                <option value="Fajar Siddiq">Fajar Siddiq</option>
+              </select>
+            </div>
+
+            <!-- Tombol Tambahkan -->
+            <div class="col-12 col-md-2">
+              <button type="submit" class="btn-primary-custom w-100">
+                Tambahkan
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- GRID KARTU KELOMPOK BELAJAR (3 KARTU SEJAJAR) -->
+      <div class="row g-4">
+        
+        <!-- KARTU 1: Matematika SMP (Border Biru Aktif & Kuota 5/5 Penuh) -->
+        <div class="col-12 col-md-4">
+          <div class="custom-card mb-0 h-100" id="card-matematika" style="border: 2px solid #2563eb;">
+            <!-- Header Kartu -->
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h6 class="fw-bold mb-1 text-dark" style="font-size: 16px;">Matematika SMP · Kelompok 1</h6>
+                <span class="text-muted small">Kak Rina Wijaya</span>
+              </div>
+              <span class="badge-quota-full" id="quota-matematika">5/5</span>
+            </div>
+
+            <!-- Daftar Anggota Siswa -->
+            <div class="member-list" id="list-matematika">
+              <div class="member-item">
+                <span>Bagas Pratama</span>
+                <a href="javascript:void(0)" class="btn-keluarkan" onclick="keluarkanSiswa(this, 'Bagas Pratama', 'matematika')">Keluarkan</a>
+              </div>
+              <div class="member-item">
+                <span>Dimas Aditya</span>
+                <a href="javascript:void(0)" class="btn-keluarkan" onclick="keluarkanSiswa(this, 'Dimas Aditya', 'matematika')">Keluarkan</a>
+              </div>
+              <div class="member-item">
+                <span>Fikri Ramadhan</span>
+                <a href="javascript:void(0)" class="btn-keluarkan" onclick="keluarkanSiswa(this, 'Fikri Ramadhan', 'matematika')">Keluarkan</a>
+              </div>
+              <div class="member-item">
+                <span>Gita Permata</span>
+                <a href="javascript:void(0)" class="btn-keluarkan" onclick="keluarkanSiswa(this, 'Gita Permata', 'matematika')">Keluarkan</a>
+              </div>
+              <div class="member-item">
+                <span>Citra Maharani</span>
+                <a href="javascript:void(0)" class="btn-keluarkan" onclick="keluarkanSiswa(this, 'Citra Maharani', 'matematika')">Keluarkan</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KARTU 2: Calistung (Kuota 2/5) -->
+        <div class="col-12 col-md-4">
+          <div class="custom-card mb-0 h-100" id="card-calistung">
+            <!-- Header Kartu -->
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h6 class="fw-bold mb-1 text-dark" style="font-size: 16px;">Calistung · Kelompok 1</h6>
+                <span class="text-muted small">Kak Yoga Saputra</span>
+              </div>
+              <span class="badge-quota-available" id="quota-calistung">2/5</span>
+            </div>
+
+            <!-- Daftar Anggota Siswa -->
+            <div class="member-list" id="list-calistung">
+              <div class="member-item">
+                <span>Alya Putri</span>
+                <a href="javascript:void(0)" class="btn-keluarkan" onclick="keluarkanSiswa(this, 'Alya Putri', 'calistung')">Keluarkan</a>
+              </div>
+              <div class="member-item">
+                <span>Eka Lestari</span>
+                <a href="javascript:void(0)" class="btn-keluarkan" onclick="keluarkanSiswa(this, 'Eka Lestari', 'calistung')">Keluarkan</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KARTU 3: IPA Terpadu (Kuota 1/5) -->
+        <div class="col-12 col-md-4">
+          <div class="custom-card mb-0 h-100" id="card-ipa">
+            <!-- Header Kartu -->
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <h6 class="fw-bold mb-1 text-dark" style="font-size: 16px;">IPA Terpadu · Kelompok 1</h6>
+                <span class="text-muted small">Kak Fajar Nugroho</span>
+              </div>
+              <span class="badge-quota-available" id="quota-ipa">1/5</span>
+            </div>
+
+            <!-- Daftar Anggota Siswa -->
+            <div class="member-list" id="list-ipa">
+              <div class="member-item">
+                <span>Bagas Pratama</span>
+                <a href="javascript:void(0)" class="btn-keluarkan" onclick="keluarkanSiswa(this, 'Bagas Pratama', 'ipa')">Keluarkan</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Panggil JavaScript Sidebar Reusable -->
   <script src="js/sidebar.js"></script>
   <script>
-    // Panggil fungsi renderSidebar dengan nama menu yang aktif
+    // 1. Aktifkan menu 'Kelompok Belajar' di sidebar
     renderSidebar('kelompok');
+
+    // 2. Fungsi Tambah Siswa ke Kelompok (Dengan Validasi Maksimal 5 Siswa!)
+    function handleTambahSiswa() {
+      const kelompok = document.getElementById('selectKelompok').value;
+      const namaSiswa = document.getElementById('selectSiswa').value;
+
+      let listId = 'list-matematika';
+      let quotaId = 'quota-matematika';
+      let groupName = 'Matematika SMP';
+      let groupKey = 'matematika';
+
+      if (kelompok === 'group-calistung') {
+        listId = 'list-calistung';
+        quotaId = 'quota-calistung';
+        groupName = 'Calistung';
+        groupKey = 'calistung';
+      } else if (kelompok === 'group-ipa') {
+        listId = 'list-ipa';
+        quotaId = 'quota-ipa';
+        groupName = 'IPA Terpadu';
+        groupKey = 'ipa';
+      }
+
+      const memberList = document.getElementById(listId);
+      const currentCount = memberList.querySelectorAll('.member-item').length;
+
+      // VALIDASI ATURAN SKRIPSI: MAKSIMAL 5 SISWA PER KELOMPOK
+      if (currentCount >= 5) {
+        alert(`❌ Sistem Menolak: Kelompok ${groupName} sudah penuh (5/5 siswa). Sesuai aturan, anggota ke-6 tidak dapat ditambahkan!`);
+        return;
+      }
+
+      // Tambahkan siswa baru ke dalam kelompok
+      const newItem = document.createElement('div');
+      newItem.className = 'member-item';
+      newItem.innerHTML = `
+        <span>${namaSiswa}</span>
+        <a href="javascript:void(0)" class="btn-keluarkan" onclick="keluarkanSiswa(this, '${namaSiswa}', '${groupKey}')">Keluarkan</a>
+      `;
+      memberList.appendChild(newItem);
+
+      // Perbarui label kuota
+      const newCount = currentCount + 1;
+      const badge = document.getElementById(quotaId);
+      badge.textContent = `${newCount}/5`;
+      if (newCount === 5) {
+        badge.className = 'badge-quota-full';
+      } else {
+        badge.className = 'badge-quota-available';
+      }
+
+      alert(`✅ Siswa "${namaSiswa}" berhasil dimasukkan ke ${groupName}!`);
+    }
+
+    // 3. Fungsi Keluarkan Siswa
+    function keluarkanSiswa(element, namaSiswa, groupKey) {
+      if (confirm(`Apakah Anda yakin ingin mengeluarkan "${namaSiswa}" dari kelompok ini?`)) {
+        const item = element.closest('.member-item');
+        const list = item.parentElement;
+        item.remove();
+
+        // Update kuota
+        const count = list.querySelectorAll('.member-item').length;
+        const badge = document.getElementById(`quota-${groupKey}`);
+        badge.textContent = `${count}/5`;
+        if (count < 5) {
+          badge.className = 'badge-quota-available';
+        }
+      }
+    }
   </script>
 </body>
 </html>
