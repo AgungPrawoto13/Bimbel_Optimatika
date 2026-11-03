@@ -6,10 +6,10 @@ function renderSidebar(activeMenu = 'program') {
   // Daftar semua menu dan link halamannya
   const menuList = [
     { id: 'siswa', label: 'Siswa dan Wali', link: 'siswa.html' },
-    { id: 'program', label: 'Program', link: 'index.html' },
+    { id: 'program', label: 'Program', link: 'program.html' },
     { id: 'tutor', label: 'Tutor', link: 'tutor.html' },
-    { id: 'ruang', label: 'Ruang Belajar', link: 'ruang.html' },
-    { id: 'kelompok', label: 'Kelompok Belajar', link: 'kelompok.html' },
+    { id: 'ruang', label: 'Ruang Belajar', link: 'ruang_belajar.html' },
+    { id: 'kelompok', label: 'Kelompok Belajar', link: 'kelompok_belajar.html' },
     { id: 'jadwal', label: 'Jadwal', link: 'jadwal.html' },
     { id: 'tagihan', label: 'Tagihan', link: 'tagihan.html' },
     { id: 'pembayaran', label: 'Pembayaran', link: 'pembayaran.html' }

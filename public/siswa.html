@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optimatika · Catat Pembayaran</title>
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="d-flex flex-column flex-lg-row">
+  <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
+  <div id="sidebar-container"></div>
+
+  <!-- 2. KONTEN UTAMA HALAMAN -->
+  <main class="main-wrapper flex-grow-1">
+    <div class="custom-card">
+          <div class="card-heading">Tambah Siswa Baru</div>
+          <form id="formAddStudent">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label-custom">Nama Lengkap Siswa</label>
+                <input type="text" class="form-control-custom" id="studentName" placeholder="Contoh: Muhammad Rizki" required>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label-custom">Gender</label>
+                <select class="form-select-custom" id="studentGender">
+                  <option value="L">Laki-laki</option>
+                  <option value="P">Perempuan</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label-custom">Nama Orang Tua / Wali</label>
+                <input type="text" class="form-control-custom" id="studentGuardian" placeholder="Contoh: Bpk. Gunawan" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label-custom">No. WhatsApp / HP</label>
+                <input type="tel" class="form-control-custom" id="studentPhone" placeholder="08123456789" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label-custom">Pilihan Program Belajar</label>
+                <select class="form-select-custom" id="studentProgramSelect">
+                  <!-- Dimuat dinamis dari daftar program -->
+                </select>
+              </div>
+              <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn-primary-custom w-100">Simpan Siswa</button>
+              </div>
+            </div>
+          </form>
+    </div>
+
+    <div class="custom-card p-0 overflow-hidden">
+      <div class="table-responsive-custom">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>NIS</th>
+              <th>NAMA SISWA</th>
+              <th>GENDER</th>
+              <th>NAMA WALI</th>
+              <th>KONTAK WA</th>
+              <th>PROGRAM</th>
+              <th>STATUS</th>
+              <th class="text-end pe-4">AKSI</th>
+            </tr>
+          </thead>
+          <tbody id="studentListBody">
+            <!-- Dimuat dinamis -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+  <!-- Panggil JavaScript Sidebar -->
+  <script src="js/sidebar.js"></script>
+  <script>
+    // Panggil fungsi renderSidebar dengan nama menu yang aktif
+    renderSidebar('siswa');
+  </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Optimatika · Catat Pembayaran</title>
+  <title>Optimatika · Tagihan Siswa</title>
   <!-- Bootstrap 5 & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -11,14 +11,22 @@
 </head>
 <body>
 
-<div class="d-flex flex-column flex-lg-row">
+  <div class="d-flex flex-column flex-lg-row">
     <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
     <div id="sidebar-container"></div>
 
     <!-- 2. KONTEN UTAMA HALAMAN -->
-    <section id="view-tagihan" class="content-section d-none">
-      <div class="custom-card">
-        <div class="card-heading">Data Tagihan SPP & Modul Siswa</div>
+    <main class="main-wrapper flex-grow-1">
+      <!-- Header Judul Halaman -->
+      <div class="top-header">
+        <div>
+          <h1 class="page-title">Data Tagihan SPP & Modul</h1>
+          <p class="page-subtitle">Rekapitulasi tagihan biaya belajar bulanan dan modul siswa.</p>
+        </div>
+      </div>
+
+      <!-- Tabel Tagihan -->
+      <div class="custom-card p-0 overflow-hidden">
         <div class="table-responsive-custom">
           <table class="custom-table">
             <thead>
@@ -38,7 +46,9 @@
                 <td>Rp 450.000</td>
                 <td>10 Nov 2026</td>
                 <td><span class="badge bg-warning-subtle text-warning-emphasis px-3 py-1 rounded-pill">Belum Lunas</span></td>
-                <td class="text-end pe-4"><button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="Swal.fire('Kirim Pengingat', 'Pesan tagihan dikirim ke WhatsApp wali murid.', 'success')">Kirim WA</button></td>
+                <td class="text-end pe-4">
+                  <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="alert('Pesan tagihan dikirim ke WhatsApp wali murid.')">Kirim WA</button>
+                </td>
               </tr>
               <tr>
                 <td><code>INV/2026/11/002</code></td>
@@ -46,20 +56,22 @@
                 <td>Rp 500.000</td>
                 <td>10 Nov 2026</td>
                 <td><span class="badge bg-success-subtle text-success px-3 py-1 rounded-pill">Lunas</span></td>
-                <td class="text-end pe-4"><button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="Swal.fire('Invoice', 'Invoice #002 tercatat lunas.', 'info')">Lihat Bukti</button></td>
+                <td class="text-end pe-4">
+                  <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="alert('Invoice #002 tercatat lunas.')">Lihat Bukti</button>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
-    </section>
-</div>
+    </main>
+  </div>
 
   <!-- Panggil JavaScript Sidebar -->
   <script src="js/sidebar.js"></script>
   <script>
-    // Panggil fungsi renderSidebar dengan nama menu yang aktif
-    renderSidebar('pembayaran');
+    // Aktifkan menu Tagihan
+    renderSidebar('tagihan');
   </script>
 </body>
 </html>
