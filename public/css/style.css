@@ -457,3 +457,13 @@ body {
   background-color: #fce8e6;
   color: #c5221f;
 }
+
+.badge-status-aktif {
+  background-color: #e6f4ea;
+  color: #137333;
+}
+
+.badge-status-nonaktif {
+  background-color: #e8ecf2;
+  color: #475569;
+}

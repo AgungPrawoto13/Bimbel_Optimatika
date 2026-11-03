@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Optimatika · Catat Pembayaran</title>
+  <title>Optimatika · Data Program Belajar</title>
   <!-- Bootstrap 5 & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -11,105 +11,178 @@
 </head>
 <body>
 
-<div class="d-flex flex-column flex-lg-row">
-  <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
-  <div id="sidebar-container"></div>
+  <div class="d-flex flex-column flex-lg-row">
+    <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
+    <div id="sidebar-container"></div>
 
-  <!-- 2. KONTEN UTAMA HALAMAN -->
-  <main class="main-wrapper flex-grow-1">
-    <div class="custom-card">
-          <div class="card-heading">Tambah program</div>
-          <form id="formAddProgram">
-            <div class="row g-3 align-items-end">
-              <!-- Nama program -->
-              <div class="col-12 col-md-5">
-                <label for="programName" class="form-label-custom">Nama program</label>
-                <input type="text" class="form-control-custom" id="programName" placeholder="contoh: Matematika Dasar" required>
-              </div>
-
-              <!-- Jenjang -->
-              <div class="col-12 col-md-3">
-                <label for="programLevel" class="form-label-custom">Jenjang</label>
-                <select class="form-select-custom" id="programLevel">
-                  <option value="SD" selected>SD</option>
-                  <option value="SMP">SMP</option>
-                  <option value="SMA">SMA</option>
-                  <option value="UMUM">UMUM / UTBK</option>
-                </select>
-              </div>
-
-              <!-- Pertemuan per bulan -->
-              <div class="col-12 col-md-2">
-                <label for="programSessions" class="form-label-custom">Pertemuan per bulan</label>
-                <input type="number" class="form-control-custom" id="programSessions" value="8" min="1" max="31" required>
-              </div>
-
-              <!-- Tombol Simpan -->
-              <div class="col-12 col-md-2">
-                <button type="submit" class="btn-primary-custom w-100" id="btnSaveProgram">
-                  Simpan
-                </button>
-              </div>
-            </div>
-          </form>
-    </div>
-
-    <!-- Card 2: Tabel Program -->
-    <div class="custom-card p-0 overflow-hidden">
-      <div class="table-responsive-custom">
-        <table class="custom-table" id="tablePrograms">
-          <thead>
-            <tr>
-              <th style="width: 45%;">PROGRAM</th>
-              <th style="width: 25%;">JENJANG</th>
-              <th style="width: 20%;">PERTEMUAN / BULAN</th>
-              <th style="width: 10%; text-align: right; padding-right: 28px;"></th>
-            </tr>
-          </thead>
-          <tbody id="programListBody">
-            <!-- Data akan dimuat otomatis oleh JavaScript dari Database Neon/SQLite -->
-            <tr>
-              <td><strong>Calistung</strong></td>
-              <td><span class="badge-level">SD</span></td>
-              <td><span class="session-count">8×</span></td>
-              <td class="text-end pe-4"><button class="btn-delete-pill" onclick="handleDeleteProgram(1)">Hapus</button></td>
-            </tr>
-            <tr>
-              <td><strong>Matematika SD</strong></td>
-              <td><span class="badge-level">SD</span></td>
-              <td><span class="session-count">8×</span></td>
-              <td class="text-end pe-4"><button class="btn-delete-pill" onclick="handleDeleteProgram(2)">Hapus</button></td>
-            </tr>
-            <tr>
-              <td><strong>Matematika SMP</strong></td>
-              <td><span class="badge-level badge-smp">SMP</span></td>
-              <td><span class="session-count">8×</span></td>
-              <td class="text-end pe-4"><button class="btn-delete-pill" onclick="handleDeleteProgram(3)">Hapus</button></td>
-            </tr>
-            <tr>
-              <td><strong>IPA Terpadu</strong></td>
-              <td><span class="badge-level badge-smp">SMP</span></td>
-              <td><span class="session-count">8×</span></td>
-              <td class="text-end pe-4"><button class="btn-delete-pill" onclick="handleDeleteProgram(4)">Hapus</button></td>
-            </tr>
-            <tr>
-              <td><strong>Persiapan UTBK</strong></td>
-              <td><span class="badge-level badge-sma">SMA</span></td>
-              <td><span class="session-count">12×</span></td>
-              <td class="text-end pe-4"><button class="btn-delete-pill" onclick="handleDeleteProgram(5)">Hapus</button></td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- 2. KONTEN UTAMA HALAMAN -->
+    <main class="main-wrapper flex-grow-1">
+      
+      <!-- TOP HEADER (Judul & Subjudul persis gambar) -->
+      <div class="top-header">
+        <div>
+          <h1 class="page-title">Data Program Belajar</h1>
+          <p class="page-subtitle">Tarif tiap program ditetapkan pengelola di menu Tarif.</p>
+        </div>
       </div>
-    </div>
-  </main>
-</div>
 
-  <!-- Panggil JavaScript Sidebar -->
+      <!-- CARD 1: FORM TAMBAH PROGRAM -->
+      <div class="custom-card mb-4">
+        <div class="card-heading">Tambah program</div>
+        <form id="formAddProgram" onsubmit="event.preventDefault(); handleSimpanProgram();">
+          <div class="row g-3 align-items-end">
+            <!-- Nama program -->
+            <div class="col-12 col-md-3">
+              <label for="programName" class="form-label-custom">Nama program</label>
+              <input type="text" class="form-control-custom" id="programName" placeholder="contoh: Matematika Dasar" required>
+            </div>
+
+            <!-- Jenjang -->
+            <div class="col-12 col-md-3">
+              <label for="programLevel" class="form-label-custom">Jenjang</label>
+              <select class="form-select-custom" id="programLevel">
+                <option value="SD" selected>SD</option>
+                <option value="SMP">SMP</option>
+                <option value="SMA">SMA</option>
+              </select>
+            </div>
+
+            <!-- Pertemuan per bulan -->
+            <div class="col-12 col-md-3">
+              <label for="programSessions" class="form-label-custom">Pertemuan per bulan</label>
+              <input type="number" class="form-control-custom" id="programSessions" value="8" min="1" max="31" required>
+            </div>
+
+            <!-- Tombol Simpan -->
+            <div class="col-12 col-md-3">
+              <button type="submit" class="btn-primary-custom w-100" id="btnSaveProgram">
+                Simpan
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- CARD 2: TABEL DATA PROGRAM -->
+      <div class="custom-card p-0 overflow-hidden">
+        <div class="table-responsive-custom">
+          <table class="custom-table" id="tablePrograms">
+            <thead>
+              <tr>
+                <th style="width: 45%;">PROGRAM</th>
+                <th style="width: 25%;">JENJANG</th>
+                <th style="width: 20%;">PERTEMUAN / BULAN</th>
+                <th style="width: 10%; text-align: right; padding-right: 28px;"></th>
+              </tr>
+            </thead>
+            <tbody id="programListBody">
+              <!-- Baris 1: Calistung -->
+              <tr>
+                <td><strong>Calistung</strong></td>
+                <td><span class="badge-level">SD</span></td>
+                <td><span class="session-count">8×</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusProgram(this, 'Calistung')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 2: Matematika SD -->
+              <tr>
+                <td><strong>Matematika SD</strong></td>
+                <td><span class="badge-level">SD</span></td>
+                <td><span class="session-count">8×</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusProgram(this, 'Matematika SD')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 3: Matematika SMP -->
+              <tr>
+                <td><strong>Matematika SMP</strong></td>
+                <td><span class="badge-level badge-smp">SMP</span></td>
+                <td><span class="session-count">8×</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusProgram(this, 'Matematika SMP')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 4: IPA Terpadu -->
+              <tr>
+                <td><strong>IPA Terpadu</strong></td>
+                <td><span class="badge-level badge-smp">SMP</span></td>
+                <td><span class="session-count">8×</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusProgram(this, 'IPA Terpadu')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 5: Persiapan UTBK -->
+              <tr>
+                <td><strong>Persiapan UTBK</strong></td>
+                <td><span class="badge-level badge-sma">SMA</span></td>
+                <td><span class="session-count">12×</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusProgram(this, 'Persiapan UTBK')">Hapus</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Panggil JavaScript Sidebar Reusable -->
   <script src="js/sidebar.js"></script>
   <script>
-    // Panggil fungsi renderSidebar dengan nama menu yang aktif
+    // 1. Aktifkan menu 'Program' di sidebar
     renderSidebar('program');
+
+    // 2. Fungsi Simpan Program Baru (Simulasi UI Ramah Skripsi)
+    function handleSimpanProgram() {
+      const nama = document.getElementById('programName').value.trim();
+      const jenjang = document.getElementById('programLevel').value;
+      const pertemuan = document.getElementById('programSessions').value;
+
+      if (!nama) {
+        alert('Nama program wajib diisi!');
+        return;
+      }
+
+      // Tentukan class warna badge jenjang
+      let badgeClass = 'badge-level';
+      if (jenjang === 'SMP') badgeClass = 'badge-level badge-smp';
+      if (jenjang === 'SMA') badgeClass = 'badge-level badge-sma';
+
+      // Tambahkan baris baru ke dalam tabel
+      const tbody = document.getElementById('programListBody');
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td><strong>${nama}</strong></td>
+        <td><span class="${badgeClass}">${jenjang}</span></td>
+        <td><span class="session-count">${pertemuan}×</span></td>
+        <td class="text-end pe-4">
+          <button type="button" class="btn-delete-pill" onclick="hapusProgram(this, '${nama}')">Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(newRow);
+
+      // Reset form input
+      document.getElementById('programName').value = '';
+      document.getElementById('programSessions').value = '8';
+      document.getElementById('programLevel').value = 'SD';
+
+      alert(`Program "${nama}" berhasil disimpan!`);
+    }
+
+    // 3. Fungsi Hapus Program dari Baris Tabel
+    function hapusProgram(buttonElement, namaProgram) {
+      if (confirm(`Apakah Anda yakin ingin menghapus program "${namaProgram}"?`)) {
+        const row = buttonElement.closest('tr');
+        row.remove();
+      }
+    }
   </script>
 </body>
 </html>

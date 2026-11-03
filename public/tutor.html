@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Optimatika · Catat Pembayaran</title>
+  <title>Optimatika · Data Tutor</title>
   <!-- Bootstrap 5 & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -11,62 +11,170 @@
 </head>
 <body>
 
-<div class="d-flex flex-column flex-lg-row">
-  <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
-  <div id="sidebar-container"></div>
+  <div class="d-flex flex-column flex-lg-row">
+    <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
+    <div id="sidebar-container"></div>
 
-  <!-- 2. KONTEN UTAMA HALAMAN -->
-  <main class="main-wrapper flex-grow-1">
-    <div class="custom-card">
-          <div class="card-heading">Tambah Data Tutor</div>
-          <form id="formAddTutor">
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label-custom">Nama Tutor & Gelar</label>
-                <input type="text" class="form-control-custom" id="tutorName" placeholder="Contoh: Kak Dedi, S.Mat." required>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label-custom">Bidang Keahlian / Mapel</label>
-                <input type="text" class="form-control-custom" id="tutorSpecialty" placeholder="Contoh: Matematika Saintek" required>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label-custom">No. HP / WhatsApp</label>
-                <input type="tel" class="form-control-custom" id="tutorPhone" placeholder="081299998888" required>
-              </div>
-              <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn-primary-custom w-100">Simpan Tutor</button>
-              </div>
-            </div>
-          </form>
-    </div>
-
-    <div class="custom-card p-0 overflow-hidden">
-      <div class="table-responsive-custom">
-        <table class="custom-table">
-          <thead>
-            <tr>
-              <th>NAMA TUTOR</th>
-              <th>BIDANG MAPEL</th>
-              <th>NO. KONTAK</th>
-              <th>EMAIL</th>
-              <th>STATUS</th>
-              <th class="text-end pe-4">AKSI</th>
-            </tr>
-          </thead>
-          <tbody id="tutorListBody">
-            <!-- Dimuat dinamis -->
-          </tbody>
-        </table>
+    <!-- 2. KONTEN UTAMA HALAMAN -->
+    <main class="main-wrapper flex-grow-1">
+      
+      <!-- TOP HEADER (Judul & Subjudul persis gambar) -->
+      <div class="top-header">
+        <div>
+          <h1 class="page-title">Data Tutor</h1>
+          <p class="page-subtitle" id="tutorSubtitle">3 tutor aktif</p>
+        </div>
       </div>
-    </div>
-  </main>
-</div>
 
-  <!-- Panggil JavaScript Sidebar -->
+      <!-- CARD 1: FORM TAMBAH TUTOR -->
+      <div class="custom-card mb-4">
+        <div class="card-heading">Tambah tutor</div>
+        <form id="formAddTutor" onsubmit="event.preventDefault(); handleSimpanTutor();">
+          <div class="row g-3 align-items-end">
+            <!-- Nama tutor -->
+            <div class="col-12 col-md-4">
+              <label for="inputNamaTutor" class="form-label-custom">Nama tutor</label>
+              <input type="text" class="form-control-custom" id="inputNamaTutor" required>
+            </div>
+
+            <!-- Mata pelajaran -->
+            <div class="col-12 col-md-3">
+              <label for="inputMapel" class="form-label-custom">Mata pelajaran</label>
+              <input type="text" class="form-control-custom" id="inputMapel" required>
+            </div>
+
+            <!-- No. telepon -->
+            <div class="col-12 col-md-3">
+              <label for="inputTeleponTutor" class="form-label-custom">No. telepon</label>
+              <input type="tel" class="form-control-custom" id="inputTeleponTutor" placeholder="08..." required>
+            </div>
+
+            <!-- Tombol Simpan -->
+            <div class="col-12 col-md-2">
+              <button type="submit" class="btn-primary-custom w-100">
+                Simpan
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- CARD 2: TABEL DATA TUTOR -->
+      <div class="custom-card p-0 overflow-hidden">
+        <div class="table-responsive-custom">
+          <table class="custom-table" id="tableTutor">
+            <thead>
+              <tr>
+                <th style="width: 30%;">TUTOR</th>
+                <th style="width: 25%;">MATA PELAJARAN</th>
+                <th style="width: 25%;">TELEPON</th>
+                <th style="width: 10%;">STATUS</th>
+                <th style="width: 10%; text-align: right; padding-right: 28px;"></th>
+              </tr>
+            </thead>
+            <tbody id="tutorListBody">
+              <!-- Baris 1: Kak Rina Wijaya -->
+              <tr>
+                <td><strong>Kak Rina Wijaya</strong></td>
+                <td>Matematika</td>
+                <td>0812-5566-1101</td>
+                <td><span class="badge-status badge-status-aktif">Aktif</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Rina Wijaya')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 2: Kak Fajar Nugroho -->
+              <tr>
+                <td><strong>Kak Fajar Nugroho</strong></td>
+                <td>IPA</td>
+                <td>0813-4455-2202</td>
+                <td><span class="badge-status badge-status-aktif">Aktif</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Fajar Nugroho')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 3: Kak Dewi Anggraini -->
+              <tr>
+                <td><strong>Kak Dewi Anggraini</strong></td>
+                <td>Bahasa Inggris</td>
+                <td>0857-3344-3303</td>
+                <td><span class="badge-status badge-status-aktif">Aktif</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Dewi Anggraini')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 4: Kak Yoga Saputra -->
+              <tr>
+                <td><strong>Kak Yoga Saputra</strong></td>
+                <td>Calistung</td>
+                <td>0821-2233-4404</td>
+                <td><span class="badge-status badge-status-nonaktif">Nonaktif</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Yoga Saputra')">Hapus</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Panggil JavaScript Sidebar Reusable -->
   <script src="js/sidebar.js"></script>
   <script>
-    // Panggil fungsi renderSidebar dengan nama menu yang aktif
+    // 1. Aktifkan menu 'Tutor' di sidebar otomatis
     renderSidebar('tutor');
+
+    // 2. Fungsi Simpan Tutor Baru (Simulasi UI Ramah Skripsi)
+    function handleSimpanTutor() {
+      const nama = document.getElementById('inputNamaTutor').value.trim();
+      const mapel = document.getElementById('inputMapel').value.trim();
+      const telepon = document.getElementById('inputTeleponTutor').value.trim();
+
+      if (!nama || !mapel) {
+        alert('Nama tutor dan mata pelajaran wajib diisi!');
+        return;
+      }
+
+      // Tambahkan baris baru ke dalam tabel (default status Aktif)
+      const tbody = document.getElementById('tutorListBody');
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td><strong>${nama}</strong></td>
+        <td>${mapel}</td>
+        <td>${telepon}</td>
+        <td><span class="badge-status badge-status-aktif">Aktif</span></td>
+        <td class="text-end pe-4">
+          <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, '${nama}')">Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(newRow);
+
+      // Reset form
+      document.getElementById('formAddTutor').reset();
+      updateTutorSubtitle();
+      alert(`Data tutor "${nama}" berhasil disimpan!`);
+    }
+
+    // 3. Fungsi Hapus Tutor
+    function hapusTutor(buttonElement, namaTutor) {
+      if (confirm(`Apakah Anda yakin ingin menghapus data "${namaTutor}"?`)) {
+        const row = buttonElement.closest('tr');
+        row.remove();
+        updateTutorSubtitle();
+      }
+    }
+
+    // 4. Update Subtitle Jumlah Tutor Aktif
+    function updateTutorSubtitle() {
+      const aktifCount = document.querySelectorAll('.badge-status-aktif').length;
+      document.getElementById('tutorSubtitle').textContent = `${aktifCount} tutor aktif`;
+    }
   </script>
 </body>
 </html>

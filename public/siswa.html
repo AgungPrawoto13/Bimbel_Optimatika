@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Optimatika · Catat Pembayaran</title>
+  <title>Optimatika · Data Siswa dan Orang Tua/Wali</title>
   <!-- Bootstrap 5 & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -11,77 +11,213 @@
 </head>
 <body>
 
-<div class="d-flex flex-column flex-lg-row">
-  <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
-  <div id="sidebar-container"></div>
+  <div class="d-flex flex-column flex-lg-row">
+    <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
+    <div id="sidebar-container"></div>
 
-  <!-- 2. KONTEN UTAMA HALAMAN -->
-  <main class="main-wrapper flex-grow-1">
-    <div class="custom-card">
-          <div class="card-heading">Tambah Siswa Baru</div>
-          <form id="formAddStudent">
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label-custom">Nama Lengkap Siswa</label>
-                <input type="text" class="form-control-custom" id="studentName" placeholder="Contoh: Muhammad Rizki" required>
-              </div>
-              <div class="col-md-2">
-                <label class="form-label-custom">Gender</label>
-                <select class="form-select-custom" id="studentGender">
-                  <option value="L">Laki-laki</option>
-                  <option value="P">Perempuan</option>
-                </select>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label-custom">Nama Orang Tua / Wali</label>
-                <input type="text" class="form-control-custom" id="studentGuardian" placeholder="Contoh: Bpk. Gunawan" required>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label-custom">No. WhatsApp / HP</label>
-                <input type="tel" class="form-control-custom" id="studentPhone" placeholder="08123456789" required>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label-custom">Pilihan Program Belajar</label>
-                <select class="form-select-custom" id="studentProgramSelect">
-                  <!-- Dimuat dinamis dari daftar program -->
-                </select>
-              </div>
-              <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn-primary-custom w-100">Simpan Siswa</button>
-              </div>
-            </div>
-          </form>
-    </div>
-
-    <div class="custom-card p-0 overflow-hidden">
-      <div class="table-responsive-custom">
-        <table class="custom-table">
-          <thead>
-            <tr>
-              <th>NIS</th>
-              <th>NAMA SISWA</th>
-              <th>GENDER</th>
-              <th>NAMA WALI</th>
-              <th>KONTAK WA</th>
-              <th>PROGRAM</th>
-              <th>STATUS</th>
-              <th class="text-end pe-4">AKSI</th>
-            </tr>
-          </thead>
-          <tbody id="studentListBody">
-            <!-- Dimuat dinamis -->
-          </tbody>
-        </table>
+    <!-- 2. KONTEN UTAMA HALAMAN -->
+    <main class="main-wrapper flex-grow-1">
+      
+      <!-- TOP HEADER (Judul + Kotak Pencarian Siswa) -->
+      <div class="top-header align-items-center">
+        <div>
+          <h1 class="page-title">Data Siswa dan Orang Tua/Wali</h1>
+          <p class="page-subtitle" id="totalSiswaText">5 siswa terdaftar</p>
+        </div>
+        <div>
+          <!-- Input Cari Nama Siswa atau Wali -->
+          <input 
+            type="text" 
+            class="form-control-custom" 
+            id="searchSiswaInput" 
+            placeholder="Cari nama siswa atau wali" 
+            style="width: 280px;"
+            onkeyup="filterSiswaTable()"
+          >
+        </div>
       </div>
-    </div>
-  </main>
-</div>
 
-  <!-- Panggil JavaScript Sidebar -->
+      <!-- CARD 1: FORM TAMBAH SISWA BARU -->
+      <div class="custom-card mb-4">
+        <div class="card-heading">Tambah siswa baru</div>
+        <form id="formAddStudent" onsubmit="event.preventDefault(); handleSimpanSiswa();">
+          <div class="row g-3 align-items-end">
+            <!-- Nama Siswa -->
+            <div class="col-12 col-md-3">
+              <label for="inputNamaSiswa" class="form-label-custom">Nama siswa</label>
+              <input type="text" class="form-control-custom" id="inputNamaSiswa" required>
+            </div>
+
+            <!-- Jenjang -->
+            <div class="col-12 col-md-2">
+              <label for="selectJenjang" class="form-label-custom">Jenjang</label>
+              <select class="form-select-custom" id="selectJenjang">
+                <option value="SD" selected>SD</option>
+                <option value="SMP">SMP</option>
+                <option value="SMA">SMA</option>
+              </select>
+            </div>
+
+            <!-- Nama Orang Tua / Wali -->
+            <div class="col-12 col-md-3">
+              <label for="inputNamaWali" class="form-label-custom">Nama orang tua/wali</label>
+              <input type="text" class="form-control-custom" id="inputNamaWali" required>
+            </div>
+
+            <!-- No. Telepon Wali -->
+            <div class="col-12 col-md-2">
+              <label for="inputTeleponWali" class="form-label-custom">No. telepon wali</label>
+              <input type="tel" class="form-control-custom" id="inputTeleponWali" placeholder="08..." required>
+            </div>
+
+            <!-- Tombol Simpan -->
+            <div class="col-12 col-md-2">
+              <button type="submit" class="btn-primary-custom w-100">
+                Simpan
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- CARD 2: TABEL DATA SISWA -->
+      <div class="custom-card p-0 overflow-hidden">
+        <div class="table-responsive-custom">
+          <table class="custom-table" id="tableSiswa">
+            <thead>
+              <tr>
+                <th style="width: 25%;">SISWA</th>
+                <th style="width: 15%;">JENJANG</th>
+                <th style="width: 25%;">ORANG TUA/WALI</th>
+                <th style="width: 25%;">TELEPON</th>
+                <th style="width: 10%; text-align: right; padding-right: 28px;"></th>
+              </tr>
+            </thead>
+            <tbody id="studentListBody">
+              <!-- Baris 1: Alya Putri -->
+              <tr>
+                <td><strong>Alya Putri</strong></td>
+                <td><span class="badge-level">SD</span></td>
+                <td>Ibu Ratna</td>
+                <td>0812-3456-7801</td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Alya Putri')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 2: Bagas Pratama -->
+              <tr>
+                <td><strong>Bagas Pratama</strong></td>
+                <td><span class="badge-level badge-smp">SMP</span></td>
+                <td>Bapak Hendra</td>
+                <td>0813-2211-4402</td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Bagas Pratama')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 3: Citra Maharani -->
+              <tr>
+                <td><strong>Citra Maharani</strong></td>
+                <td><span class="badge-level badge-sma">SMA</span></td>
+                <td>Ibu Sari</td>
+                <td>0857-9012-3305</td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Citra Maharani')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 4: Dimas Aditya -->
+              <tr>
+                <td><strong>Dimas Aditya</strong></td>
+                <td><span class="badge-level badge-smp">SMP</span></td>
+                <td>Bapak Joko</td>
+                <td>0821-7788-9906</td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Dimas Aditya')">Hapus</button>
+                </td>
+              </tr>
+
+              <!-- Baris 5: Eka Lestari -->
+              <tr>
+                <td><strong>Eka Lestari</strong></td>
+                <td><span class="badge-level">SD</span></td>
+                <td>Ibu Wulan</td>
+                <td>0878-1234-5507</td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Eka Lestari')">Hapus</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Panggil JavaScript Sidebar Reusable -->
   <script src="js/sidebar.js"></script>
   <script>
-    // Panggil fungsi renderSidebar dengan nama menu yang aktif
+    // 1. Aktifkan menu 'Siswa dan Wali' di sidebar otomatis
     renderSidebar('siswa');
+
+    // 2. Fungsi Simpan Siswa Baru (Simulasi UI ramah skripsi)
+    function handleSimpanSiswa() {
+      const nama = document.getElementById('inputNamaSiswa').value;
+      const jenjang = document.getElementById('selectJenjang').value;
+      const wali = document.getElementById('inputNamaWali').value;
+      const telp = document.getElementById('inputTeleponWali').value;
+
+      // Tentukan class warna badge jenjang
+      let badgeClass = 'badge-level';
+      if (jenjang === 'SMP') badgeClass = 'badge-level badge-smp';
+      if (jenjang === 'SMA') badgeClass = 'badge-level badge-sma';
+
+      // Tambahkan baris baru ke tabel
+      const tbody = document.getElementById('studentListBody');
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+        <td><strong>${nama}</strong></td>
+        <td><span class="${badgeClass}">${jenjang}</span></td>
+        <td>${wali}</td>
+        <td>${telp}</td>
+        <td class="text-end pe-4">
+          <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, '${nama}')">Hapus</button>
+        </td>
+      `;
+      tbody.appendChild(newRow);
+
+      // Reset formulir
+      document.getElementById('formAddStudent').reset();
+      updateTotalSiswa();
+      alert(`Data siswa "${nama}" berhasil disimpan!`);
+    }
+
+    // 3. Fungsi Hapus Baris
+    function hapusBaris(buttonElement, namaSiswa) {
+      if (confirm(`Yakin ingin menghapus data siswa "${namaSiswa}"?`)) {
+        const row = buttonElement.closest('tr');
+        row.remove();
+        updateTotalSiswa();
+      }
+    }
+
+    // 4. Update Jumlah Total Siswa Terdaftar
+    function updateTotalSiswa() {
+      const total = document.querySelectorAll('#studentListBody tr').length;
+      document.getElementById('totalSiswaText').textContent = `${total} siswa terdaftar`;
+    }
+
+    // 5. Fitur Pencarian Cepat Nama Siswa / Wali
+    function filterSiswaTable() {
+      const keyword = document.getElementById('searchSiswaInput').value.toLowerCase();
+      const rows = document.querySelectorAll('#studentListBody tr');
+      rows.forEach(row => {
+        const text = row.innerText.toLowerCase();
+        row.style.display = text.includes(keyword) ? '' : 'none';
+      });
+    }
   </script>
 </body>
 </html>
