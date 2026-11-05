@@ -52,7 +52,8 @@ function renderSidebar(activeMenu = 'program') {
       </nav>
 
       <div class="sidebar-footer">
-        <a href="javascript:void(0)" class="btn-logout" onclick="alert('Keluar dari sesi admin')">
+        <a href="javascript:void(0)" class="btn-logout" onclick="handleLogout()">
+          <i class="bi bi-box-arrow-left me-2"></i>
           <span>Keluar</span>
         </a>
       </div>
@@ -72,5 +73,15 @@ function renderSidebar(activeMenu = 'program') {
         sidebar.classList.toggle('show');
       });
     }
+  }
+}
+
+/**
+ * Handler logout untuk kembali ke halaman login (index.html)
+ */
+function handleLogout() {
+  if (confirm('Apakah Anda yakin ingin keluar dari sistem admin Optimatika?')) {
+    localStorage.removeItem('optimatika_admin_user');
+    window.location.href = 'index.html';
   }
 }
