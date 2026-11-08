@@ -7,22 +7,113 @@ import database
 # 1. KONFIGURASI HALAMAN STREAMLIT
 # =============================================================================
 st.set_page_config(
-    page_title="Optimatika · Admin Bimbel",
+    page_title="Optimatika · Data Program Belajar",
     page_icon="📚",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Hilangkan margin berlebih Streamlit agar tampilan HTML di folder public/ tampil penuh
+# Custom CSS: Menerapkan 100% Desain Asli Bimbel Optimatika
 st.markdown("""
 <style>
-    .main .block-container {
-        padding-top: 0.5rem !important;
-        padding-bottom: 0rem !important;
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-        max-width: 100% !important;
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"], .stApp {
+        font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important;
+        background-color: #f5f7fb !important;
     }
+
+    /* ----------------- SIDEBAR DEEP NAVY ----------------- */
+    section[data-testid="stSidebar"] {
+        background-color: #131f38 !important;
+        width: 260px !important;
+    }
+    section[data-testid="stSidebar"] * {
+        color: #8ea3c7 !important;
+    }
+    section[data-testid="stSidebar"] h1, 
+    section[data-testid="stSidebar"] h2, 
+    section[data-testid="stSidebar"] h3 {
+        color: #ffffff !important;
+    }
+    
+    /* Tombol Navigasi Sidebar */
+    div[data-testid="stRadio"] > div {
+        gap: 6px !important;
+    }
+    div[data-testid="stRadio"] label {
+        padding: 8px 14px !important;
+        border-radius: 10px !important;
+        transition: all 0.2s ease !important;
+    }
+    div[data-testid="stRadio"] label:hover {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* ----------------- CARDS & CONTAINERS ----------------- */
+    .custom-card {
+        background-color: #ffffff;
+        border: 1px solid #f0f4f8;
+        border-radius: 16px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(18, 24, 38, 0.02);
+    }
+    
+    .card-heading {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 18px;
+    }
+    
+    .page-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #121826;
+        letter-spacing: -0.5px;
+        margin-bottom: 4px;
+    }
+    
+    .page-subtitle {
+        color: #64748b;
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    /* ----------------- BUTTONS ----------------- */
+    /* Tombol Primary Biru (Simpan) */
+    button[kind="primary"] {
+        background-color: #1e50bb !important;
+        color: #ffffff !important;
+        border-radius: 10px !important;
+        border: none !important;
+        font-weight: 600 !important;
+        height: 44px !important;
+        transition: all 0.2s ease !important;
+    }
+    button[kind="primary"]:hover {
+        background-color: #173fa0 !important;
+        box-shadow: 0 4px 14px rgba(30, 80, 187, 0.28) !important;
+    }
+
+    /* Tombol Hapus (Outline Pill Merah persis desain asli) */
+    button[kind="secondary"] {
+        background: transparent !important;
+        color: #dc2626 !important;
+        border: 1px solid #fecaca !important;
+        border-radius: 8px !important;
+        padding: 4px 18px !important;
+        font-size: 13.5px !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+    }
+    button[kind="secondary"]:hover {
+        background-color: #fee2e2 !important;
+        border-color: #f87171 !important;
+    }
+
+    /* Sembunyikan header/footer default Streamlit */
     header[data-testid="stHeader"] {
         background: transparent !important;
     }
@@ -37,192 +128,178 @@ PUBLIC_DIR = os.path.join(BASE_DIR, 'public')
 
 
 # =============================================================================
-# 2. FUNGSI PENGGABUNG FILE HTML DENGAN CSS & JS DARI FOLDER PUBLIC
+# 2. SIDEBAR DEEP NAVY (PERSIS SIDEBAR.JS ASLI)
 # =============================================================================
-
-def get_bundled_html(filename):
-    """
-    Membaca file HTML dari folder public/ dan menyematkan langsung:
-    1. Sinkronisasi data live dari Neon PostgreSQL (jika program.html)
-    2. File css/style.css
-    3. File js/sidebar.js dengan navigasi otomatis antar halaman
-    """
-    filepath = os.path.join(PUBLIC_DIR, filename)
-    if not os.path.exists(filepath):
-        return f"<h3>File '{filename}' tidak ditemukan di folder public/.</h3>"
-
-    # 1. Auto-sync data terbaru dari Neon PostgreSQL ke program.html
-    if filename == "program.html":
-        try:
-            database.sync_ke_html()
-        except Exception:
-            pass
-
-    # 2. Baca file HTML asli
-    with open(filepath, 'r', encoding='utf-8') as f:
-        html = f.read()
-
-    # 3. Gabungkan file public/css/style.css langsung ke dalam tag <style>
-    css_path = os.path.join(PUBLIC_DIR, 'css', 'style.css')
-    if os.path.exists(css_path):
-        with open(css_path, 'r', encoding='utf-8') as cf:
-            css_code = cf.read()
-        html = html.replace(
-            '<link rel="stylesheet" href="css/style.css">',
-            f'<style>\n{css_code}\n</style>'
-        )
-
-    # 4. Gabungkan file public/js/sidebar.js dan sesuaikan link navigasi
-    js_path = os.path.join(PUBLIC_DIR, 'js', 'sidebar.js')
-    if os.path.exists(js_path):
-        with open(js_path, 'r', encoding='utf-8') as jf:
-            js_code = jf.read()
-
-        # Ubah link menu di sidebar.js agar saat diklik di browser langsung berpindah halaman di Streamlit
-        js_code = js_code.replace(
-            'href="${item.link}"',
-            'href="?page=${encodeURIComponent(item.link)}" target="_top"'
-        )
-
-        html = html.replace(
-            '<script src="js/sidebar.js"></script>',
-            f'<script>\n{js_code}\n</script>'
-        )
-
-    return html
-
-
-# =============================================================================
-# 3. TANGANI AKSI TOMBOL DARI HALAMAN HTML (HAPUS & TAMBAH OTOMATIS)
-# =============================================================================
-
-action = st.query_params.get("action")
-if action == "hapus":
-    target = st.query_params.get("id") or st.query_params.get("name")
-    if target:
-        try:
-            database.delete_program(target)
-            database.sync_ke_html()
-            st.toast(f"✓ Program '{target}' berhasil dihapus dari Neon!", icon="🗑️")
-        except Exception as e:
-            st.error(f"Gagal menghapus: {e}")
-        # Bersihkan query parameter agar tidak terhapus ulang saat refresh
-        if "action" in st.query_params: del st.query_params["action"]
-        if "id" in st.query_params: del st.query_params["id"]
-        if "name" in st.query_params: del st.query_params["name"]
-        st.rerun()
-
-elif action == "tambah":
-    p_name = st.query_params.get("name")
-    p_lvl = st.query_params.get("level", "SD")
-    p_ses_raw = st.query_params.get("sessions", "8")
-    try:
-        p_ses = int(p_ses_raw)
-    except Exception:
-        p_ses = 8
-
-    if p_name and p_name.strip():
-        try:
-            new_id = database.add_program(p_name.strip(), p_lvl, p_ses)
-            database.sync_ke_html()
-            st.toast(f"✓ Program '{p_name}' berhasil ditambahkan ke Neon! (ID: {new_id})", icon="➕")
-        except Exception as e:
-            st.error(f"Gagal menambahkan: {e}")
-        if "action" in st.query_params: del st.query_params["action"]
-        if "name" in st.query_params: del st.query_params["name"]
-        if "level" in st.query_params: del st.query_params["level"]
-        if "sessions" in st.query_params: del st.query_params["sessions"]
-        st.rerun()
-
-
-# =============================================================================
-# 4. SIDEBAR: PENGATURAN & NAVIGASI FOLDER PUBLIC
-# =============================================================================
-
-# Ambil halaman aktif dari URL query parameter (misal: ?page=dashboard.html)
-url_page = st.query_params.get("page", "program.html")
-
-file_options = [
-    ("program.html", "📚 Data Program Belajar (program.html)"),
-    ("dashboard.html", "📊 Dashboard (dashboard.html)"),
-    ("siswa.html", "👨‍🎓 Data Siswa dan Wali (siswa.html)"),
-    ("tutor.html", "👨‍🏫 Data Tutor (tutor.html)"),
-    ("jadwal.html", "📅 Jadwal Belajar (jadwal.html)"),
-    ("tagihan.html", "🧾 Tagihan SPP (tagihan.html)"),
-    ("pembayaran.html", "💳 Pembayaran (pembayaran.html)"),
-    ("ruang_belajar.html", "🏢 Ruang Belajar (ruang_belajar.html)"),
-    ("kelompok_belajar.html", "👥 Kelompok Belajar (kelompok_belajar.html)"),
-    ("index.html", "🔐 Halaman Login (index.html)")
-]
-
-file_keys = [opt[0] for opt in file_options]
-default_index = file_keys.index(url_page) if url_page in file_keys else 0
-
 with st.sidebar:
-    st.markdown("## **Optimatika** `· Admin`")
-    st.caption("Fokus: Memuat Langsung File HTML di Folder `public/`")
-    st.divider()
+    st.markdown("""
+        <div style="padding: 10px 0 20px 0;">
+            <div style="font-size: 20px; font-weight: 700; color: #ffffff;">
+                Optimatika <span style="font-weight: 400; color: #8ea3c7;">· Admin</span>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
-    selected_label = st.radio(
-        "Buka Halaman HTML di public/:",
-        options=[opt[1] for opt in file_options],
-        index=default_index
+    menu = st.radio(
+        "Menu Navigasi",
+        [
+            "Dashboard",
+            "Siswa dan Wali",
+            "Program",
+            "Tutor",
+            "Ruang Belajar",
+            "Kelompok Belajar",
+            "Jadwal",
+            "Tagihan",
+            "Pembayaran"
+        ],
+        index=2,  # Default langsung ke menu 'Program'
+        label_visibility="collapsed"
     )
-    # Temukan nama file yang dipilih
-    selected_file = [opt[0] for opt in file_options if opt[1] == selected_label][0]
 
-    st.divider()
-
-    # Form cepat untuk tambah program langsung ke Neon dari sidebar
-    with st.expander("➕ Tambah Program Baru ke Neon"):
-        with st.form("sidebar_add_prog", clear_on_submit=True):
-            p_name = st.text_input("Nama Program", placeholder="Misal: Fisika SMA")
-            p_level = st.selectbox("Jenjang", ["SD", "SMP", "SMA"])
-            p_sessions = st.number_input("Sesi / Bulan", min_value=1, max_value=31, value=8)
-            btn_add = st.form_submit_button("Simpan ke Neon")
-            if btn_add and p_name.strip():
-                try:
-                    new_id = database.add_program(p_name.strip(), p_level, p_sessions)
-                    database.sync_ke_html()
-                    st.success(f"✓ Berhasil tambah {p_name}!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error: {e}")
-
-    # Form cepat untuk hapus program dari Neon
-    with st.expander("🗑️ Hapus Program dari Neon"):
-        try:
-            curr_progs = database.get_programs()
-            if curr_progs:
-                prog_to_del = st.selectbox(
-                    "Pilih program yang ingin dihapus:",
-                    options=[f"{p['id']} - {p['name']}" for p in curr_progs]
-                )
-                if st.button("Hapus Program Ini", type="primary"):
-                    del_id = int(prog_to_del.split(" - ")[0])
-                    database.delete_program(del_id)
-                    database.sync_ke_html()
-                    st.success("✓ Program berhasil dihapus!")
-                    st.rerun()
-            else:
-                st.caption("Tidak ada program di database.")
-        except Exception:
-            pass
-
-    st.divider()
-    st.markdown("### ⚡ Status Neon Database")
+    st.markdown("<div style='margin-top: 40px;'></div>", unsafe_allow_html=True)
+    st.markdown("---")
+    
+    # Status Koneksi Neon PostgreSQL
     try:
         conn = database.create_new_connection()
         conn.close()
-        st.success("✓ Neon PostgreSQL: Terhubung")
+        st.markdown("""
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #22c55e;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block;"></span>
+                <span>Neon PostgreSQL Terhubung</span>
+            </div>
+        """, unsafe_allow_html=True)
     except Exception as e:
-        st.error(f"✗ Gagal: {e}")
+        st.markdown(f"<span style='color: #ef4444; font-size: 12px;'>✗ Offline: {e}</span>", unsafe_allow_html=True)
 
 
 # =============================================================================
-# 4. KONTEN UTAMA: RENDER 100% FILE HTML DARI FOLDER PUBLIC/
+# 3. KONTEN UTAMA: HALAMAN PROGRAM BELAJAR
 # =============================================================================
+if menu == "Program":
+    # TOP HEADER
+    st.markdown("<h1 class='page-title'>Data Program Belajar</h1>", unsafe_allow_html=True)
+    st.markdown("<p class='page-subtitle'>Daftar program bimbingan belajar yang terdaftar di database Neon PostgreSQL.</p>", unsafe_allow_html=True)
 
-# Render file HTML asli dari folder public/ lengkap dengan CSS & Sidebar
-rendered_html = get_bundled_html(selected_file)
-components.html(rendered_html, height=1100, scrolling=True)
+    # CARD 1: FORM TAMBAH PROGRAM (AKTIF & LANGSUNG AUTO-REFRESH)
+    st.markdown('<div class="custom-card"><div class="card-heading">Tambah program</div>', unsafe_allow_html=True)
+    with st.form("form_add_program", clear_on_submit=True):
+        col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
+        with col1:
+            nama_input = st.text_input("Nama program", placeholder="contoh: Matematika Dasar")
+        with col2:
+            jenjang_input = st.selectbox("Jenjang", ["SD", "SMP", "SMA"])
+        with col3:
+            sesi_input = st.number_input("Pertemuan per bulan", min_value=1, max_value=31, value=8)
+        with col4:
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            btn_simpan = st.form_submit_button("Simpan", type="primary", use_container_width=True)
+
+        if btn_simpan and nama_input.strip():
+            try:
+                new_id = database.add_program(nama_input.strip(), jenjang_input, sesi_input)
+                # Auto-sync ke file HTML lokal
+                try:
+                    database.sync_ke_html()
+                except Exception:
+                    pass
+                st.toast(f"✓ Program '{nama_input}' berhasil ditambahkan ke Neon!", icon="🎉")
+                st.rerun()  # Auto-refresh instan tanpa perlu reload manual
+            except Exception as e:
+                st.error(f"Gagal menambahkan program: {e}")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # CARD 2: TABEL DATA PROGRAM DARI NEON POSTGRESQL (TAMPIL & HAPUS AKTIF)
+    st.markdown("""
+        <div class="custom-card" style="padding: 0; overflow: hidden;">
+    """, unsafe_allow_html=True)
+
+    # Header Tabel
+    th1, th2, th3, th4 = st.columns([4, 2, 2, 2])
+    with th1:
+        st.markdown("<div style='font-size: 12px; font-weight: 700; color: #8292a8; letter-spacing: 0.6px; padding: 14px 20px 8px 20px;'>PROGRAM</div>", unsafe_allow_html=True)
+    with th2:
+        st.markdown("<div style='font-size: 12px; font-weight: 700; color: #8292a8; letter-spacing: 0.6px; padding: 14px 0 8px 0;'>JENJANG</div>", unsafe_allow_html=True)
+    with th3:
+        st.markdown("<div style='font-size: 12px; font-weight: 700; color: #8292a8; letter-spacing: 0.6px; padding: 14px 0 8px 0;'>PERTEMUAN / BULAN</div>", unsafe_allow_html=True)
+    with th4:
+        st.markdown("<div style='padding: 14px 20px 8px 0;'></div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='border-bottom: 1.5px solid #edf2f7;'></div>", unsafe_allow_html=True)
+
+    # Baris Data Program
+    try:
+        programs = database.get_programs()
+        if not programs:
+            st.markdown("<p style='text-align: center; color: #64748b; padding: 30px 0;'>Belum ada data program di database Neon.</p>", unsafe_allow_html=True)
+        else:
+            for p in programs:
+                r1, r2, r3, r4 = st.columns([4, 2, 2, 2])
+                with r1:
+                    st.markdown(f"<div style='font-size: 14.5px; font-weight: 600; color: #1e293b; padding: 12px 20px 0 20px;'>{p['name']}</div>", unsafe_allow_html=True)
+                with r2:
+                    lvl = str(p['level']).upper()
+                    if lvl == "SMP":
+                        bg, col = "#ebf4ff", "#3182ce"
+                    elif lvl == "SMA":
+                        bg, col = "#e6f6ff", "#0284c7"
+                    else:
+                        bg, col = "#e6f0ff", "#2b6cb0"
+                    st.markdown(f"<div style='padding-top: 10px;'><span style='background-color: {bg}; color: {col}; font-weight: 700; font-size: 12px; padding: 4px 14px; border-radius: 9999px;'>{lvl}</span></div>", unsafe_allow_html=True)
+                with r3:
+                    st.markdown(f"<div style='font-size: 14px; color: #334155; font-weight: 500; padding-top: 12px;'>{p['sessions_per_month']}×</div>", unsafe_allow_html=True)
+                with r4:
+                    st.markdown("<div style='text-align: right; padding: 6px 20px 0 0;'>", unsafe_allow_html=True)
+                    if st.button("Hapus", key=f"btn_del_{p['id']}", type="secondary"):
+                        try:
+                            database.delete_program(p['id'])
+                            # Sync ke program.html lokal
+                            try:
+                                database.sync_ke_html()
+                            except Exception:
+                                pass
+                            st.toast(f"✓ Program '{p['name']}' berhasil dihapus dari Neon!", icon="🗑️")
+                            st.rerun()  # Auto-refresh instan tanpa perlu reload manual
+                        except Exception as e:
+                            st.error(f"Gagal menghapus: {e}")
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+                st.markdown("<div style='border-bottom: 1px solid #f1f5f9;'></div>", unsafe_allow_html=True)
+
+    except Exception as e:
+        st.error(f"Gagal mengambil data dari database Neon: {e}")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
+# =============================================================================
+# 4. MENU LAINNYA: TAMPILKAN FILE HTML DARI FOLDER PUBLIC/
+# =============================================================================
+else:
+    file_map = {
+        "Dashboard": "dashboard.html",
+        "Siswa dan Wali": "siswa.html",
+        "Tutor": "tutor.html",
+        "Ruang Belajar": "ruang_belajar.html",
+        "Kelompok Belajar": "kelompok_belajar.html",
+        "Jadwal": "jadwal.html",
+        "Tagihan": "tagihan.html",
+        "Pembayaran": "pembayaran.html"
+    }
+
+    target_file = file_map.get(menu, "dashboard.html")
+    file_path = os.path.join(PUBLIC_DIR, target_file)
+
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            raw_html = f.read()
+
+        # Sisipkan CSS & JS asli
+        css_path = os.path.join(PUBLIC_DIR, 'css', 'style.css')
+        if os.path.exists(css_path):
+            with open(css_path, 'r', encoding='utf-8') as cf:
+                raw_html = raw_html.replace('<link rel="stylesheet" href="css/style.css">', f'<style>\n{cf.read()}\n</style>')
+
+        components.html(raw_html, height=1100, scrolling=True)
+    else:
+        st.warning(f"File {target_file} belum ditemukan di folder public/.")
