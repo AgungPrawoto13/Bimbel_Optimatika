@@ -23,7 +23,19 @@ HTML_FILE = os.path.join(PUBLIC_DIR, 'program.html')
 def create_new_connection():
     """Membuka dan mengembalikan koneksi baru ke Neon PostgreSQL"""
     try:
-        db_url = os.getenv("DATABASE_URL")
+        # 1. Coba ambil dari Streamlit Secrets jika berjalan di Streamlit Cloud
+        db_url = None
+        try:
+            import streamlit as st
+            if hasattr(st, "secrets") and "DATABASE_URL" in st.secrets:
+                db_url = st.secrets["DATABASE_URL"]
+        except Exception:
+            pass
+
+        # 2. Coba ambil dari file .env atau Environment Variable
+        if not db_url:
+            db_url = os.getenv("DATABASE_URL")
+
         if db_url:
             return psycopg.connect(db_url)
 
