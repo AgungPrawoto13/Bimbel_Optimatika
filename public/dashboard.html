@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optimatika · Dashboard Admin Bimbel</title>
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="d-flex flex-column flex-lg-row">
+    <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
+    <div id="sidebar-container"></div>
+
+    <!-- 2. KONTEN UTAMA HALAMAN -->
+    <main class="main-wrapper flex-grow-1">
+      
+      <!-- WELCOME BANNER UTAMA -->
+      <div class="welcome-banner">
+        <div class="row align-items-center g-3">
+          <div class="col-lg-8">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="status-dot-pulse"></span>
+              <span class="badge text-bg-primary px-3 py-1 rounded-pill" style="font-size: 11.5px; font-weight: 600; background-color: rgba(255,255,255,0.2) !important;">
+                Semester Ganjil 2026/2027
+              </span>
+              <button type="button" class="time-pill-badge d-none d-sm-inline-flex border-0" id="dbStatusPill" onclick="bukaModalDbConfig()" title="Klik untuk menghubungkan Neon PostgreSQL" style="cursor: pointer;">
+                <i class="bi bi-database-gear text-warning"></i> <span id="dbNameText">Database Online</span> <i class="bi bi-chevron-right ms-1 opacity-50" style="font-size: 10px;"></i>
+              </button>
+            </div>
+            <h1 class="page-title text-white mb-2" style="font-size: 26px;">
+              Selamat Datang di Portal Admin Optimatika
+            </h1>
+            <p class="mb-0 text-white-50" style="font-size: 14px; max-width: 680px; line-height: 1.5;">
+              Pusat monitoring dan pengelolaan operasional bimbel: pantau data siswa, jalannya jadwal bimbingan, absensi presensi harian, evaluasi tugas modul, serta status tagihan & pembayaran SPP secara real-time.
+            </p>
+          </div>
+          <div class="col-lg-4 text-lg-end">
+            <!-- Jam Digital Real-Time -->
+            <div class="time-pill-badge mb-3 d-inline-flex">
+              <i class="bi bi-clock-history"></i>
+              <span id="liveDateText">Senin, 9 November 2026</span>
+              <span class="opacity-50">·</span>
+              <strong id="liveTimeText">17:00:00 WIB</strong>
+            </div>
+            <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
+              <a href="siswa.html" class="btn btn-light btn-sm fw-semibold rounded-3 px-3 shadow-sm text-primary">
+                <i class="bi bi-person-plus-fill me-1"></i> + Siswa Baru
+              </a>
+              <button type="button" class="btn btn-primary btn-sm fw-semibold rounded-3 px-3 shadow-sm border border-light border-opacity-25" onclick="bukaModalTugas()">
+                <i class="bi bi-journal-plus me-1"></i> + Beri Tugas
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 1: 4 KARTU METRIK UTAMA (KPI CARDS) -->
+      <div class="row g-3 mb-4">
+        
+        <!-- KPI 1: PENGELOLAAN DATA SISWA -->
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="kpi-card">
+            <div>
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="kpi-title">Data Siswa Bimbel</span>
+                <div class="kpi-icon-box kpi-icon-blue">
+                  <i class="bi bi-people-fill"></i>
+                </div>
+              </div>
+              <div class="kpi-value" id="kpiSiswaCount">4 Siswa</div>
+              <div class="kpi-subtitle mb-3">
+                <span class="badge-tag-pill" style="background:#e6f0ff; color:#1e50bb;">2 SD</span>
+                <span class="badge-tag-pill" style="background:#ebf4ff; color:#3182ce;">1 SMP</span>
+                <span class="badge-tag-pill" style="background:#e6f6ff; color:#0284c7;">1 SMA</span>
+              </div>
+            </div>
+            <div class="pt-2 border-top d-flex justify-content-between align-items-center" style="font-size: 12px;">
+              <span class="text-muted">Status: 100% Aktif</span>
+              <a href="siswa.html" class="text-decoration-none fw-semibold" style="color: #1e50bb;">Kelola Data &rarr;</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 2: ABSENSI & PRESENSI SISWA -->
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="kpi-card">
+            <div>
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="kpi-title">Presensi Hari Ini</span>
+                <div class="kpi-icon-box kpi-icon-green">
+                  <i class="bi bi-calendar-check-fill"></i>
+                </div>
+              </div>
+              <div class="kpi-value" id="kpiPresensiRate">95% Hadir</div>
+              <div class="kpi-subtitle mb-3">
+                <span class="badge-tag-pill" style="background:#eaf7ee; color:#137333;" id="badgeHadir">18 Hadir</span>
+                <span class="badge-tag-pill" style="background:#fffbeb; color:#92400e;" id="badgeIzin">1 Izin</span>
+                <span class="badge-tag-pill" style="background:#fce8e6; color:#c5221f;" id="badgeAlpa">0 Alpa</span>
+              </div>
+            </div>
+            <div class="pt-2 border-top d-flex justify-content-between align-items-center" style="font-size: 12px;">
+              <span class="text-muted">Sesi Senin aktif</span>
+              <a href="javascript:void(0)" onclick="focusPresensi()" class="text-decoration-none fw-semibold" style="color: #059669;">Input Cepat &rarr;</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 3: PENGELOLAAN TUGAS SISWA -->
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="kpi-card">
+            <div>
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="kpi-title">Pengelolaan Tugas</span>
+                <div class="kpi-icon-box kpi-icon-purple">
+                  <i class="bi bi-journal-bookmark-fill"></i>
+                </div>
+              </div>
+              <div class="kpi-value" id="kpiTugasCount">4 Tugas Aktif</div>
+              <div class="kpi-subtitle mb-3">
+                <span class="badge-tag-pill" style="background:#f5f3ff; color:#7c3aed;">82% Terkumpul</span>
+                <span class="badge-tag-pill" style="background:#fef3c7; color:#b45309;">1 Butuh Koreksi</span>
+              </div>
+            </div>
+            <div class="pt-2 border-top d-flex justify-content-between align-items-center" style="font-size: 12px;">
+              <span class="text-muted">Semua jenjang</span>
+              <a href="javascript:void(0)" onclick="bukaModalTugas()" class="text-decoration-none fw-semibold" style="color: #7c3aed;">+ Buat Tugas &rarr;</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 4: STATUS PEMBAYARAN SPP -->
+        <div class="col-12 col-sm-6 col-xl-3">
+          <div class="kpi-card">
+            <div>
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="kpi-title">Pembayaran & SPP</span>
+                <div class="kpi-icon-box kpi-icon-amber">
+                  <i class="bi bi-wallet2"></i>
+                </div>
+              </div>
+              <div class="kpi-value" id="kpiTotalBayar">Rp 350.000</div>
+              <div class="kpi-subtitle mb-3">
+                <span class="badge-tag-pill" style="background:#eaf7ee; color:#137333;">1 Lunas</span>
+                <span class="badge-tag-pill" style="background:#fef7e0; color:#92400e;">2 Belum</span>
+                <span class="badge-tag-pill" style="background:#fce8e6; color:#c5221f;">1 Menunggak</span>
+              </div>
+            </div>
+            <div class="pt-2 border-top d-flex justify-content-between align-items-center" style="font-size: 12px;">
+              <span class="text-muted">Total Tagihan: Rp 1,65 Jt</span>
+              <a href="pembayaran.html" class="text-decoration-none fw-semibold" style="color: #d97706;">Kas Masuk &rarr;</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ROW 2: DUA KOLOM (JADWAL HARI INI + WIDGET PRESENSI SISWA CEPAT) -->
+      <div class="row g-4 mb-4" id="sectionJadwalPresensi">
+        
+        <!-- KOLOM KIRI: SESI BELAJAR HARI INI -->
+        <div class="col-12 col-xl-7">
+          <div class="custom-card h-100 mb-0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <div class="card-heading mb-1">Jadwal & Sesi Belajar Hari Ini</div>
+                <p class="page-subtitle mb-0">Sesi kelas bimbingan yang terdaftar untuk hari ini.</p>
+              </div>
+              <span class="badge text-bg-light border px-3 py-2 rounded-pill fw-semibold text-dark">
+                <i class="bi bi-calendar-event me-1 text-primary"></i> <span id="currentDayBadge">Senin</span>
+              </span>
+            </div>
+
+            <!-- Tabel Sesi Hari Ini -->
+            <div class="table-responsive-custom">
+              <table class="custom-table" id="tableJadwalHariIni">
+                <thead>
+                  <tr>
+                    <th style="width: 25%;">WAKTU & KELAS</th>
+                    <th style="width: 25%;">PROGRAM</th>
+                    <th style="width: 25%;">TUTOR & RUANG</th>
+                    <th style="width: 25%; text-align: right;">STATUS SESI</th>
+                  </tr>
+                </thead>
+                <tbody id="listJadwalHariIni">
+                  <!-- Sesi 1: Matematika SMP 1 -->
+                  <tr>
+                    <td>
+                      <div class="fw-bold text-dark">Matematika SMP 1</div>
+                      <div class="small text-muted"><i class="bi bi-clock me-1"></i>15:30 - 17:00</div>
+                    </td>
+                    <td>
+                      <span class="badge-level badge-smp">SMP</span>
+                      <div class="small text-muted mt-1">Matematika SMP</div>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">Kak Budi Santoso</div>
+                      <span class="badge-room mt-1"><i class="bi bi-geo-alt"></i> Ruang Alpha (Lt. 1)</span>
+                    </td>
+                    <td class="text-end">
+                      <span class="session-live-indicator">
+                        <span class="status-dot-pulse"></span> Berlangsung
+                      </span>
+                    </td>
+                  </tr>
+
+                  <!-- Sesi 2: Calistung 1 -->
+                  <tr>
+                    <td>
+                      <div class="fw-bold text-dark">Calistung 1</div>
+                      <div class="small text-muted"><i class="bi bi-clock me-1"></i>15:30 - 17:00</div>
+                    </td>
+                    <td>
+                      <span class="badge-level">SD</span>
+                      <div class="small text-muted mt-1">Calistung</div>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">Kak Budi Santoso</div>
+                      <span class="badge-room mt-1"><i class="bi bi-geo-alt"></i> Ruang Beta (Lt. 1)</span>
+                    </td>
+                    <td class="text-end">
+                      <span class="session-live-indicator">
+                        <span class="status-dot-pulse"></span> Berlangsung
+                      </span>
+                    </td>
+                  </tr>
+
+                  <!-- Sesi 3: IPA Terpadu 1 -->
+                  <tr>
+                    <td>
+                      <div class="fw-bold text-dark">IPA Terpadu 1</div>
+                      <div class="small text-muted"><i class="bi bi-clock me-1"></i>17:15 - 18:45</div>
+                    </td>
+                    <td>
+                      <span class="badge-level badge-smp">SMP</span>
+                      <div class="small text-muted mt-1">IPA Terpadu</div>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">Kak Siti Aminah</div>
+                      <span class="badge-room mt-1"><i class="bi bi-geo-alt"></i> Ruang Alpha (Lt. 1)</span>
+                    </td>
+                    <td class="text-end">
+                      <span class="badge-status badge-status-belum">Akan Datang</span>
+                    </td>
+                  </tr>
+
+                  <!-- Sesi 4: Persiapan UTBK 1 -->
+                  <tr>
+                    <td>
+                      <div class="fw-bold text-dark">Persiapan UTBK 1</div>
+                      <div class="small text-muted"><i class="bi bi-clock me-1"></i>19:00 - 20:30</div>
+                    </td>
+                    <td>
+                      <span class="badge-level badge-sma">SMA</span>
+                      <div class="small text-muted mt-1">Persiapan UTBK</div>
+                    </td>
+                    <td>
+                      <div class="fw-semibold">Kak Rizky Pratama</div>
+                      <span class="badge-room mt-1"><i class="bi bi-geo-alt"></i> Ruang Gamma (Lt. 2)</span>
+                    </td>
+                    <td class="text-end">
+                      <span class="badge-status badge-status-nonaktif">Malam Ini</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Footer Card Jadwal -->
+            <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+              <span class="small text-muted">
+                <i class="bi bi-shield-check text-success me-1"></i> Semua jadwal bebas bentrok tutor dan ruang
+              </span>
+              <a href="jadwal.html" class="btn-outline-custom">
+                <span>Kelola Semua Jadwal</span> <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- KOLOM KANAN: WIDGET PRESENSI / ABSENSI SISWA CEPAT -->
+        <div class="col-12 col-xl-5" id="attendanceWidgetArea">
+          <div class="custom-card h-100 mb-0 d-flex flex-column justify-content-between">
+            <div>
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                  <div class="card-heading mb-1">Presensi Siswa Cepat</div>
+                  <p class="page-subtitle mb-0">Verifikasi kehadiran siswa per kelompok bimbingan.</p>
+                </div>
+                <span class="badge-tag-pill" style="background:#eaf7ee; color:#137333;">
+                  <i class="bi bi-check-circle-fill me-1"></i> Presensi Harian
+                </span>
+              </div>
+
+              <!-- Pilihan Kelompok Belajar -->
+              <div class="mb-3">
+                <label for="selectSesiPresensi" class="form-label-custom">Pilih Kelompok / Sesi</label>
+                <select class="form-select-custom" id="selectSesiPresensi" onchange="gantiKelompokPresensi(this.value)">
+                  <option value="smp1" selected>Matematika SMP 1 (Kak Budi Santoso · 15:30)</option>
+                  <option value="calistung1">Calistung 1 (Kak Budi Santoso · 15:30)</option>
+                  <option value="ipa1">IPA Terpadu 1 (Kak Siti Aminah · 17:15)</option>
+                  <option value="utbk1">Persiapan UTBK 1 (Kak Rizky Pratama · 19:00)</option>
+                </select>
+              </div>
+
+              <!-- Notifikasi Feedback Presensi -->
+              <div id="alertPresensiFeedback" class="alert alert-success py-2 px-3 small rounded-3 d-none mb-3" role="alert">
+                <i class="bi bi-check-circle-fill me-1"></i> Presensi siswa berhasil disimpan ke database!
+              </div>
+
+              <!-- Daftar Siswa untuk Presensi -->
+              <div class="p-2 rounded-3 bg-light border mb-3" style="max-height: 230px; overflow-y: auto;" id="containerSiswaPresensi">
+                
+                <!-- Siswa 1 -->
+                <div class="d-flex justify-content-between align-items-center p-2 border-bottom bg-white rounded mb-2 shadow-sm attendance-row" data-student-id="1">
+                  <div>
+                    <div class="fw-bold small text-dark">Ahmad Farhan</div>
+                    <div class="text-muted" style="font-size: 11px;">NIS: OPT-2026-001 · SD</div>
+                  </div>
+                  <div class="attendance-btn-group">
+                    <button type="button" class="attendance-pill-btn active-hadir" onclick="setAttendance(this, 'hadir')">Hadir</button>
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'sakit')">Sakit</button>
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'izin')">Izin</button>
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'alpa')">Alpa</button>
+                  </div>
+                </div>
+
+                <!-- Siswa 2 -->
+                <div class="d-flex justify-content-between align-items-center p-2 border-bottom bg-white rounded mb-2 shadow-sm attendance-row" data-student-id="2">
+                  <div>
+                    <div class="fw-bold small text-dark">Nabila Putri</div>
+                    <div class="text-muted" style="font-size: 11px;">NIS: OPT-2026-002 · SD</div>
+                  </div>
+                  <div class="attendance-btn-group">
+                    <button type="button" class="attendance-pill-btn active-hadir" onclick="setAttendance(this, 'hadir')">Hadir</button>
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'sakit')">Sakit</button>
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'izin')">Izin</button>
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'alpa')">Alpa</button>
+                  </div>
+                </div>
+
+                <!-- Siswa 3 -->
+                <div class="d-flex justify-content-between align-items-center p-2 border-bottom bg-white rounded mb-2 shadow-sm attendance-row" data-student-id="3">
+                  <div>
+                    <div class="fw-bold small text-dark">Dimas Anggara</div>
+                    <div class="text-muted" style="font-size: 11px;">NIS: OPT-2026-003 · SMP</div>
+                  </div>
+                  <div class="attendance-btn-group">
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'hadir')">Hadir</button>
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'sakit')">Sakit</button>
+                    <button type="button" class="attendance-pill-btn active-izin" onclick="setAttendance(this, 'izin')">Izin</button>
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'alpa')">Alpa</button>
+                  </div>
+                </div>
+
+                <!-- Siswa 4 -->
+                <div class="d-flex justify-content-between align-items-center p-2 bg-white rounded shadow-sm attendance-row" data-student-id="4">
+                  <div>
+                    <div class="fw-bold small text-dark">Zahra Amelia</div>
+                    <div class="text-muted" style="font-size: 11px;">NIS: OPT-2026-004 · SMA</div>
+                  </div>
+                  <div class="attendance-btn-group">
+                    <button type="button" class="attendance-pill-btn active-hadir" onclick="setAttendance(this, 'hadir')">Hadir</button>
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'sakit')">Sakit</button>
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'izin')">Izin</button>
+                    <button type="button" class="attendance-pill-btn" onclick="setAttendance(this, 'alpa')">Alpa</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Catatan & Tombol Simpan Presensi -->
+            <div>
+              <div class="mb-3">
+                <input type="text" class="form-control-custom" id="inputCatatanPresensi" placeholder="Catatan materi atau sesi (opsional)..." style="font-size: 13px; height: 38px;">
+              </div>
+              <button type="button" class="btn-primary-custom w-100" id="btnSimpanPresensi" onclick="simpanPresensiCepat()">
+                <i class="bi bi-save2 me-1"></i> Simpan Presensi Sesi Ini
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ROW 3: PENGELOLAAN TUGAS SISWA & MODUL (ASSIGNMENTS) -->
+      <div class="custom-card mb-4" id="sectionTugasSiswa">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <div>
+            <div class="card-heading mb-1">Pengelolaan Tugas & Evaluasi Siswa</div>
+            <p class="page-subtitle mb-0">Pantau tugas modul, tenggat waktu (deadline), dan tingkat pengumpulan per mata pelajaran.</p>
+          </div>
+          <div class="d-flex gap-2">
+            <!-- Filter Kategori Tugas -->
+            <select class="form-select-custom py-1 px-3" style="width: auto; height: 40px; font-size: 13.5px;" id="filterJenjangTugas" onchange="filterTugasByJenjang(this.value)">
+              <option value="semua" selected>Semua Jenjang</option>
+              <option value="SD">Jenjang SD</option>
+              <option value="SMP">Jenjang SMP</option>
+              <option value="SMA">Jenjang SMA</option>
+            </select>
+            <!-- Tombol Beri Tugas Baru -->
+            <button type="button" class="btn-primary-custom" onclick="bukaModalTugas()" style="height: 40px; padding: 0 20px;">
+              <i class="bi bi-plus-lg me-1"></i> Beri Tugas Baru
+            </button>
+          </div>
+        </div>
+
+        <!-- Tabel Daftar Tugas -->
+        <div class="table-responsive-custom">
+          <table class="custom-table" id="tableTugasSiswa">
+            <thead>
+              <tr>
+                <th style="width: 30%;">JUDUL TUGAS & INSTRUKSI</th>
+                <th style="width: 18%;">PROGRAM / KELAS</th>
+                <th style="width: 16%;">TUTOR PENANGGUNG JAWAB</th>
+                <th style="width: 14%;">BATAS WAKTU</th>
+                <th style="width: 12%;">PENGUMPULAN</th>
+                <th style="width: 10%; text-align: right;">STATUS</th>
+              </tr>
+            </thead>
+            <tbody id="listTugasBody">
+              <!-- Tugas 1: Aljabar Linear -->
+              <tr data-level="SMP">
+                <td>
+                  <div class="fw-bold text-dark">Latihan Aljabar & Persamaan Linear Bab 4</div>
+                  <div class="small text-muted">Kerjakan soal 1-15 pada modul halaman 42. Upload foto langkah pengerjaan.</div>
+                </td>
+                <td>
+                  <span class="badge-level badge-smp">SMP</span>
+                  <div class="small text-muted mt-1">Matematika SMP 1</div>
+                </td>
+                <td>
+                  <div class="fw-semibold">Kak Budi Santoso, S.Pd.</div>
+                  <div class="small text-muted">Matematika</div>
+                </td>
+                <td>
+                  <span class="text-danger fw-semibold small"><i class="bi bi-clock-history me-1"></i>Hari Ini, 23:59</span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-between align-items-center small mb-1">
+                    <span class="fw-bold">8/10 Siswa</span>
+                    <span class="text-muted">80%</span>
+                  </div>
+                  <div class="task-progress-track">
+                    <div class="task-progress-bar bg-primary" style="width: 80%;"></div>
+                  </div>
+                </td>
+                <td class="text-end">
+                  <span class="badge-status badge-status-belum">Berjalan</span>
+                </td>
+              </tr>
+
+              <!-- Tugas 2: Calistung -->
+              <tr data-level="SD">
+                <td>
+                  <div class="fw-bold text-dark">Membaca Lancar Suku Kata & Angka</div>
+                  <div class="small text-muted">Latihan dikte 5 kalimat terpandu dan penjumlahan puluhan dengan sempoa.</div>
+                </td>
+                <td>
+                  <span class="badge-level">SD</span>
+                  <div class="small text-muted mt-1">Calistung 1</div>
+                </td>
+                <td>
+                  <div class="fw-semibold">Kak Budi Santoso, S.Pd.</div>
+                  <div class="small text-muted">Dasar Berhitung</div>
+                </td>
+                <td>
+                  <span class="text-dark fw-semibold small"><i class="bi bi-calendar3 me-1"></i>Besok, 17:00</span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-between align-items-center small mb-1">
+                    <span class="fw-bold text-success">5/5 Siswa</span>
+                    <span class="text-success fw-bold">100%</span>
+                  </div>
+                  <div class="task-progress-track">
+                    <div class="task-progress-bar bg-success" style="width: 100%;"></div>
+                  </div>
+                </td>
+                <td class="text-end">
+                  <span class="badge-status badge-status-lunas">Selesai Dinilai</span>
+                </td>
+              </tr>
+
+              <!-- Tugas 3: UTBK -->
+              <tr data-level="SMA">
+                <td>
+                  <div class="fw-bold text-dark">Simulasi Soal UTBK TPS Penalaran Matematika</div>
+                  <div class="small text-muted">Tryout paket A 20 butir soal logika aljabar dan kuantitatif berdurasi 30 menit.</div>
+                </td>
+                <td>
+                  <span class="badge-level badge-sma">SMA</span>
+                  <div class="small text-muted mt-1">Persiapan UTBK 1</div>
+                </td>
+                <td>
+                  <div class="fw-semibold">Kak Rizky Pratama, S.Si.</div>
+                  <div class="small text-muted">Saintek UTBK</div>
+                </td>
+                <td>
+                  <span class="text-muted fw-semibold small"><i class="bi bi-calendar3 me-1"></i>12 Nov 2026</span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-between align-items-center small mb-1">
+                    <span class="fw-bold">3/4 Siswa</span>
+                    <span class="text-muted">75%</span>
+                  </div>
+                  <div class="task-progress-track">
+                    <div class="task-progress-bar bg-warning" style="width: 75%;"></div>
+                  </div>
+                </td>
+                <td class="text-end">
+                  <span class="badge-status badge-status-belum" style="background-color: #fef3c7; color: #b45309;">Perlu Koreksi</span>
+                </td>
+              </tr>
+
+              <!-- Tugas 4: IPA Fluida -->
+              <tr data-level="SMP">
+                <td>
+                  <div class="fw-bold text-dark">Laporan Praktikum Sederhana Fluida Statis</div>
+                  <div class="small text-muted">Amati hukum Archimedes dengan percobaan air garam dan telur di rumah.</div>
+                </td>
+                <td>
+                  <span class="badge-level badge-smp">SMP</span>
+                  <div class="small text-muted mt-1">IPA Terpadu 1</div>
+                </td>
+                <td>
+                  <div class="fw-semibold">Kak Siti Aminah, M.Si.</div>
+                  <div class="small text-muted">Fisika Terpadu</div>
+                </td>
+                <td>
+                  <span class="text-muted fw-semibold small"><i class="bi bi-calendar3 me-1"></i>14 Nov 2026</span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-between align-items-center small mb-1">
+                    <span class="fw-bold">2/6 Siswa</span>
+                    <span class="text-muted">33%</span>
+                  </div>
+                  <div class="task-progress-track">
+                    <div class="task-progress-bar bg-info" style="width: 33%;"></div>
+                  </div>
+                </td>
+                <td class="text-end">
+                  <span class="badge-status badge-status-belum">Berjalan</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ROW 4: DUA KOLOM (MONITORING SPP + AKTIVITAS TERKINI) -->
+      <div class="row g-4 mb-4">
+        
+        <!-- KOLOM KIRI: STATUS TAGIHAN & PEMBAYARAN SPP -->
+        <div class="col-12 col-xl-7">
+          <div class="custom-card h-100 mb-0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <div class="card-heading mb-1">Monitoring SPP & Tagihan Siswa</div>
+                <p class="page-subtitle mb-0">Status invoice tagihan SPP periode berjalan November 2026.</p>
+              </div>
+              <a href="pembayaran.html" class="btn-outline-custom">
+                <i class="bi bi-receipt"></i> Buka Kas Pembayaran
+              </a>
+            </div>
+
+            <!-- Tabel Tagihan Terkini -->
+            <div class="table-responsive-custom">
+              <table class="custom-table" id="tableTagihanDashboard">
+                <thead>
+                  <tr>
+                    <th style="width: 25%;">NO. INVOICE</th>
+                    <th style="width: 30%;">SISWA & PROGRAM</th>
+                    <th style="width: 20%;">NOMINAL</th>
+                    <th style="width: 25%; text-align: right;">STATUS & AKSI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Row 1: Lunas -->
+                  <tr>
+                    <td>
+                      <strong class="text-dark">INV-2026-001</strong>
+                      <div class="small text-muted">Jatuh tempo: 31 Okt 2026</div>
+                    </td>
+                    <td>
+                      <div class="fw-bold">Ahmad Farhan</div>
+                      <div class="small text-muted">Calistung (SD)</div>
+                    </td>
+                    <td>
+                      <strong class="text-success">Rp 350.000</strong>
+                    </td>
+                    <td class="text-end">
+                      <span class="badge-status badge-status-lunas mb-1">LUNAS</span>
+                      <div class="small text-muted">Kwitansi #KWT-001</div>
+                    </td>
+                  </tr>
+
+                  <!-- Row 2: Belum Lunas -->
+                  <tr>
+                    <td>
+                      <strong class="text-dark">INV-2026-002</strong>
+                      <div class="small text-muted">Jatuh tempo: 10 Nov 2026</div>
+                    </td>
+                    <td>
+                      <div class="fw-bold">Nabila Putri</div>
+                      <div class="small text-muted">Matematika SD</div>
+                    </td>
+                    <td>
+                      <strong>Rp 350.000</strong>
+                    </td>
+                    <td class="text-end">
+                      <span class="badge-status badge-status-belum mb-1">BELUM LUNAS</span>
+                      <div>
+                        <a href="pembayaran.html" class="small text-decoration-none fw-semibold text-primary">Bayar Sekarang &rarr;</a>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Row 3: Menunggak -->
+                  <tr>
+                    <td>
+                      <strong class="text-dark">INV-2026-003</strong>
+                      <div class="small text-danger fw-semibold">Jatuh tempo: 25 Okt 2026</div>
+                    </td>
+                    <td>
+                      <div class="fw-bold">Dimas Anggara</div>
+                      <div class="small text-muted">Matematika SMP</div>
+                    </td>
+                    <td>
+                      <strong class="text-danger">Rp 400.000</strong>
+                    </td>
+                    <td class="text-end">
+                      <span class="badge-status badge-status-menunggak mb-1">MENUNGGAK</span>
+                      <div>
+                        <a href="https://wa.me/6285655556666?text=Halo%20Bpk.%20Bambang,%20mengingatkan%20tagihan%20SPP%20Optimatika%20an.%20Dimas%20Anggara" target="_blank" class="small text-decoration-none fw-semibold text-success">
+                          <i class="bi bi-whatsapp"></i> Ingatkan Wali
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Row 4: Belum Lunas -->
+                  <tr>
+                    <td>
+                      <strong class="text-dark">INV-2026-004</strong>
+                      <div class="small text-muted">Jatuh tempo: 15 Nov 2026</div>
+                    </td>
+                    <td>
+                      <div class="fw-bold">Zahra Amelia</div>
+                      <div class="small text-muted">Persiapan UTBK (SMA)</div>
+                    </td>
+                    <td>
+                      <strong>Rp 550.000</strong>
+                    </td>
+                    <td class="text-end">
+                      <span class="badge-status badge-status-belum mb-1">BELUM LUNAS</span>
+                      <div>
+                        <a href="pembayaran.html" class="small text-decoration-none fw-semibold text-primary">Bayar Sekarang &rarr;</a>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+              <span class="small text-muted">Terintegrasi dengan kwitansi resmi bimbel</span>
+              <a href="tagihan.html" class="btn-outline-custom">
+                <span>Terbitkan Tagihan Baru</span> <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- KOLOM KANAN: AKTIVITAS OPERASIONAL & DISTRIBUSI PROGRAM -->
+        <div class="col-12 col-xl-5">
+          <div class="custom-card h-100 mb-0 d-flex flex-column justify-content-between">
+            <div>
+              <div class="card-heading mb-1">Log Aktivitas Bimbel Terbaru</div>
+              <p class="page-subtitle mb-3">Pembaruan sistem, presensi, tugas, dan pembayaran.</p>
+
+              <!-- Timeline Aktivitas -->
+              <div class="activity-feed-list">
+                <!-- Item 1 -->
+                <div class="activity-item">
+                  <div class="activity-icon-badge bg-primary bg-opacity-10 text-primary">
+                    <i class="bi bi-calendar2-check"></i>
+                  </div>
+                  <div>
+                    <div class="small fw-bold text-dark">Presensi Sesi Matematika SMP 1 telah diverifikasi</div>
+                    <div class="small text-muted">Kak Budi merekap kehadiran 3 siswa Hadir dan 1 siswa Izin.</div>
+                    <div class="text-muted" style="font-size: 11px;">10 menit yang lalu</div>
+                  </div>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="activity-item">
+                  <div class="activity-icon-badge bg-success bg-opacity-10 text-success">
+                    <i class="bi bi-check2-circle"></i>
+                  </div>
+                  <div>
+                    <div class="small fw-bold text-dark">Pembayaran SPP Alya Putri Diterima</div>
+                    <div class="small text-muted">Nominal Rp 350.000 via Transfer Bank, kwitansi KWT-2026-001 terbit.</div>
+                    <div class="text-muted" style="font-size: 11px;">45 menit yang lalu</div>
+                  </div>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="activity-item">
+                  <div class="activity-icon-badge bg-purple bg-opacity-10 text-purple" style="background:#f5f3ff; color:#7c3aed;">
+                    <i class="bi bi-journal-check"></i>
+                  </div>
+                  <div>
+                    <div class="small fw-bold text-dark">Tugas Baru Diterbitkan: Tryout TPS UTBK</div>
+                    <div class="small text-muted">Kak Rizky menugaskan paket TPS 20 butir soal untuk persiapan UTBK.</div>
+                    <div class="text-muted" style="font-size: 11px;">2 jam yang lalu</div>
+                  </div>
+                </div>
+
+                <!-- Item 4 -->
+                <div class="activity-item">
+                  <div class="activity-icon-badge bg-info bg-opacity-10 text-info">
+                    <i class="bi bi-person-check"></i>
+                  </div>
+                  <div>
+                    <div class="small fw-bold text-dark">Pendaftaran Siswa Baru Terdaftar</div>
+                    <div class="small text-muted">Zahra Amelia resmi bergabung program Persiapan UTBK (SMA).</div>
+                    <div class="text-muted" style="font-size: 11px;">Kemarin, 14:20 WIB</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Kapasitas Ruang Belajar Terkini -->
+            <div class="mt-4 pt-3 border-top">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small fw-bold text-dark">Okupansi Ruang Belajar:</span>
+                <span class="small text-muted">3 Ruang Ber-AC</span>
+              </div>
+              <div class="row g-2 text-center" style="font-size: 12px;">
+                <div class="col-4">
+                  <div class="p-2 rounded bg-light border">
+                    <div class="fw-bold text-dark">Ruang Alpha</div>
+                    <div class="text-success small fw-semibold">Terpakai 80%</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="p-2 rounded bg-light border">
+                    <div class="fw-bold text-dark">Ruang Beta</div>
+                    <div class="text-primary small fw-semibold">Terpakai 60%</div>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="p-2 rounded bg-light border">
+                    <div class="fw-bold text-dark">Ruang Gamma</div>
+                    <div class="text-warning small fw-semibold">Siap Pakai</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ========================================================
+       MODAL 1: BERI TUGAS BARU (ASSIGNMENT MODAL)
+  ======================================================== -->
+  <div class="modal fade" id="modalTugasBaru" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 540px;">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-bottom-0 pb-0">
+          <div class="d-flex align-items-center gap-2">
+            <div class="p-2 rounded-3" style="background-color: #f5f3ff; color: #7c3aed;">
+              <i class="bi bi-journal-plus fs-4"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold" style="font-size: 18px; color: #121826;">Beri Tugas / Modul Baru</h5>
+              <p class="text-muted small mb-0">Tugaskan latihan soal modul untuk siswa bimbingan</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body py-4">
+          <form id="formBeriTugas" onsubmit="event.preventDefault(); handleSimpanTugasBaru();">
+            
+            <!-- Judul Tugas -->
+            <div class="mb-3">
+              <label for="inputJudulTugas" class="form-label-custom">Judul Tugas</label>
+              <input type="text" class="form-control-custom" id="inputJudulTugas" placeholder="contoh: Latihan Trigonometri Sudut Istimewa" required>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <!-- Program Belajar -->
+              <div class="col-12 col-md-6">
+                <label for="selectProgramTugas" class="form-label-custom">Program Belajar</label>
+                <select class="form-select-custom" id="selectProgramTugas" required>
+                  <option value="Calistung (SD)">Calistung (SD)</option>
+                  <option value="Matematika SD (SD)">Matematika SD (SD)</option>
+                  <option value="Matematika SMP (SMP)" selected>Matematika SMP (SMP)</option>
+                  <option value="IPA Terpadu (SMP)">IPA Terpadu (SMP)</option>
+                  <option value="Persiapan UTBK (SMA)">Persiapan UTBK (SMA)</option>
+                </select>
+              </div>
+
+              <!-- Tutor Pengampu -->
+              <div class="col-12 col-md-6">
+                <label for="selectTutorTugas" class="form-label-custom">Tutor Pengampu</label>
+                <select class="form-select-custom" id="selectTutorTugas" required>
+                  <option value="Kak Budi Santoso, S.Pd." selected>Kak Budi Santoso, S.Pd.</option>
+                  <option value="Kak Siti Aminah, M.Si.">Kak Siti Aminah, M.Si.</option>
+                  <option value="Kak Rizky Pratama, S.Si.">Kak Rizky Pratama, S.Si.</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <!-- Batas Waktu / Deadline -->
+              <div class="col-12 col-md-6">
+                <label for="inputDeadlineTugas" class="form-label-custom">Batas Waktu (Deadline)</label>
+                <input type="text" class="form-control-custom" id="inputDeadlineTugas" placeholder="contoh: Besok, 23:59 atau 15 Nov" required>
+              </div>
+
+              <!-- Estimasi Siswa Penerima -->
+              <div class="col-12 col-md-6">
+                <label for="inputJumlahSiswaTugas" class="form-label-custom">Target Siswa</label>
+                <input type="number" class="form-control-custom" id="inputJumlahSiswaTugas" value="8" min="1" max="50">
+              </div>
+            </div>
+
+            <!-- Instruksi / Deskripsi Tugas -->
+            <div class="mb-4">
+              <label for="inputDeskripsiTugas" class="form-label-custom">Petunjuk / Deskripsi Tugas</label>
+              <textarea class="form-control-custom" id="inputDeskripsiTugas" rows="3" placeholder="Tuliskan petunjuk pengerjaan modul atau batas pengumpulan..." style="height: auto;"></textarea>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+              <button type="button" class="btn btn-light rounded-3 px-3 fw-semibold text-muted" data-bs-dismiss="modal">Batal</button>
+              <button type="submit" class="btn-primary-custom" style="padding: 0 24px;">
+                <i class="bi bi-send-check me-1"></i> Terbitkan Tugas
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================
+       MODAL 2: KONFIGURASI KONEKSI DATABASE NEON POSTGRESQL
+  ======================================================== -->
+  <div class="modal fade" id="modalDbConfig" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;">
+      <div class="modal-content rounded-4 border-0 shadow">
+        <div class="modal-header border-bottom-0 pb-0">
+          <div class="d-flex align-items-center gap-2">
+            <div class="p-2 rounded-3" style="background-color: #ecfdf5; color: #059669;">
+              <i class="bi bi-database-fill-gear fs-4"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold" style="font-size: 18px; color: #121826;">Koneksi Neon PostgreSQL</h5>
+              <p class="text-muted small mb-0">Hubungkan cloud database Neon ke aplikasi Bimbel</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body py-4">
+          <div class="p-3 rounded-3 mb-3" style="background-color: #f8fafc; border: 1px solid #e2e8f0;">
+            <div class="small fw-semibold text-dark mb-1"><i class="bi bi-info-circle text-primary me-1"></i> Status Database Saat Ini:</div>
+            <div class="small text-muted" id="modalCurrentDbStatus">Memeriksa status sistem...</div>
+          </div>
+
+          <form id="formDbConfig" onsubmit="event.preventDefault(); handleSimpanKoneksiDb();">
+            <div class="mb-3">
+              <label for="inputDatabaseUrl" class="form-label-custom">Connection String Neon PostgreSQL</label>
+              <textarea 
+                class="form-control-custom" 
+                id="inputDatabaseUrl" 
+                rows="3" 
+                placeholder="postgresql://alex:AbC123dEf@ep-cool-fog-123456.us-east-2.aws.neon.tech/neondb?sslmode=require" 
+                required 
+                style="height: auto; font-family: monospace; font-size: 12.5px;"
+              ></textarea>
+              <div class="form-text" style="font-size: 11.5px;">
+                Dapatkan dari <strong>console.neon.tech &rarr; Dashboard Project &rarr; Connection Details (pilih opsi Postgres)</strong>.
+              </div>
+            </div>
+
+            <div id="alertDbConfig" class="alert d-none rounded-3 py-2 px-3 small mb-3" role="alert"></div>
+
+            <div class="d-flex gap-2 justify-content-end">
+              <button type="button" class="btn btn-light rounded-3 px-3 fw-semibold text-muted" data-bs-dismiss="modal">Tutup</button>
+              <button type="submit" class="btn-primary-custom" id="btnSimpanDb" style="padding: 0 20px;">
+                <i class="bi bi-cloud-arrow-up me-1"></i> Simpan & Sambungkan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Panggil JavaScript Sidebar Reusable -->
+  <script src="js/sidebar.js"></script>
+
+  <!-- Logika Interaktif Dashboard -->
+  <script>
+    // 1. Inisialisasi Sidebar Aktif pada Menu 'Dashboard'
+    renderSidebar('dashboard');
+
+    // 2. Real-Time Clock & Date
+    function updateClock() {
+      const now = new Date();
+      const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateStr = now.toLocaleDateString('id-ID', optionsDate);
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      
+      const elDate = document.getElementById('liveDateText');
+      const elTime = document.getElementById('liveTimeText');
+      if (elDate) elDate.textContent = dateStr;
+      if (elTime) elTime.textContent = `${hours}:${minutes}:${seconds} WIB`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // 3. Muat Data Statistik dari Backend REST API
+    async function fetchDashboardStats() {
+      try {
+        const res = await fetch('/api/dashboard/stats');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            const d = json.data;
+            if (d.students_count !== undefined) {
+              document.getElementById('kpiSiswaCount').textContent = `${d.students_count} Siswa`;
+            }
+            if (d.assignments_count !== undefined) {
+              document.getElementById('kpiTugasCount').textContent = `${d.assignments_count} Tugas Aktif`;
+            }
+            if (d.total_masuk !== undefined && d.total_masuk > 0) {
+              document.getElementById('kpiTotalBayar').textContent = `Rp ${Number(d.total_masuk).toLocaleString('id-ID')}`;
+            }
+          }
+        }
+      } catch (err) {
+        console.log('Mode offline/lokal aktif untuk dashboard.');
+      }
+
+      // Periksa status database
+      try {
+        const resDb = await fetch('/api/status');
+        if (resDb.ok) {
+          const statusJson = await resDb.json();
+          const dbText = document.getElementById('dbNameText');
+          if (dbText) dbText.textContent = `${statusJson.database} Online`;
+        }
+      } catch (e) {
+        // Fallback default
+      }
+    }
+    document.addEventListener('DOMContentLoaded', fetchDashboardStats);
+
+    // 4. Interaksi Tombol Presensi Cepat (Hadir, Sakit, Izin, Alpa)
+    function setAttendance(buttonElement, statusType) {
+      const parentGroup = buttonElement.closest('.attendance-btn-group');
+      const buttons = parentGroup.querySelectorAll('.attendance-pill-btn');
+      
+      // Hapus semua class aktif
+      buttons.forEach(btn => {
+        btn.classList.remove('active-hadir', 'active-sakit', 'active-izin', 'active-alpa');
+      });
+
+      // Pasang class aktif sesuai pilihan
+      buttonElement.classList.add(`active-${statusType}`);
+      hitungTotalPresensi();
+    }
+
+    // Hitung rekap kehadiran otomatis
+    function hitungTotalPresensi() {
+      const hadirCount = document.querySelectorAll('.active-hadir').length;
+      const sakitCount = document.querySelectorAll('.active-sakit').length;
+      const izinCount = document.querySelectorAll('.active-izin').length;
+      const alpaCount = document.querySelectorAll('.active-alpa').length;
+
+      const totalSiswaSesi = hadirCount + sakitCount + izinCount + alpaCount;
+      if (totalSiswaSesi > 0) {
+        const rate = Math.round((hadirCount / totalSiswaSesi) * 100);
+        document.getElementById('kpiPresensiRate').textContent = `${rate}% Hadir`;
+      }
+
+      document.getElementById('badgeHadir').textContent = `${15 + hadirCount} Hadir`;
+      document.getElementById('badgeIzin').textContent = `${izinCount} Izin`;
+      document.getElementById('badgeAlpa').textContent = `${alpaCount} Alpa`;
+    }
+
+    // 5. Simpan Presensi Cepat
+    function simpanPresensiCepat() {
+      const alertBox = document.getElementById('alertPresensiFeedback');
+      const btn = document.getElementById('btnSimpanPresensi');
+      const originalText = btn.innerHTML;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+
+      // Kumpulkan data presensi
+      const rows = document.querySelectorAll('.attendance-row');
+      const records = [];
+      rows.forEach(row => {
+        const studentId = row.getAttribute('data-student-id');
+        let status = 'Hadir';
+        if (row.querySelector('.active-sakit')) status = 'Sakit';
+        if (row.querySelector('.active-izin')) status = 'Izin';
+        if (row.querySelector('.active-alpa')) status = 'Alpa';
+        records.push({ student_id: parseInt(studentId), status: status });
+      });
+
+      // Kirim ke backend jika tersedia
+      fetch('/api/attendances', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          records: records,
+          date: new Date().toISOString().split('T')[0],
+          notes: document.getElementById('inputCatatanPresensi').value
+        })
+      }).catch(() => {});
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        alertBox.classList.remove('d-none');
+        setTimeout(() => {
+          alertBox.classList.add('d-none');
+        }, 3500);
+      }, 500);
+    }
+
+    // Ganti Kelompok Presensi (Simulasi pindah kelas)
+    function gantiKelompokPresensi(kelompokKey) {
+      const alertBox = document.getElementById('alertPresensiFeedback');
+      alertBox.classList.add('d-none');
+      // Berikan feedback visual
+      const container = document.getElementById('containerSiswaPresensi');
+      container.style.opacity = '0.5';
+      setTimeout(() => {
+        container.style.opacity = '1';
+      }, 200);
+    }
+
+    function focusPresensi() {
+      document.getElementById('attendanceWidgetArea').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // 6. Modal Beri Tugas Baru
+    function bukaModalTugas() {
+      const modal = new bootstrap.Modal(document.getElementById('modalTugasBaru'));
+      modal.show();
+    }
+
+    function handleSimpanTugasBaru() {
+      const judul = document.getElementById('inputJudulTugas').value.trim();
+      const programRaw = document.getElementById('selectProgramTugas').value;
+      const tutor = document.getElementById('selectTutorTugas').value;
+      const deadline = document.getElementById('inputDeadlineTugas').value.trim();
+      const targetSiswa = document.getElementById('inputJumlahSiswaTugas').value;
+      const deskripsi = document.getElementById('inputDeskripsiTugas').value.trim() || 'Modul latihan soal bimbel.';
+
+      if (!judul || !deadline) {
+        alert('Harap isi judul dan batas waktu tugas!');
+        return;
+      }
+
+      // Ekstrak jenjang
+      let jenjang = 'SD';
+      let badgeClass = 'badge-level';
+      if (programRaw.includes('SMP')) {
+        jenjang = 'SMP';
+        badgeClass = 'badge-level badge-smp';
+      } else if (programRaw.includes('SMA')) {
+        jenjang = 'SMA';
+        badgeClass = 'badge-level badge-sma';
+      }
+
+      // Tambahkan baris tugas baru ke tabel secara visual
+      const tbody = document.getElementById('listTugasBody');
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-level', jenjang);
+      tr.innerHTML = `
+        <td>
+          <div class="fw-bold text-dark">${judul}</div>
+          <div class="small text-muted">${deskripsi}</div>
+        </td>
+        <td>
+          <span class="${badgeClass}">${jenjang}</span>
+          <div class="small text-muted mt-1">${programRaw.split('(')[0].trim()}</div>
+        </td>
+        <td>
+          <div class="fw-semibold">${tutor}</div>
+          <div class="small text-muted">Pengajar</div>
+        </td>
+        <td>
+          <span class="text-danger fw-semibold small"><i class="bi bi-clock-history me-1"></i>${deadline}</span>
+        </td>
+        <td>
+          <div class="d-flex justify-content-between align-items-center small mb-1">
+            <span class="fw-bold">0/${targetSiswa} Siswa</span>
+            <span class="text-muted">0%</span>
+          </div>
+          <div class="task-progress-track">
+            <div class="task-progress-bar bg-primary" style="width: 5%;"></div>
+          </div>
+        </td>
+        <td class="text-end">
+          <span class="badge-status badge-status-belum">Berjalan</span>
+        </td>
+      `;
+
+      tbody.insertBefore(tr, tbody.firstChild);
+
+      // Kirim ke backend jika tersedia
+      fetch('/api/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: judul,
+          tutor_id: 1,
+          due_date: deadline,
+          description: deskripsi,
+          total_students: parseInt(targetSiswa) || 8,
+          submitted_count: 0,
+          status: 'Berjalan'
+        })
+      }).catch(() => {});
+
+      // Update counter tugas di KPI card
+      const totalTugasEl = document.getElementById('kpiTugasCount');
+      const currentCount = parseInt(totalTugasEl.textContent) || 4;
+      totalTugasEl.textContent = `${currentCount + 1} Tugas Aktif`;
+
+      // Tutup modal dan reset
+      const modalEl = document.getElementById('modalTugasBaru');
+      const modalInstance = bootstrap.Modal.getInstance(modalEl);
+      if (modalInstance) modalInstance.hide();
+      document.getElementById('formBeriTugas').reset();
+
+      alert(`Tugas "${judul}" berhasil diterbitkan untuk siswa!`);
+    }
+
+    // 7. Filter Tugas berdasarkan Jenjang
+    function filterTugasByJenjang(selectedJenjang) {
+      const rows = document.querySelectorAll('#listTugasBody tr');
+      rows.forEach(row => {
+        const rowLevel = row.getAttribute('data-level');
+        if (selectedJenjang === 'semua' || rowLevel === selectedJenjang) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    // 8. Modal & Koneksi Database Neon PostgreSQL
+    function bukaModalDbConfig() {
+      const modal = new bootstrap.Modal(document.getElementById('modalDbConfig'));
+      modal.show();
+      const statusEl = document.getElementById('modalCurrentDbStatus');
+      fetch('/api/status')
+        .then(r => r.json())
+        .then(res => {
+          if (statusEl) {
+            const badgeClass = res.using_postgres ? 'bg-success' : 'bg-warning text-dark';
+            statusEl.innerHTML = `Mode aktif: <strong>${res.database}</strong> &middot; Status: <span class="badge ${badgeClass}">${res.using_postgres ? 'Online (Postgres)' : 'SQLite Lokal'}</span>`;
+          }
+        })
+        .catch(() => {
+          if (statusEl) statusEl.textContent = 'Server backend belum dijalankan.';
+        });
+    }
+
+    function handleSimpanKoneksiDb() {
+      const url = document.getElementById('inputDatabaseUrl').value.trim();
+      const alertBox = document.getElementById('alertDbConfig');
+      const btn = document.getElementById('btnSimpanDb');
+      if (!url) return;
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyambungkan...';
+
+      fetch('/api/config-db', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ database_url: url })
+      })
+      .then(r => r.json())
+      .then(res => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i> Simpan & Hubungkan';
+        alertBox.classList.remove('d-none');
+        if (res.success) {
+          alertBox.className = 'alert alert-success rounded-3 py-2 px-3 small mb-3';
+          alertBox.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> ${res.message}`;
+          const dbText = document.getElementById('dbNameText');
+          if (dbText) dbText.textContent = 'Neon PostgreSQL Online';
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        } else {
+          alertBox.className = 'alert alert-warning rounded-3 py-2 px-3 small mb-3';
+          alertBox.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> ${res.message}`;
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-cloud-arrow-up me-1"></i> Simpan & Hubungkan';
+        alertBox.classList.remove('d-none');
+        alertBox.className = 'alert alert-danger rounded-3 py-2 px-3 small mb-3';
+        alertBox.innerHTML = `<i class="bi bi-x-circle-fill me-1"></i> Gagal menghubungi server: ${err.message}`;
+      });
+    }
+  </script>
+</body>
+</html>

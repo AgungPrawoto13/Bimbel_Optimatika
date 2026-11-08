@@ -88,6 +88,31 @@ CREATE TABLE IF NOT EXISTS payments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 9. TABEL TUGAS SISWA & MODUL
+CREATE TABLE IF NOT EXISTS assignments (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    program_id INTEGER REFERENCES programs(id) ON DELETE SET NULL,
+    tutor_id INTEGER REFERENCES tutors(id) ON DELETE SET NULL,
+    due_date VARCHAR(50) NOT NULL,
+    description TEXT,
+    total_students INTEGER DEFAULT 0,
+    submitted_count INTEGER DEFAULT 0,
+    status VARCHAR(50) DEFAULT 'Berjalan', -- Berjalan, Selesai Dinilai, Perlu Koreksi
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 10. TABEL ABSENSI / PRESENSI SISWA
+CREATE TABLE IF NOT EXISTS attendances (
+    id SERIAL PRIMARY KEY,
+    student_id INTEGER REFERENCES students(id) ON DELETE CASCADE,
+    schedule_id INTEGER REFERENCES schedules(id) ON DELETE SET NULL,
+    date DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'Hadir', -- Hadir, Sakit, Izin, Alpa
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- =======================================================
 -- DATA AWAL (SEED DATA PERSIS SEPERTI GAMBAR TAMPILAN)
 -- =======================================================
@@ -120,4 +145,12 @@ INSERT INTO students (nis, name, gender, guardian_name, phone, program_id, statu
 ('OPT-2026-002', 'Nabila Putri', 'P', 'Ibu Ratna', '081333334444', 2, 'Aktif'),
 ('OPT-2026-003', 'Dimas Anggara', 'L', 'Bpk. Bambang', '085655556666', 3, 'Aktif'),
 ('OPT-2026-004', 'Zahra Amelia', 'P', 'Ibu Dewi', '087777778888', 5, 'Aktif')
+ON CONFLICT DO NOTHING;
+
+-- Data Awal Tugas
+INSERT INTO assignments (title, program_id, tutor_id, due_date, description, total_students, submitted_count, status) VALUES
+('Latihan Aljabar & Persamaan Linear Bab 4', 3, 1, 'Hari Ini, 23:59', 'Kerjakan soal 1-15 pada modul halaman 42.', 10, 8, 'Berjalan'),
+('Membaca Lancar Suku Kata & Angka', 1, 1, 'Besok, 17:00', 'Latihan dikte 5 kalimat dan penjumlahan puluhan.', 5, 5, 'Selesai Dinilai'),
+('Simulasi Soal UTBK TPS Penalaran Matematika', 5, 3, '12 Nov 2026', 'Tryout online paket TPS 20 butir soal.', 4, 3, 'Perlu Koreksi'),
+('Laporan Praktikum Sederhana Fluida Statis', 4, 2, '14 Nov 2026', 'Amati hukum Archimedes dengan air dan telur.', 6, 2, 'Berjalan')
 ON CONFLICT DO NOTHING;

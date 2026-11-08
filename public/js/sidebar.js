@@ -2,9 +2,10 @@
  * Fungsi untuk memunculkan Sidebar & Topbar Mobile otomatis
  * Cara pakai di HTML: renderSidebar('pembayaran');
  */
-function renderSidebar(activeMenu = 'program') {
+function renderSidebar(activeMenu = 'dashboard') {
   // Daftar semua menu dan link halamannya
   const menuList = [
+    { id: 'dashboard', label: 'Dashboard', link: 'dashboard.html' },
     { id: 'siswa', label: 'Siswa dan Wali', link: 'siswa.html' },
     { id: 'program', label: 'Program', link: 'program.html' },
     { id: 'tutor', label: 'Tutor', link: 'tutor.html' },

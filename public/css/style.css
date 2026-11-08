@@ -829,3 +829,245 @@ body {
     padding: 36px 24px;
   }
 }
+
+/* ========================================================
+   DASHBOARD KHUSUS BIMBEL OPTIMATIKA
+======================================================== */
+.welcome-banner {
+  background: linear-gradient(135deg, #131f38 0%, #1e3a6c 100%);
+  color: #ffffff;
+  border-radius: 16px;
+  padding: 24px 30px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(19, 31, 56, 0.08);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-banner::after {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.25) 0%, rgba(37, 99, 235, 0) 70%);
+  pointer-events: none;
+}
+
+.time-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.kpi-card {
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #edf2f7;
+  padding: 20px 22px;
+  box-shadow: 0 2px 8px rgba(18, 24, 38, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(18, 24, 38, 0.06);
+}
+
+.kpi-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.kpi-icon-blue { background-color: #eff6ff; color: #1e50bb; }
+.kpi-icon-green { background-color: #ecfdf5; color: #059669; }
+.kpi-icon-purple { background-color: #f5f3ff; color: #7c3aed; }
+.kpi-icon-amber { background-color: #fffbeb; color: #d97706; }
+
+.kpi-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: #121826;
+  line-height: 1.1;
+  margin-bottom: 6px;
+}
+
+.kpi-subtitle {
+  font-size: 12.5px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge-tag-pill {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* Attendance Quick Segmented Buttons */
+.attendance-btn-group {
+  display: inline-flex;
+  border-radius: 8px;
+  background-color: #f1f5f9;
+  padding: 3px;
+  gap: 2px;
+}
+
+.attendance-pill-btn {
+  border: none;
+  background: transparent;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.attendance-pill-btn:hover {
+  color: #1e293b;
+}
+
+.attendance-pill-btn.active-hadir {
+  background-color: #22c55e;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(34, 197, 94, 0.3);
+}
+
+.attendance-pill-btn.active-sakit {
+  background-color: #eab308;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(234, 179, 8, 0.3);
+}
+
+.attendance-pill-btn.active-izin {
+  background-color: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(59, 130, 246, 0.3);
+}
+
+.attendance-pill-btn.active-alpa {
+  background-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.3);
+}
+
+/* Task Progress Bar */
+.task-progress-track {
+  height: 6px;
+  background-color: #e2e8f0;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.task-progress-bar {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.session-live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #eaf7ee;
+  color: #137333;
+}
+
+.badge-room {
+  background-color: #f1f5f9;
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Timeline & Activity Feed */
+.activity-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.activity-icon-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.btn-outline-custom {
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  color: #334155;
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-custom:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
+}

@@ -287,7 +287,7 @@
 
           // Cek parameter redirect jika ada (misal ?redirect=jadwal.html)
           const urlParams = new URLSearchParams(window.location.search);
-          const redirectTarget = urlParams.get('redirect') || 'program.html';
+          const redirectTarget = urlParams.get('redirect') || 'dashboard.html';
 
           setTimeout(() => {
             window.location.href = redirectTarget;
