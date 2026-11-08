@@ -4,8 +4,17 @@ import time
 import json
 from urllib.parse import urlparse, parse_qs
 from http.server import HTTPServer, SimpleHTTPRequestHandler
-import psycopg
-from psycopg.rows import dict_row
+PSYCOPG_V3 = True
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+except ImportError:
+    try:
+        import psycopg2 as psycopg
+        import psycopg2.extras
+        PSYCOPG_V3 = False
+    except ImportError:
+        raise ImportError("Modul 'psycopg' belum terpasang. Pastikan file requirements.txt berisi 'psycopg[binary]' dan 'psycopg'.")
 from dotenv import load_dotenv
 
 # Memuat variabel lingkungan dari file .env
@@ -60,9 +69,14 @@ def get_programs():
     """Mengambil semua daftar program dari database Neon PostgreSQL"""
     conn = create_new_connection()
     try:
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute("SELECT id, name, level, sessions_per_month FROM programs ORDER BY id ASC;")
-            return cur.fetchall()
+        if PSYCOPG_V3:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute("SELECT id, name, level, sessions_per_month FROM programs ORDER BY id ASC;")
+                return cur.fetchall()
+        else:
+            with conn.cursor(cursor_factory=psycopg.extras.RealDictCursor) as cur:
+                cur.execute("SELECT id, name, level, sessions_per_month FROM programs ORDER BY id ASC;")
+                return [dict(r) for r in cur.fetchall()]
     finally:
         conn.close()
 

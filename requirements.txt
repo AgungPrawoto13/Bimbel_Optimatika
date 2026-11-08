@@ -1,4 +1,5 @@
 # Requirements untuk Bimbel Optimatika di Streamlit Cloud & Lokal
 streamlit>=1.30.0
-psycopg-binary>=3.1.0
+psycopg[binary]>=3.1.0
+psycopg>=3.1.0
 python-dotenv>=1.0.0
