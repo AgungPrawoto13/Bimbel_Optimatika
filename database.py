@@ -148,7 +148,7 @@ def sync_ke_html():
                 <td><span class="{badge_class}">{level}</span></td>
                 <td><span class="session-count">{p['sessions_per_month']}×</span></td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusProgram(this, '{p_name}')">Hapus</button>
+                  <a href="?page=program.html&action=hapus&id={p['id']}&name={p_name}" target="_top" class="btn-delete-pill" style="text-decoration: none; display: inline-block;" onclick="return confirm('Yakin ingin menghapus program \'{p_name}\' dari database Neon?');">Hapus</a>
                 </td>
               </tr>"""
             rows_list.append(row)

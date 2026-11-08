@@ -81,7 +81,7 @@ def get_bundled_html(filename):
         # Ubah link menu di sidebar.js agar saat diklik di browser langsung berpindah halaman di Streamlit
         js_code = js_code.replace(
             'href="${item.link}"',
-            'href="javascript:void(0)" onclick="window.top.location.search = \'?page=\' + encodeURIComponent(\'${item.link}\');"'
+            'href="?page=${encodeURIComponent(item.link)}" target="_top"'
         )
 
         html = html.replace(
@@ -93,7 +93,50 @@ def get_bundled_html(filename):
 
 
 # =============================================================================
-# 3. SIDEBAR: PENGATURAN & NAVIGASI FOLDER PUBLIC
+# 3. TANGANI AKSI TOMBOL DARI HALAMAN HTML (HAPUS & TAMBAH OTOMATIS)
+# =============================================================================
+
+action = st.query_params.get("action")
+if action == "hapus":
+    target = st.query_params.get("id") or st.query_params.get("name")
+    if target:
+        try:
+            database.delete_program(target)
+            database.sync_ke_html()
+            st.toast(f"✓ Program '{target}' berhasil dihapus dari Neon!", icon="🗑️")
+        except Exception as e:
+            st.error(f"Gagal menghapus: {e}")
+        # Bersihkan query parameter agar tidak terhapus ulang saat refresh
+        if "action" in st.query_params: del st.query_params["action"]
+        if "id" in st.query_params: del st.query_params["id"]
+        if "name" in st.query_params: del st.query_params["name"]
+        st.rerun()
+
+elif action == "tambah":
+    p_name = st.query_params.get("name")
+    p_lvl = st.query_params.get("level", "SD")
+    p_ses_raw = st.query_params.get("sessions", "8")
+    try:
+        p_ses = int(p_ses_raw)
+    except Exception:
+        p_ses = 8
+
+    if p_name and p_name.strip():
+        try:
+            new_id = database.add_program(p_name.strip(), p_lvl, p_ses)
+            database.sync_ke_html()
+            st.toast(f"✓ Program '{p_name}' berhasil ditambahkan ke Neon! (ID: {new_id})", icon="➕")
+        except Exception as e:
+            st.error(f"Gagal menambahkan: {e}")
+        if "action" in st.query_params: del st.query_params["action"]
+        if "name" in st.query_params: del st.query_params["name"]
+        if "level" in st.query_params: del st.query_params["level"]
+        if "sessions" in st.query_params: del st.query_params["sessions"]
+        st.rerun()
+
+
+# =============================================================================
+# 4. SIDEBAR: PENGATURAN & NAVIGASI FOLDER PUBLIC
 # =============================================================================
 
 # Ambil halaman aktif dari URL query parameter (misal: ?page=dashboard.html)
