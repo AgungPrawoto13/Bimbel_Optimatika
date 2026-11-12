@@ -73,6 +73,7 @@
               </tr>
             </thead>
             <tbody id="tutorListBody">
+              <!-- DATA_TUTOR_START -->
               <!-- Baris 1: Kak Rina Wijaya -->
               <tr>
                 <td><strong>Kak Rina Wijaya</strong></td>
@@ -105,17 +106,7 @@
                   <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Dewi Anggraini')">Hapus</button>
                 </td>
               </tr>
-
-              <!-- Baris 4: Kak Yoga Saputra -->
-              <tr>
-                <td><strong>Kak Yoga Saputra</strong></td>
-                <td>Calistung</td>
-                <td>0821-2233-4404</td>
-                <td><span class="badge-status badge-status-nonaktif">Nonaktif</span></td>
-                <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Yoga Saputra')">Hapus</button>
-                </td>
-              </tr>
+              <!-- DATA_TUTOR_END -->
             </tbody>
           </table>
         </div>
@@ -130,43 +121,117 @@
     // 1. Aktifkan menu 'Tutor' di sidebar otomatis
     renderSidebar('tutor');
 
-    // 2. Fungsi Simpan Tutor Baru (Simulasi UI Ramah Skripsi)
-    function handleSimpanTutor() {
+    const API_BASE = (window.location.protocol === 'file:') ? 'http://localhost:8000' : '';
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text ?? '';
+      return div.innerHTML;
+    }
+
+    function renderTutorRows(tutors) {
+      const tbody = document.getElementById('tutorListBody');
+      if (!tutors || tutors.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Belum ada data tutor di database Neon.</td></tr>';
+        updateTutorSubtitle();
+        return;
+      }
+
+      tbody.innerHTML = tutors.map(t => {
+        const status = t.status || 'Aktif';
+        const isAktif = status.trim().toLowerCase() === 'aktif';
+        const badgeClass = isAktif ? 'badge-status badge-status-aktif' : 'badge-status badge-status-nonaktif';
+        const jsName = String(t.name).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        return `
+          <tr>
+            <td><strong>${escapeHtml(t.name)}</strong></td>
+            <td>${escapeHtml(t.specialty)}</td>
+            <td>${escapeHtml(t.phone)}</td>
+            <td><span class="${badgeClass}">${escapeHtml(status)}</span></td>
+            <td class="text-end pe-4">
+              <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, '${jsName}', ${Number(t.id)})">Hapus</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      updateTutorSubtitle();
+    }
+
+    async function callApi(pathWithQuery) {
+      let res = await fetch(`${API_BASE}${pathWithQuery}`);
+      if (res.status === 404 && API_BASE === '' && !['8000', '8080'].includes(window.location.port)) {
+        res = await fetch(`http://localhost:8000${pathWithQuery}`);
+      }
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (_) {
+        data = null;
+      }
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('HTTP 404: Endpoint /api/tutor tidak ditemukan. Hentikan lalu jalankan ulang "python3 database.py standby", dan buka via http://localhost:8000/tutor.html');
+        }
+        throw new Error((data && data.error) ? data.error : `HTTP ${res.status} (${res.statusText})`);
+      }
+      return data;
+    }
+
+    async function muatTutorDariNeon() {
+      try {
+        const data = await callApi('/api/tutor/list');
+        if (data && data.success && Array.isArray(data.tutors)) {
+          renderTutorRows(data.tutors);
+        }
+      } catch (_) {
+        // Fallback diam jika dibuka sebagai file statis tanpa server standby
+      }
+    }
+
+    // 2. Fungsi Simpan Tutor Baru ke Neon PostgreSQL
+    async function handleSimpanTutor() {
       const nama = document.getElementById('inputNamaTutor').value.trim();
       const mapel = document.getElementById('inputMapel').value.trim();
       const telepon = document.getElementById('inputTeleponTutor').value.trim();
 
-      if (!nama || !mapel) {
-        alert('Nama tutor dan mata pelajaran wajib diisi!');
+      if (!nama || !mapel || !telepon) {
+        alert('Nama tutor, mata pelajaran, dan no. telepon wajib diisi!');
         return;
       }
 
-      // Tambahkan baris baru ke dalam tabel (default status Aktif)
-      const tbody = document.getElementById('tutorListBody');
-      const newRow = document.createElement('tr');
-      newRow.innerHTML = `
-        <td><strong>${nama}</strong></td>
-        <td>${mapel}</td>
-        <td>${telepon}</td>
-        <td><span class="badge-status badge-status-aktif">Aktif</span></td>
-        <td class="text-end pe-4">
-          <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, '${nama}')">Hapus</button>
-        </td>
-      `;
-      tbody.appendChild(newRow);
+      try {
+        const params = new URLSearchParams({
+          name: nama,
+          specialty: mapel,
+          phone: telepon,
+          status: 'Aktif'
+        });
+        const data = await callApi(`/api/tutor/tambah?${params.toString()}`);
+        if (!data || !data.success) throw new Error((data && data.error) || 'Gagal menyimpan data tutor');
 
-      // Reset form
-      document.getElementById('formAddTutor').reset();
-      updateTutorSubtitle();
-      alert(`Data tutor "${nama}" berhasil disimpan!`);
+        document.getElementById('formAddTutor').reset();
+        await muatTutorDariNeon();
+        alert(`Data tutor "${nama}" berhasil disimpan ke Neon PostgreSQL!`);
+      } catch (err) {
+        alert(`Gagal menyimpan ke Neon PostgreSQL:\n${err.message}`);
+      }
     }
 
-    // 3. Fungsi Hapus Tutor
-    function hapusTutor(buttonElement, namaTutor) {
-      if (confirm(`Apakah Anda yakin ingin menghapus data "${namaTutor}"?`)) {
-        const row = buttonElement.closest('tr');
-        row.remove();
-        updateTutorSubtitle();
+    // 3. Fungsi Hapus Tutor dari Neon PostgreSQL
+    async function hapusTutor(buttonElement, namaTutor, tutorId) {
+      if (!confirm(`Yakin ingin menghapus tutor "${namaTutor}" dari database Neon?`)) {
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams(tutorId ? { id: String(tutorId) } : { name: namaTutor });
+        const data = await callApi(`/api/tutor/hapus?${params.toString()}`);
+        if (!data || !data.success) throw new Error((data && data.error) || 'Tutor tidak ditemukan di database');
+
+        await muatTutorDariNeon();
+      } catch (err) {
+        alert(`Gagal menghapus dari Neon PostgreSQL:\n${err.message}`);
       }
     }
 
@@ -175,6 +240,8 @@
       const aktifCount = document.querySelectorAll('.badge-status-aktif').length;
       document.getElementById('tutorSubtitle').textContent = `${aktifCount} tutor aktif`;
     }
+
+    document.addEventListener('DOMContentLoaded', muatTutorDariNeon);
   </script>
 </body>
 </html>

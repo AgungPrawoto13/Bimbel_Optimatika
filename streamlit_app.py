@@ -137,6 +137,25 @@ st.markdown("""
         margin: 0 !important;
     }
 
+    section[data-testid="stSidebar"] div[data-testid="stButton"] button {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        text-align: left !important;
+        width: 100% !important;
+    }
+
+    section[data-testid="stSidebar"] div[data-testid="stButton"] button > div,
+    section[data-testid="stSidebar"] div[data-testid="stButton"] button [data-testid="stMarkdownContainer"],
+    section[data-testid="stSidebar"] div[data-testid="stButton"] button [data-testid="stMarkdownContainer"] p {
+        width: auto !important;
+        flex: 0 1 auto !important;
+        text-align: left !important;
+        justify-content: flex-start !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
     section[data-testid="stSidebar"] button[kind="secondary"],
     section[data-testid="stSidebar"] button[data-testid="baseButton-secondary"],
     section[data-testid="stSidebar"] button[data-testid="stBaseButton-secondary"] {
@@ -292,7 +311,7 @@ st.markdown("""
         font-size: 17px;
         font-weight: 700;
         color: #1e293b;
-        margin: 0 0 6px 0;
+        margin: 0 0 10px 0;
         line-height: 1.4;
     }
 
@@ -314,6 +333,8 @@ st.markdown("""
     }
 
     /* Text & Number Input putih bersih dengan border #e2e8f0 */
+    div[data-testid="stForm"] div[data-testid="stTextInputRootElement"],
+    div[data-testid="stForm"] div[data-testid="stNumberInputContainer"],
     div[data-testid="stForm"] div[data-baseweb="input"] {
         background-color: #ffffff !important;
         border: 1.5px solid #e2e8f0 !important;
@@ -324,18 +345,33 @@ st.markdown("""
         transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
     }
 
+    div[data-testid="stForm"] div[data-testid="stTextInputRootElement"] div[data-baseweb="input"],
+    div[data-testid="stForm"] div[data-testid="stNumberInputContainer"] div[data-baseweb="input"] {
+        border: none !important;
+        height: 41px !important;
+        min-height: 41px !important;
+    }
+
+    div[data-testid="stForm"] div[data-testid="stTextInputRootElement"]:focus-within,
+    div[data-testid="stForm"] div[data-testid="stNumberInputContainer"]:focus-within,
     div[data-testid="stForm"] div[data-baseweb="input"]:focus-within {
         border-color: #2563eb !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
     }
 
+    div[data-testid="stForm"] div[data-testid="stTextInputRootElement"] div[data-baseweb="input"]:focus-within,
+    div[data-testid="stForm"] div[data-testid="stNumberInputContainer"] div[data-baseweb="input"]:focus-within {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
     div[data-testid="stForm"] div[data-baseweb="base-input"] {
-        background-color: transparent !important;
+        background-color: #ffffff !important;
         border: none !important;
     }
 
     div[data-testid="stForm"] div[data-baseweb="input"] input {
-        background-color: transparent !important;
+        background-color: #ffffff !important;
         color: #1e293b !important;
         font-size: 14.5px !important;
         padding: 8px 14px !important;
@@ -537,6 +573,32 @@ st.markdown("""
         line-height: 1.5;
     }
 
+    .table-text-cell {
+        font-size: 14.5px;
+        color: #1e293b;
+        line-height: 1.5;
+    }
+
+    .badge-status {
+        padding: 4px 14px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-block;
+        letter-spacing: 0.2px;
+        line-height: 1.4;
+    }
+
+    .badge-status-aktif {
+        background-color: #e6f4ea;
+        color: #137333;
+    }
+
+    .badge-status-nonaktif {
+        background-color: #e8ecf2;
+        color: #475569;
+    }
+
     /* Tombol Hapus rata kanan & gaya outline pill merah */
     [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .table-card-marker) [data-testid="stColumn"]:last-child [data-testid="stButton"],
     [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .table-card-marker) [data-testid="column"]:last-child [data-testid="stButton"] {
@@ -596,6 +658,198 @@ st.markdown("""
     [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .table-card-marker) button[data-testid="stBaseButton-secondary"]:hover p {
         color: #b91c1c !important;
     }
+
+    /* ----------------- GRID KARTU RUANG BELAJAR ----------------- */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .room-card-marker),
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .room-card-marker),
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .room-card-marker),
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="element-container"] .room-card-marker) {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--card-border) !important;
+        border-radius: 16px !important;
+        padding: 24px 28px !important;
+        box-shadow: 0 2px 8px rgba(18, 24, 38, 0.02) !important;
+        margin-bottom: 16px !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker),
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--card-border) !important;
+        border-radius: 16px !important;
+        padding: 24px 28px !important;
+        box-shadow: 0 2px 8px rgba(18, 24, 38, 0.02) !important;
+        gap: 0 !important;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker),
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+
+    [data-testid="stElementContainer"]:has(.room-card-marker),
+    [data-testid="element-container"]:has(.room-card-marker) {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .room-card-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0 0 8px 0;
+        line-height: 1.3;
+    }
+
+    .room-card-capacity {
+        font-size: 14.5px;
+        color: var(--text-muted);
+        margin: 0 0 18px 0;
+        line-height: 1.5;
+    }
+
+    .room-card-capacity strong {
+        color: #1e293b;
+        font-weight: 700;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[kind="secondary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="baseButton-secondary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="stBaseButton-secondary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[kind="secondary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="baseButton-secondary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="stBaseButton-secondary"] {
+        background: transparent !important;
+        color: var(--danger-text) !important;
+        border: 1px solid var(--danger-border) !important;
+        border-radius: 8px !important;
+        padding: 6px 18px !important;
+        min-height: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+        justify-content: center !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[kind="secondary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="baseButton-secondary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="stBaseButton-secondary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[kind="secondary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="baseButton-secondary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="stBaseButton-secondary"] p {
+        color: var(--danger-text) !important;
+        font-size: 13.5px !important;
+        font-weight: 500 !important;
+        line-height: 1.4 !important;
+        margin: 0 !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[kind="secondary"]:hover,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="baseButton-secondary"]:hover,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="stBaseButton-secondary"]:hover,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[kind="secondary"]:hover,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="baseButton-secondary"]:hover,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="stBaseButton-secondary"]:hover {
+        background-color: var(--danger-bg-hover) !important;
+        border-color: #f87171 !important;
+        color: #b91c1c !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[kind="secondary"]:hover p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="baseButton-secondary"]:hover p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="stBaseButton-secondary"]:hover p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[kind="secondary"]:hover p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="baseButton-secondary"]:hover p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="stBaseButton-secondary"]:hover p {
+        color: #b91c1c !important;
+    }
+
+    /* Tombol Lihat (Outline Biru) di Kartu Ruang Belajar */
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[kind="primary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="baseButton-primary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="stBaseButton-primary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[kind="primary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="baseButton-primary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="stBaseButton-primary"] {
+        background: transparent !important;
+        color: var(--primary-blue) !important;
+        border: 1px solid #bfdbfe !important;
+        border-radius: 8px !important;
+        padding: 6px 12px !important;
+        min-height: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+        justify-content: center !important;
+        box-shadow: none !important;
+        transition: all 0.2s ease !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[kind="primary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="baseButton-primary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="stBaseButton-primary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[kind="primary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="baseButton-primary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="stBaseButton-primary"] p {
+        color: var(--primary-blue) !important;
+        font-size: 13.5px !important;
+        font-weight: 500 !important;
+        line-height: 1.4 !important;
+        margin: 0 !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[kind="primary"]:hover,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="baseButton-primary"]:hover,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="stBaseButton-primary"]:hover,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[kind="primary"]:hover,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="baseButton-primary"]:hover,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="stBaseButton-primary"]:hover {
+        background-color: #eff6ff !important;
+        border-color: #60a5fa !important;
+        color: var(--primary-hover) !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[kind="primary"]:hover p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="baseButton-primary"]:hover p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .room-card-marker) button[data-testid="stBaseButton-primary"]:hover p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[kind="primary"]:hover p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="baseButton-primary"]:hover p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .room-card-marker) button[data-testid="stBaseButton-primary"]:hover p {
+        color: var(--primary-hover) !important;
+    }
+
+    /* Card jadwal ruang (Lihat) */
+    .sched-item {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+        background-color: #f8fafc;
+    }
+    .sched-item.ongoing {
+        border-color: #86efac;
+        background-color: #f0fdf4;
+    }
+    .sched-badge-ongoing {
+        background-color: #dcfce7;
+        color: #15803d;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 9999px;
+    }
+    .sched-badge-scheduled {
+        background-color: #e0f2fe;
+        color: #0369a1;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 9999px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -616,6 +870,8 @@ MENU_ITEMS = [
 
 if "active_menu" not in st.session_state:
     st.session_state.active_menu = "Program"
+if "selected_room_detail" not in st.session_state:
+    st.session_state.selected_room_detail = None
 
 
 # =============================================================================
@@ -639,6 +895,7 @@ with st.sidebar:
             use_container_width=True,
         ):
             st.session_state.active_menu = item
+            st.session_state.selected_room_detail = None
             st.rerun()
 
     st.markdown('<div class="sidebar-footer-divider"></div>', unsafe_allow_html=True)
@@ -752,16 +1009,574 @@ if menu == "Program":
 
 
 # =============================================================================
+# 3B. KONTEN UTAMA: HALAMAN DATA TUTOR (PERSIS PUBLIC/TUTOR.HTML + NEON CRUD)
+# =============================================================================
+elif menu == "Tutor":
+    tutors = []
+    tutor_load_error = None
+    try:
+        tutors = database.get_tutors()
+    except Exception as e:
+        tutor_load_error = e
+
+    aktif_count = sum(1 for t in tutors if str(t.get('status', 'Aktif')).strip().lower() == 'aktif')
+
+    # TOP HEADER
+    st.markdown(f"""
+        <div class="top-header">
+            <div>
+                <h1 class="page-title">Data Tutor</h1>
+                <p class="page-subtitle">{aktif_count} tutor aktif</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # CARD 1: FORM TAMBAH TUTOR
+    with st.form("form_add_tutor", clear_on_submit=True):
+        st.markdown('<div class="card-heading">Tambah tutor</div>', unsafe_allow_html=True)
+        col1, col2, col3, col4 = st.columns([4, 3, 3, 2])
+        with col1:
+            tutor_name = st.text_input("Nama tutor")
+        with col2:
+            tutor_specialty = st.text_input("Mata pelajaran")
+        with col3:
+            tutor_phone = st.text_input("No. telepon", placeholder="08...")
+        with col4:
+            btn_simpan_tutor = st.form_submit_button("Simpan", type="primary", use_container_width=True)
+
+        if btn_simpan_tutor:
+            if not tutor_name.strip() or not tutor_specialty.strip() or not tutor_phone.strip():
+                st.warning("Nama tutor, mata pelajaran, dan no. telepon wajib diisi.")
+            else:
+                try:
+                    database.add_tutor(
+                        tutor_name.strip(),
+                        tutor_specialty.strip(),
+                        tutor_phone.strip(),
+                        status="Aktif",
+                    )
+                    try:
+                        database.sync_tutor_ke_html()
+                    except Exception:
+                        pass
+                    st.toast(f"✓ Tutor '{tutor_name.strip()}' berhasil ditambahkan ke Neon!", icon="🎉")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Gagal menambahkan tutor: {e}")
+
+    # CARD 2: TABEL DATA TUTOR
+    with st.container(border=True):
+        st.markdown('<div class="table-card-marker"></div>', unsafe_allow_html=True)
+
+        # Header Tabel
+        th1, th2, th3, th4, th5 = st.columns([3.0, 2.5, 2.3, 1.0, 1.2])
+        with th1:
+            st.markdown('<div class="table-th table-header-marker">TUTOR</div>', unsafe_allow_html=True)
+        with th2:
+            st.markdown('<div class="table-th">MATA PELAJARAN</div>', unsafe_allow_html=True)
+        with th3:
+            st.markdown('<div class="table-th">TELEPON</div>', unsafe_allow_html=True)
+        with th4:
+            st.markdown('<div class="table-th">STATUS</div>', unsafe_allow_html=True)
+        with th5:
+            st.markdown('<div class="table-th"></div>', unsafe_allow_html=True)
+
+        if tutor_load_error is not None:
+            st.error(f"Gagal mengambil data tutor dari database Neon: {tutor_load_error}")
+        elif not tutors:
+            st.markdown(
+                "<p style='text-align: center; color: #64748b; padding: 28px 20px; margin: 0;'>"
+                "Belum ada data tutor di database Neon.</p>",
+                unsafe_allow_html=True,
+            )
+        else:
+            for t in tutors:
+                r1, r2, r3, r4, r5 = st.columns([3.0, 2.5, 2.3, 1.0, 1.2])
+                with r1:
+                    st.markdown(
+                        f'<div class="program-name-cell">{html.escape(str(t["name"]))}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with r2:
+                    st.markdown(
+                        f'<div class="table-text-cell">{html.escape(str(t["specialty"]))}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with r3:
+                    st.markdown(
+                        f'<div class="table-text-cell">{html.escape(str(t["phone"]))}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with r4:
+                    status = str(t.get("status") or "Aktif")
+                    badge_cls = (
+                        "badge-status badge-status-aktif"
+                        if status.strip().lower() == "aktif"
+                        else "badge-status badge-status-nonaktif"
+                    )
+                    st.markdown(
+                        f'<span class="{badge_cls}">{html.escape(status)}</span>',
+                        unsafe_allow_html=True,
+                    )
+                with r5:
+                    if st.button("Hapus", key=f"btn_del_tutor_{t['id']}", type="secondary"):
+                        try:
+                            database.delete_tutor(t['id'])
+                            try:
+                                database.sync_tutor_ke_html()
+                            except Exception:
+                                pass
+                            st.toast(f"✓ Tutor '{t['name']}' berhasil dihapus dari Neon!", icon="🗑️")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Gagal menghapus tutor: {e}")
+
+
+# =============================================================================
+# 3C. KONTEN UTAMA: HALAMAN DATA RUANG BELAJAR & DETAIL JADWAL RUANG
+# =============================================================================
+elif menu == "Ruang Belajar":
+    selected_room = st.session_state.get("selected_room_detail")
+
+    # JIKA TOMBOL "LIHAT" DIKLIK -> TAMPILAN FULL PAGE SEPERTI RUANG_BELAJAR_DETAIL.HTML (REFERENSI DATA TUTOR)
+    if selected_room is not None:
+        room_id = selected_room["id"]
+        room_label = selected_room["name"]
+        room_cap = selected_room.get("capacity", 0)
+
+        schedules = []
+        sched_error = None
+        try:
+            schedules = database.get_room_schedules(room_id)
+        except Exception as e:
+            sched_error = e
+
+        # TOP HEADER + TOMBOL KEMBALI
+        h_left, h_right = st.columns([8, 2])
+        with h_left:
+            st.markdown(f"""
+                <div class="top-header" style="margin-bottom: 18px;">
+                    <div>
+                        <h1 class="page-title">Jadwal Kelas · {html.escape(str(room_label))}</h1>
+                        <p class="page-subtitle">Kapasitas {int(room_cap)} siswa · {len(schedules)} jadwal kelas terdaftar.</p>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+        with h_right:
+            st.markdown("<div style='display:flex; justify-content:flex-end; padding-top:8px;'>", unsafe_allow_html=True)
+            if st.button("← Kembali", key="btn_back_to_rooms", type="secondary", use_container_width=True):
+                st.session_state.selected_room_detail = None
+                st.rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        # CARD 1: FORM TAMBAH JADWAL KELAS DI RUANG INI (PERSIS GAYA DATA TUTOR)
+        try:
+            tutor_opts = database.get_tutors()
+            program_opts = database.get_programs()
+        except Exception as e:
+            tutor_opts, program_opts = [], []
+            st.error(f"Gagal memuat daftar tutor/program: {e}")
+
+        with st.form(f"form_room_sched_{room_id}", clear_on_submit=False):
+            st.markdown('<div class="card-heading">Tambah jadwal kelas</div>', unsafe_allow_html=True)
+            f1, f2, f3, f4, f5, f6 = st.columns([3, 3, 2, 1.5, 1.5, 2])
+            with f1:
+                if tutor_opts:
+                    sel_tutor = st.selectbox(
+                        "Tutor",
+                        tutor_opts,
+                        format_func=lambda t: f"{t['name']} ({t['specialty']})",
+                    )
+                else:
+                    sel_tutor = None
+                    st.text_input("Tutor", value="Belum ada data tutor", disabled=True)
+            with f2:
+                if program_opts:
+                    sel_program = st.selectbox(
+                        "Mata pelajaran",
+                        program_opts,
+                        format_func=lambda p: f"{p['name']} ({p['level']})",
+                    )
+                else:
+                    sel_program = None
+                    st.text_input("Mata pelajaran", value="Belum ada data program", disabled=True)
+            with f3:
+                sel_day = st.selectbox(
+                    "Hari",
+                    ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
+                )
+            with f4:
+                jam_mulai = st.text_input("Jam mulai", value="15:00", placeholder="15:00")
+            with f5:
+                jam_selesai = st.text_input("Jam berakhir", value="16:30", placeholder="16:30")
+            with f6:
+                btn_save_sched = st.form_submit_button("Simpan", type="primary", use_container_width=True)
+
+            if btn_save_sched:
+                if not sel_tutor or not sel_program:
+                    st.warning("Pastikan data Tutor dan Program sudah ada terlebih dahulu.")
+                else:
+                    try:
+                        database.add_room_schedule(
+                            room_id,
+                            sel_tutor["id"],
+                            sel_program["id"],
+                            sel_day,
+                            jam_mulai.strip() or "15:00",
+                            jam_selesai.strip() or "16:30",
+                        )
+                        try:
+                            database.sync_jadwal_ke_html()
+                        except Exception:
+                            pass
+                        st.toast(f"✓ Jadwal kelas di {room_label} berhasil disimpan!", icon="🎉")
+                        st.rerun()
+                    except ValueError as ve:
+                        st.warning(f"⚠️ {ve}")
+                    except Exception as e:
+                        st.error(f"Gagal menyimpan jadwal: {e}")
+
+        # CARD 2: TABEL FULL-WIDTH JADWAL KELAS DI RUANG (REFERENSI GAMBAR 2)
+        with st.container(border=True):
+            st.markdown('<div class="table-card-marker"></div>', unsafe_allow_html=True)
+
+            th1, th2, th3, th4, th5, th6 = st.columns([2.4, 2.5, 1.1, 1.6, 1.2, 1.2])
+            with th1:
+                st.markdown('<div class="table-th table-header-marker">TUTOR</div>', unsafe_allow_html=True)
+            with th2:
+                st.markdown('<div class="table-th">MATA PELAJARAN</div>', unsafe_allow_html=True)
+            with th3:
+                st.markdown('<div class="table-th">HARI</div>', unsafe_allow_html=True)
+            with th4:
+                st.markdown('<div class="table-th">WAKTU</div>', unsafe_allow_html=True)
+            with th5:
+                st.markdown('<div class="table-th">STATUS</div>', unsafe_allow_html=True)
+            with th6:
+                st.markdown('<div class="table-th"></div>', unsafe_allow_html=True)
+
+            if sched_error is not None:
+                st.error(f"Gagal mengambil jadwal ruang dari database Neon: {sched_error}")
+            elif not schedules:
+                st.markdown(
+                    "<p style='text-align: center; color: #64748b; padding: 28px 20px; margin: 0;'>"
+                    "Belum ada jadwal kelas yang terdaftar di ruang ini.</p>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                for s in schedules:
+                    r1, r2, r3, r4, r5, r6 = st.columns([2.4, 2.5, 1.1, 1.6, 1.2, 1.2])
+                    with r1:
+                        st.markdown(
+                            f'<div class="program-name-cell">{html.escape(str(s["tutor_name"]))}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r2:
+                        prog = str(s.get("program_name") or "-")
+                        subj = str(s.get("subject_name") or "-")
+                        mapel_txt = f"{prog} ({subj})" if subj and subj != prog else prog
+                        st.markdown(
+                            f'<div class="table-text-cell">{html.escape(mapel_txt)}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r3:
+                        st.markdown(
+                            f'<div class="table-text-cell">{html.escape(str(s["day"]))}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r4:
+                        st.markdown(
+                            f'<div class="table-text-cell">{html.escape(str(s["start_time"]))} – {html.escape(str(s["end_time"]))}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r5:
+                        ongoing = bool(s.get("is_ongoing"))
+                        if ongoing:
+                            st.markdown('<span class="badge-status badge-status-aktif">Berlangsung</span>', unsafe_allow_html=True)
+                        else:
+                            st.markdown('<span class="badge-level">Terjadwal</span>', unsafe_allow_html=True)
+                    with r6:
+                        if st.button("Hapus", key=f"btn_del_sched_{room_id}_{s['schedule_id']}", type="secondary"):
+                            try:
+                                database.delete_room_schedule(s["schedule_id"])
+                                try:
+                                    database.sync_jadwal_ke_html()
+                                except Exception:
+                                    pass
+                                st.toast("✓ Jadwal ruang dihapus dari Neon!", icon="🗑️")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Gagal menghapus jadwal: {e}")
+
+    # HALAMAN GRID RUANG BELAJAR (DEFAULT)
+    else:
+        st.markdown("""
+            <div class="top-header">
+                <div>
+                    <h1 class="page-title">Data Ruang Belajar</h1>
+                    <p class="page-subtitle">Kapasitas ruang dipakai untuk memeriksa jadwal dan jumlah anggota kelompok.</p>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # CARD 1: FORM TAMBAH RUANG
+        with st.form("form_add_room", clear_on_submit=True):
+            st.markdown('<div class="card-heading">Tambah ruang</div>', unsafe_allow_html=True)
+            col1, col2, col3 = st.columns([5, 4, 3])
+            with col1:
+                room_name = st.text_input("Nama ruang", placeholder="contoh: Ruang C")
+            with col2:
+                room_capacity = st.number_input("Kapasitas (siswa)", min_value=1, max_value=200, value=5, step=1)
+            with col3:
+                btn_simpan_room = st.form_submit_button("Simpan", type="primary", use_container_width=True)
+
+            if btn_simpan_room:
+                if not room_name.strip():
+                    st.warning("Nama ruang wajib diisi.")
+                else:
+                    try:
+                        database.add_room(room_name.strip(), int(room_capacity))
+                        try:
+                            database.sync_ruang_ke_html()
+                        except Exception:
+                            pass
+                        st.toast(f"✓ Ruang '{room_name.strip()}' berhasil ditambahkan ke Neon!", icon="🎉")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Gagal menambahkan ruang: {e}")
+
+        # GRID KARTU DAFTAR RUANG BELAJAR
+        try:
+            rooms = database.get_rooms()
+            if not rooms:
+                st.markdown(
+                    "<div style='background:#ffffff; border:1px solid #f0f4f8; border-radius:16px; padding:28px 20px; text-align:center; color:#64748b;'>"
+                    "Belum ada data ruang belajar di database Neon.</div>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                for i in range(0, len(rooms), 4):
+                    cols = st.columns(4)
+                    for col, room in zip(cols, rooms[i:i + 4]):
+                        with col:
+                            with st.container(border=True):
+                                st.markdown('<div class="room-card-marker"></div>', unsafe_allow_html=True)
+                                st.markdown(
+                                    f'<div class="room-card-title">{html.escape(str(room["name"]))}</div>'
+                                    f'<div class="room-card-capacity">Kapasitas <strong>{int(room["capacity"])}</strong> siswa</div>',
+                                    unsafe_allow_html=True,
+                                )
+                                btn_col1, btn_col2 = st.columns(2, gap="small")
+                                with btn_col1:
+                                    if st.button(
+                                        "Lihat",
+                                        key=f"btn_view_room_{room['id']}",
+                                        type="primary",
+                                        use_container_width=True,
+                                    ):
+                                        st.session_state.selected_room_detail = {
+                                            "id": room["id"],
+                                            "name": room["name"],
+                                            "capacity": room["capacity"],
+                                        }
+                                        st.rerun()
+                                with btn_col2:
+                                    if st.button(
+                                        "Hapus",
+                                        key=f"btn_del_room_{room['id']}",
+                                        type="secondary",
+                                        use_container_width=True,
+                                    ):
+                                        try:
+                                            database.delete_room(room['id'])
+                                            try:
+                                                database.sync_ruang_ke_html()
+                                                database.sync_jadwal_ke_html()
+                                            except Exception:
+                                                pass
+                                            st.toast(f"✓ Ruang '{room['name']}' berhasil dihapus dari Neon!", icon="🗑️")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(f"Gagal menghapus ruang: {e}")
+        except Exception as e:
+            st.error(f"Gagal mengambil data ruang belajar dari database Neon: {e}")
+
+
+# =============================================================================
+# 3D. KONTEN UTAMA: HALAMAN JADWAL BELAJAR (TERHUBUNG KE RUANG & TUTOR DI NEON)
+# =============================================================================
+elif menu == "Jadwal":
+    # TOP HEADER
+    st.markdown("""
+        <div class="top-header">
+            <div>
+                <h1 class="page-title">Jadwal Belajar</h1>
+                <p class="page-subtitle">Sebelum disimpan, sistem memeriksa bentrok ruang dan tutor pada hari yang sama.</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    try:
+        program_opts = database.get_programs()
+        tutor_opts = database.get_tutors()
+        room_opts = database.get_rooms()
+    except Exception as e:
+        program_opts, tutor_opts, room_opts = [], [], []
+        st.error(f"Gagal memuat data Program/Tutor/Ruang dari Neon: {e}")
+
+    # CARD 1: FORM TAMBAH JADWAL (PERSIS PUBLIC/JADWAL.HTML)
+    with st.form("form_add_schedule", clear_on_submit=False):
+        st.markdown('<div class="card-heading">Tambah jadwal</div>', unsafe_allow_html=True)
+        c1, c2, c3, c4, c5 = st.columns(5)
+        with c1:
+            if program_opts:
+                sel_prog = st.selectbox(
+                    "Kelompok",
+                    program_opts,
+                    format_func=lambda p: f"{p['name']} ({p['level']})",
+                )
+            else:
+                sel_prog = None
+                st.text_input("Kelompok", value="Belum ada program", disabled=True)
+        with c2:
+            if tutor_opts:
+                sel_tutor = st.selectbox(
+                    "Tutor",
+                    tutor_opts,
+                    format_func=lambda t: t["name"],
+                )
+            else:
+                sel_tutor = None
+                st.text_input("Tutor", value="Belum ada tutor", disabled=True)
+        with c3:
+            if room_opts:
+                sel_room = st.selectbox(
+                    "Ruang",
+                    room_opts,
+                    format_func=lambda r: r["name"],
+                )
+            else:
+                sel_room = None
+                st.text_input("Ruang", value="Belum ada ruang", disabled=True)
+        with c4:
+            sel_hari = st.selectbox(
+                "Hari",
+                ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
+            )
+        with c5:
+            jam_mulai = st.text_input("Mulai", value="15:00", placeholder="15:00")
+
+        s1, _ = st.columns([1, 4])
+        with s1:
+            jam_selesai = st.text_input("Selesai", value="16:30", placeholder="16:30")
+
+        btn_simpan_jadwal = st.form_submit_button("Periksa dan simpan", type="primary")
+
+        if btn_simpan_jadwal:
+            if not sel_prog or not sel_tutor or not sel_room:
+                st.warning("Pastikan data Program, Tutor, dan Ruang Belajar sudah tersedia di Neon.")
+            else:
+                try:
+                    database.add_schedule(
+                        sel_room["id"],
+                        sel_tutor["id"],
+                        sel_prog["id"],
+                        sel_hari,
+                        jam_mulai.strip() or "15:00",
+                        jam_selesai.strip() or "16:30",
+                    )
+                    try:
+                        database.sync_jadwal_ke_html()
+                    except Exception:
+                        pass
+                    st.toast(
+                        f"✓ Jadwal {sel_prog['name']} di {sel_room['name']} ({sel_hari}, {jam_mulai.strip()}–{jam_selesai.strip()}) tersimpan!",
+                        icon="🎉",
+                    )
+                    st.rerun()
+                except ValueError as ve:
+                    st.warning(f"⚠️ {ve}")
+                except Exception as e:
+                    st.error(f"Gagal menyimpan jadwal: {e}")
+
+    # CARD 2: TABEL DATA JADWAL (PERSIS PUBLIC/JADWAL.HTML)
+    with st.container(border=True):
+        st.markdown('<div class="table-card-marker"></div>', unsafe_allow_html=True)
+
+        th1, th2, th3, th4, th5, th6 = st.columns([1.4, 1.8, 2.5, 2.0, 1.1, 1.2])
+        with th1:
+            st.markdown('<div class="table-th table-header-marker">HARI</div>', unsafe_allow_html=True)
+        with th2:
+            st.markdown('<div class="table-th">WAKTU</div>', unsafe_allow_html=True)
+        with th3:
+            st.markdown('<div class="table-th">KELOMPOK</div>', unsafe_allow_html=True)
+        with th4:
+            st.markdown('<div class="table-th">TUTOR</div>', unsafe_allow_html=True)
+        with th5:
+            st.markdown('<div class="table-th">RUANG</div>', unsafe_allow_html=True)
+        with th6:
+            st.markdown('<div class="table-th"></div>', unsafe_allow_html=True)
+
+        try:
+            all_schedules = database.get_all_schedules()
+            if not all_schedules:
+                st.markdown(
+                    "<p style='text-align: center; color: #64748b; padding: 28px 20px; margin: 0;'>"
+                    "Belum ada data jadwal belajar di database Neon.</p>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                for s in all_schedules:
+                    r1, r2, r3, r4, r5, r6 = st.columns([1.4, 1.8, 2.5, 2.0, 1.1, 1.2])
+                    with r1:
+                        st.markdown(
+                            f'<div class="program-name-cell">{html.escape(str(s["day"]))}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r2:
+                        st.markdown(
+                            f'<div class="table-text-cell">{html.escape(str(s["start_time"]))}–{html.escape(str(s["end_time"]))}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r3:
+                        kelompok_txt = str(s.get("program_name") or s.get("group_name") or "-")
+                        st.markdown(
+                            f'<div class="table-text-cell">{html.escape(kelompok_txt)}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r4:
+                        st.markdown(
+                            f'<div class="table-text-cell">{html.escape(str(s["tutor_name"]))}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r5:
+                        st.markdown(
+                            f'<div class="table-text-cell">{html.escape(str(s["room_name"]))}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r6:
+                        if st.button("Hapus", key=f"btn_del_jadwal_{s['schedule_id']}", type="secondary"):
+                            try:
+                                database.delete_schedule(s["schedule_id"])
+                                try:
+                                    database.sync_jadwal_ke_html()
+                                except Exception:
+                                    pass
+                                st.toast("✓ Jadwal berhasil dihapus dari Neon!", icon="🗑️")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Gagal menghapus jadwal: {e}")
+        except Exception as e:
+            st.error(f"Gagal mengambil data jadwal dari database Neon: {e}")
+
+
+# =============================================================================
 # 4. MENU LAINNYA: TAMPILKAN FILE HTML DARI FOLDER PUBLIC/
 # =============================================================================
 else:
     file_map = {
         "Dashboard": "dashboard.html",
         "Siswa dan Wali": "siswa.html",
-        "Tutor": "tutor.html",
-        "Ruang Belajar": "ruang_belajar.html",
         "Kelompok Belajar": "kelompok_belajar.html",
-        "Jadwal": "jadwal.html",
         "Tagihan": "tagihan.html",
         "Pembayaran": "pembayaran.html"
     }

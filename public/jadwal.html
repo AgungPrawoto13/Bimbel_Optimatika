@@ -116,6 +116,7 @@
               </tr>
             </thead>
             <tbody id="scheduleListBody">
+              <!-- DATA_JADWAL_START -->
               <!-- Baris 1: Senin Matematika SMP 1 -->
               <tr data-hari="Senin" data-ruang="Ruang A" data-tutor="Kak Rina" data-waktu="15:00–16:30">
                 <td><strong>Senin</strong></td>
@@ -151,6 +152,7 @@
                   <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, 'Rabu - IPA Terpadu 1')">Hapus</button>
                 </td>
               </tr>
+              <!-- DATA_JADWAL_END -->
             </tbody>
           </table>
         </div>
@@ -165,14 +167,103 @@
     // 1. Aktifkan menu 'Jadwal' di sidebar
     renderSidebar('jadwal');
 
-    // 2. Fungsi Pemeriksaan Bentrok & Simpan Jadwal (Fitur Unggulan Skripsi!)
-    function handleSimpanJadwal() {
-      const kelompok = document.getElementById('selectKelompok').value;
-      const tutor = document.getElementById('selectTutor').value;
-      const ruang = document.getElementById('selectRuang').value;
+    const API_BASE = (window.location.protocol === 'file:') ? 'http://localhost:8000' : '';
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text ?? '';
+      return div.innerHTML;
+    }
+
+    async function callApi(pathWithQuery) {
+      let res = await fetch(`${API_BASE}${pathWithQuery}`);
+      if (res.status === 404 && API_BASE === '' && !['8000', '8080'].includes(window.location.port)) {
+        res = await fetch(`http://localhost:8000${pathWithQuery}`);
+      }
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (_) {
+        data = null;
+      }
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('HTTP 404: Endpoint /api/jadwal tidak ditemukan. Jalankan ulang "python3 database.py standby" dan buka via http://localhost:8000/jadwal.html');
+        }
+        throw new Error((data && data.error) ? data.error : `HTTP ${res.status} (${res.statusText})`);
+      }
+      return data;
+    }
+
+    function renderScheduleRows(schedules) {
+      const tbody = document.getElementById('scheduleListBody');
+      if (!schedules || schedules.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Belum ada data jadwal di database Neon.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = schedules.map(s => {
+        const waktu = `${s.start_time || ''}–${s.end_time || ''}`;
+        const kelompok = s.program_name || s.group_name || '-';
+        const tutor = s.tutor_name || '-';
+        const ruang = s.room_name || '-';
+        const jsInfo = `${s.day} - ${kelompok}`.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+        return `
+          <tr data-hari="${escapeHtml(s.day)}" data-ruang="${escapeHtml(ruang)}" data-tutor="${escapeHtml(tutor)}" data-waktu="${escapeHtml(waktu)}">
+            <td><strong>${escapeHtml(s.day)}</strong></td>
+            <td>${escapeHtml(waktu)}</td>
+            <td>${escapeHtml(kelompok)}</td>
+            <td>${escapeHtml(tutor)}</td>
+            <td>${escapeHtml(ruang)}</td>
+            <td class="text-end pe-4">
+              <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, '${jsInfo}', ${Number(s.schedule_id)})">Hapus</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function muatJadwalDariNeon() {
+      try {
+        const data = await callApi('/api/jadwal/list');
+        if (!data || !data.success) return;
+
+        const selKelompok = document.getElementById('selectKelompok');
+        const selTutor = document.getElementById('selectTutor');
+        const selRuang = document.getElementById('selectRuang');
+
+        selKelompok.innerHTML = (data.programs || []).map(p =>
+          `<option value="${Number(p.id)}">${escapeHtml(p.name)} (${escapeHtml(p.level)})</option>`
+        ).join('') || '<option value="">Belum ada program</option>';
+
+        selTutor.innerHTML = (data.tutors || []).map(t =>
+          `<option value="${Number(t.id)}">${escapeHtml(t.name)}</option>`
+        ).join('') || '<option value="">Belum ada tutor</option>';
+
+        selRuang.innerHTML = (data.rooms || []).map(r =>
+          `<option value="${Number(r.id)}">${escapeHtml(r.name)}</option>`
+        ).join('') || '<option value="">Belum ada ruang</option>';
+
+        renderScheduleRows(data.schedules || []);
+      } catch (_) {
+        // Fallback diam jika dibuka sebagai file statis tanpa server standby
+      }
+    }
+
+    // 2. Fungsi Pemeriksaan Bentrok & Simpan Jadwal ke Neon PostgreSQL
+    async function handleSimpanJadwal() {
+      const programId = document.getElementById('selectKelompok').value;
+      const tutorId = document.getElementById('selectTutor').value;
+      const roomId = document.getElementById('selectRuang').value;
       const hari = document.getElementById('selectHari').value;
       const mulai = document.getElementById('timeMulai').value;
       const selesai = document.getElementById('timeSelesai').value;
+
+      if (!programId || !tutorId || !roomId) {
+        alert('Kelompok/Program, Tutor, dan Ruang wajib dipilih!');
+        return;
+      }
 
       if (!mulai || !selesai) {
         alert('Jam mulai dan selesai wajib diisi!');
@@ -184,61 +275,43 @@
         return;
       }
 
-      const rentangWaktu = `${mulai}–${selesai}`;
-
-      // PERIKSA BENTROK JADWAL SECARA OTOMATIS
-      const rows = document.querySelectorAll('#scheduleListBody tr');
-      for (const row of rows) {
-        const rowHari = row.getAttribute('data-hari');
-        const rowRuang = row.getAttribute('data-ruang');
-        const rowTutor = row.getAttribute('data-tutor');
-        const rowWaktu = row.getAttribute('data-waktu');
-
-        // Jika hari dan waktunya bersamaan
-        if (rowHari === hari && rowWaktu === rentangWaktu) {
-          // Bentrok Ruangan
-          if (rowRuang === ruang) {
-            alert(`⚠️ JADWAL BENTROK!\n${ruang} sudah digunakan pada hari ${hari} pukul ${rentangWaktu}.\nSistem membatalkan penyimpanan.`);
-            return;
-          }
-          // Bentrok Pengajar / Tutor
-          if (rowTutor === tutor) {
-            alert(`⚠️ TUTOR BENTROK!\n${tutor} sudah memiliki jadwal mengajar lain pada hari ${hari} pukul ${rentangWaktu}.\nSistem membatalkan penyimpanan.`);
-            return;
-          }
-        }
-      }
-
-      // JIKA TIDAK ADA BENTROK, TAMBAHKAN KE TABEL
-      const tbody = document.getElementById('scheduleListBody');
-      const newRow = document.createElement('tr');
-      newRow.setAttribute('data-hari', hari);
-      newRow.setAttribute('data-ruang', ruang);
-      newRow.setAttribute('data-tutor', tutor);
-      newRow.setAttribute('data-waktu', rentangWaktu);
-
-      newRow.innerHTML = `
-        <td><strong>${hari}</strong></td>
-        <td>${rentangWaktu}</td>
-        <td>${kelompok}</td>
-        <td>${tutor}</td>
-        <td>${ruang}</td>
-        <td class="text-end pe-4">
-          <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, '${hari} - ${kelompok}')">Hapus</button>
-        </td>
-      `;
-      tbody.appendChild(newRow);
-
-      alert(`✅ Berhasil! Tidak ada jadwal bentrok.\nJadwal ${kelompok} (${hari}, ${rentangWaktu}) berhasil disimpan!`);
-    }
-
-    // 3. Fungsi Hapus Jadwal
-    function hapusJadwal(buttonElement, infoJadwal) {
-      if (confirm(`Apakah Anda yakin ingin menghapus jadwal "${infoJadwal}"?`)) {
-        const row = buttonElement.closest('tr');
-        row.remove();
+      try {
+        const params = new URLSearchParams({
+          program_id: programId,
+          tutor_id: tutorId,
+          room_id: roomId,
+          day: hari,
+          start_time: mulai,
+          end_time: selesai
+        });
+        await callApi(`/api/jadwal/tambah?${params.toString()}`);
+        await muatJadwalDariNeon();
+        alert(`✅ Berhasil! Tidak ada jadwal bentrok.\nJadwal (${hari}, ${mulai}–${selesai}) berhasil disimpan ke Neon PostgreSQL!`);
+      } catch (err) {
+        alert(`⚠️ ${err.message}`);
       }
     }
+
+    // 3. Fungsi Hapus Jadwal dari Neon PostgreSQL
+    async function hapusJadwal(buttonElement, infoJadwal, scheduleId) {
+      if (!confirm(`Yakin ingin menghapus jadwal "${infoJadwal}" dari database Neon?`)) {
+        return;
+      }
+
+      if (!scheduleId) {
+        alert('Data jadwal ini belum tersinkron dengan ID database Neon. Pastikan server "python3 database.py standby" berjalan lalu refresh halaman.');
+        return;
+      }
+
+      try {
+        await callApi(`/api/jadwal/hapus?id=${encodeURIComponent(scheduleId)}`);
+        await muatJadwalDariNeon();
+      } catch (err) {
+        alert(`Gagal menghapus jadwal dari Neon PostgreSQL:\n${err.message}`);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', muatJadwalDariNeon);
   </script>
 </body>
 </html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optimatika · Detail Jadwal Ruang Belajar</title>
+  <!-- Bootstrap 5 & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .btn-back-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 8px 16px;
+      font-size: 13.5px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+    .btn-back-pill:hover {
+      background-color: #f8fafc;
+      border-color: #94a3b8;
+      color: #121826;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="d-flex flex-column flex-lg-row">
+    <!-- 1. TEMPAT SIDEBAR OTOMATIS -->
+    <div id="sidebar-container"></div>
+
+    <!-- 2. KONTEN UTAMA HALAMAN -->
+    <main class="main-wrapper flex-grow-1">
+
+      <!-- TOP HEADER -->
+      <div class="top-header">
+        <div>
+          <h1 class="page-title" id="detailRoomTitle">Jadwal Kelas · Ruang Belajar</h1>
+          <p class="page-subtitle" id="detailRoomSubtitle">Daftar tutor, mata pelajaran, serta jam mulai dan berakhir kelas di ruang ini.</p>
+        </div>
+        <a href="ruang_belajar.html" class="btn-back-pill">
+          <i class="bi bi-arrow-left"></i>
+          <span>Kembali ke Ruang Belajar</span>
+        </a>
+      </div>
+
+      <!-- CARD 1: FORM TAMBAH JADWAL KELAS DI RUANG -->
+      <div class="custom-card mb-4">
+        <div class="card-heading">Tambah jadwal kelas</div>
+        <form id="formAddRoomSchedule" onsubmit="event.preventDefault(); tambahJadwalRuang();">
+          <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+              <label for="schedTutorId" class="form-label-custom">Tutor</label>
+              <select class="form-select-custom" id="schedTutorId" required></select>
+            </div>
+
+            <div class="col-12 col-md-3">
+              <label for="schedProgramId" class="form-label-custom">Mata pelajaran</label>
+              <select class="form-select-custom" id="schedProgramId" required></select>
+            </div>
+
+            <div class="col-12 col-md-2">
+              <label for="schedDay" class="form-label-custom">Hari</label>
+              <select class="form-select-custom" id="schedDay">
+                <option value="Senin">Senin</option>
+                <option value="Selasa">Selasa</option>
+                <option value="Rabu">Rabu</option>
+                <option value="Kamis">Kamis</option>
+                <option value="Jumat">Jumat</option>
+                <option value="Sabtu">Sabtu</option>
+                <option value="Minggu">Minggu</option>
+              </select>
+            </div>
+
+            <div class="col-6 col-md-1">
+              <label for="schedStartTime" class="form-label-custom">Mulai</label>
+              <input type="time" class="form-control-custom" id="schedStartTime" value="15:00" required>
+            </div>
+
+            <div class="col-6 col-md-1">
+              <label for="schedEndTime" class="form-label-custom">Berakhir</label>
+              <input type="time" class="form-control-custom" id="schedEndTime" value="16:30" required>
+            </div>
+
+            <div class="col-12 col-md-2">
+              <button type="submit" class="btn-primary-custom w-100">
+                Simpan
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- CARD 2: TABEL JADWAL KELAS DI RUANG -->
+      <div class="custom-card p-0 overflow-hidden">
+        <div class="table-responsive-custom">
+          <table class="custom-table" id="tableRoomDetail">
+            <thead>
+              <tr>
+                <th style="width: 26%;">TUTOR</th>
+                <th style="width: 26%;">MATA PELAJARAN</th>
+                <th style="width: 12%;">HARI</th>
+                <th style="width: 16%;">WAKTU</th>
+                <th style="width: 10%;">STATUS</th>
+                <th style="width: 10%; text-align: right; padding-right: 28px;"></th>
+              </tr>
+            </thead>
+            <tbody id="roomScheduleBody">
+              <tr>
+                <td colspan="6" class="text-center py-4 text-muted">Memuat jadwal kelas dari Neon PostgreSQL...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Panggil JavaScript Sidebar Reusable -->
+  <script src="js/sidebar.js"></script>
+  <script>
+    renderSidebar('ruang');
+
+    const API_BASE = (window.location.protocol === 'file:') ? 'http://localhost:8000' : '';
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get('room_id');
+    const roomNameParam = urlParams.get('name') || 'Ruang Belajar';
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text ?? '';
+      return div.innerHTML;
+    }
+
+    async function callApi(pathWithQuery) {
+      let res = await fetch(`${API_BASE}${pathWithQuery}`);
+      if (res.status === 404 && API_BASE === '' && !['8000', '8080'].includes(window.location.port)) {
+        res = await fetch(`http://localhost:8000${pathWithQuery}`);
+      }
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (_) {
+        data = null;
+      }
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('HTTP 404: Endpoint tidak ditemukan. Jalankan ulang "python3 database.py standby" dan akses lewat http://localhost:8000/ruang_belajar.html');
+        }
+        throw new Error((data && data.error) ? data.error : `HTTP ${res.status} (${res.statusText})`);
+      }
+      return data;
+    }
+
+    function renderSchedules(schedules) {
+      const tbody = document.getElementById('roomScheduleBody');
+      if (!schedules || schedules.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">Belum ada jadwal kelas yang terdaftar di ruang ini.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = schedules.map(s => {
+        const ongoing = Boolean(s.is_ongoing);
+        const badge = ongoing
+          ? '<span class="badge-status badge-status-aktif">Berlangsung</span>'
+          : '<span class="badge-level">Terjadwal</span>';
+        const mapelLabel = (s.program_name && s.subject_name && s.program_name !== s.subject_name)
+          ? `${escapeHtml(s.program_name)} (${escapeHtml(s.subject_name)})`
+          : escapeHtml(s.program_name || s.subject_name || '-');
+
+        return `
+          <tr>
+            <td><strong>${escapeHtml(s.tutor_name)}</strong></td>
+            <td>${mapelLabel}</td>
+            <td>${escapeHtml(s.day)}</td>
+            <td>${escapeHtml(s.start_time)} – ${escapeHtml(s.end_time)}</td>
+            <td>${badge}</td>
+            <td class="text-end pe-4">
+              <button type="button" class="btn-delete-pill" onclick="hapusJadwalRuang(${Number(s.schedule_id)})">Hapus</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function muatDetailRuang() {
+      document.getElementById('detailRoomTitle').textContent = `Jadwal Kelas · ${roomNameParam}`;
+      if (!roomId) {
+        document.getElementById('roomScheduleBody').innerHTML =
+          '<tr><td colspan="6" class="text-center py-4 text-danger">ID ruang tidak ditemukan di URL. Silakan kembali ke halaman Ruang Belajar.</td></tr>';
+        return;
+      }
+
+      try {
+        const data = await callApi(`/api/ruang/jadwal?room_id=${encodeURIComponent(roomId)}`);
+        if (data.room && data.room.name) {
+          document.getElementById('detailRoomTitle').textContent = `Jadwal Kelas · ${data.room.name}`;
+          document.getElementById('detailRoomSubtitle').textContent =
+            `Kapasitas ${data.room.capacity} siswa · ${(data.schedules || []).length} jadwal kelas terdaftar.`;
+        }
+
+        const tutorSelect = document.getElementById('schedTutorId');
+        const programSelect = document.getElementById('schedProgramId');
+
+        tutorSelect.innerHTML = (data.tutors || []).map(t =>
+          `<option value="${Number(t.id)}">${escapeHtml(t.name)} (${escapeHtml(t.specialty)})</option>`
+        ).join('') || '<option value="">Belum ada data tutor</option>';
+
+        programSelect.innerHTML = (data.programs || []).map(p =>
+          `<option value="${Number(p.id)}">${escapeHtml(p.name)} (${escapeHtml(p.level)})</option>`
+        ).join('') || '<option value="">Belum ada data program</option>';
+
+        renderSchedules(data.schedules || []);
+      } catch (err) {
+        document.getElementById('roomScheduleBody').innerHTML =
+          `<tr><td colspan="6" class="text-center py-4 text-danger">Gagal memuat jadwal: ${escapeHtml(err.message)}</td></tr>`;
+      }
+    }
+
+    async function tambahJadwalRuang() {
+      if (!roomId) return;
+      const tutorId = document.getElementById('schedTutorId').value;
+      const programId = document.getElementById('schedProgramId').value;
+      const day = document.getElementById('schedDay').value;
+      const startTime = document.getElementById('schedStartTime').value;
+      const endTime = document.getElementById('schedEndTime').value;
+
+      try {
+        const params = new URLSearchParams({
+          room_id: roomId,
+          tutor_id: tutorId,
+          program_id: programId,
+          day: day,
+          start_time: startTime,
+          end_time: endTime
+        });
+        await callApi(`/api/ruang/jadwal/tambah?${params.toString()}`);
+        await muatDetailRuang();
+      } catch (err) {
+        alert(`Gagal menyimpan jadwal:\n${err.message}`);
+      }
+    }
+
+    async function hapusJadwalRuang(scheduleId) {
+      if (!confirm('Yakin ingin menghapus jadwal kelas ini dari ruang?')) return;
+      try {
+        await callApi(`/api/ruang/jadwal/hapus?id=${encodeURIComponent(scheduleId)}`);
+        await muatDetailRuang();
+      } catch (err) {
+        alert(`Gagal menghapus jadwal:\n${err.message}`);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', muatDetailRuang);
+  </script>
+</body>
+</html>

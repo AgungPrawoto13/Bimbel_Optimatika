@@ -8,6 +8,74 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    .btn-view-pill {
+      background: transparent;
+      color: #1e50bb;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 13.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-view-pill:hover {
+      background-color: #eff6ff;
+      border-color: #60a5fa;
+      color: #173fa0;
+    }
+    .room-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+    }
+    .room-modal-backdrop.show {
+      display: flex;
+    }
+    .room-modal-box {
+      background: #ffffff;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 620px;
+      padding: 24px 28px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .schedule-item-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      background: #f8fafc;
+    }
+    .schedule-item-card.ongoing {
+      border-color: #86efac;
+      background: #f0fdf4;
+    }
+    .badge-ongoing {
+      background: #dcfce7;
+      color: #15803d;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 9999px;
+    }
+    .badge-scheduled {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 9999px;
+    }
+  </style>
 </head>
 <body>
 
@@ -55,50 +123,60 @@
 
       <!-- GRID KARTU DAFTAR RUANG BELAJAR -->
       <div class="row g-4" id="roomCardContainer">
-        <!-- Kartu 1: Ruang A -->
+        <!-- DATA_ROOM_START -->
         <div class="col-12 col-md-4 col-lg-3">
           <div class="custom-card mb-0 h-100 d-flex flex-column justify-content-between">
             <div>
-              <h5 class="fw-bold mb-2 text-dark">Ruang A</h5>
+              <h5 class="fw-bold mb-2 text-dark">RUANG A</h5>
               <p class="text-muted mb-3" style="font-size: 14.5px;">
                 Kapasitas <strong>5</strong> siswa
               </p>
             </div>
-            <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, 'Ruang A')">
+            <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, 'RUANG A', 4)">
               Hapus
             </button>
           </div>
         </div>
-
-        <!-- Kartu 2: Ruang B -->
         <div class="col-12 col-md-4 col-lg-3">
           <div class="custom-card mb-0 h-100 d-flex flex-column justify-content-between">
             <div>
-              <h5 class="fw-bold mb-2 text-dark">Ruang B</h5>
+              <h5 class="fw-bold mb-2 text-dark">RUANG B</h5>
               <p class="text-muted mb-3" style="font-size: 14.5px;">
                 Kapasitas <strong>5</strong> siswa
               </p>
             </div>
-            <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, 'Ruang B')">
+            <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, 'RUANG B', 5)">
               Hapus
             </button>
           </div>
         </div>
-
-        <!-- Kartu 3: Ruang Privat -->
         <div class="col-12 col-md-4 col-lg-3">
           <div class="custom-card mb-0 h-100 d-flex flex-column justify-content-between">
             <div>
-              <h5 class="fw-bold mb-2 text-dark">Ruang Privat</h5>
+              <h5 class="fw-bold mb-2 text-dark">RUANG C</h5>
               <p class="text-muted mb-3" style="font-size: 14.5px;">
-                Kapasitas <strong>2</strong> siswa
+                Kapasitas <strong>5</strong> siswa
               </p>
             </div>
-            <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, 'Ruang Privat')">
+            <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, 'RUANG C', 6)">
               Hapus
             </button>
           </div>
         </div>
+        <div class="col-12 col-md-4 col-lg-3">
+          <div class="custom-card mb-0 h-100 d-flex flex-column justify-content-between">
+            <div>
+              <h5 class="fw-bold mb-2 text-dark">RUANG D</h5>
+              <p class="text-muted mb-3" style="font-size: 14.5px;">
+                Kapasitas <strong>5</strong> siswa
+              </p>
+            </div>
+            <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, 'RUANG D', 7)">
+              Hapus
+            </button>
+          </div>
+        </div>
+        <!-- DATA_ROOM_END -->
       </div>
 
     </main>
@@ -110,8 +188,80 @@
     // 1. Aktifkan menu 'Ruang Belajar' di sidebar otomatis
     renderSidebar('ruang');
 
-    // 2. Fungsi Simpan Ruang Baru (Simulasi UI Ramah Skripsi)
-    function handleSimpanRuang() {
+    const API_BASE = (window.location.protocol === 'file:') ? 'http://localhost:8000' : '';
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text ?? '';
+      return div.innerHTML;
+    }
+
+    function renderRoomCards(rooms) {
+      const container = document.getElementById('roomCardContainer');
+      if (!rooms || rooms.length === 0) {
+        container.innerHTML = '<div class="col-12"><div class="custom-card text-center text-muted py-4">Belum ada data ruang belajar di database Neon.</div></div>';
+        return;
+      }
+
+      container.innerHTML = rooms.map(r => {
+        const jsName = String(r.name).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const cap = Number(r.capacity) || 0;
+        return `
+          <div class="col-12 col-md-4 col-lg-3">
+            <div class="custom-card mb-0 h-100 d-flex flex-column justify-content-between">
+              <div>
+                <h5 class="fw-bold mb-2 text-dark">${escapeHtml(r.name)}</h5>
+                <p class="text-muted mb-3" style="font-size: 14.5px;">
+                  Kapasitas <strong>${cap}</strong> siswa
+                </p>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn-view-pill w-50 text-center" onclick="lihatRuang('${jsName}', ${Number(r.id)})">
+                  Lihat
+                </button>
+                <button type="button" class="btn-delete-pill w-50 text-center" onclick="hapusRuang(this, '${jsName}', ${Number(r.id)})">
+                  Hapus
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function callApi(pathWithQuery) {
+      let res = await fetch(`${API_BASE}${pathWithQuery}`);
+      if (res.status === 404 && API_BASE === '' && !['8000', '8080'].includes(window.location.port)) {
+        res = await fetch(`http://localhost:8000${pathWithQuery}`);
+      }
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (_) {
+        data = null;
+      }
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('HTTP 404: Endpoint /api/ruang tidak ditemukan. Hentikan lalu jalankan ulang "python3 database.py standby", dan buka via http://localhost:8000/ruang_belajar.html');
+        }
+        throw new Error((data && data.error) ? data.error : `HTTP ${res.status} (${res.statusText})`);
+      }
+      return data;
+    }
+
+    async function muatRuangDariNeon() {
+      try {
+        const data = await callApi('/api/ruang/list');
+        if (data && data.success && Array.isArray(data.rooms)) {
+          renderRoomCards(data.rooms);
+        }
+      } catch (_) {
+        // Fallback diam jika dibuka sebagai file statis tanpa server standby
+      }
+    }
+
+    // 2. Fungsi Simpan Ruang Baru ke Neon PostgreSQL
+    async function handleSimpanRuang() {
       const nama = document.getElementById('inputNamaRuang').value.trim();
       const kapasitas = document.getElementById('inputKapasitas').value;
 
@@ -120,39 +270,49 @@
         return;
       }
 
-      // Buat kartu baru di dalam Grid
-      const container = document.getElementById('roomCardContainer');
-      const newCardCol = document.createElement('div');
-      newCardCol.className = 'col-12 col-md-4 col-lg-3';
-      newCardCol.innerHTML = `
-        <div class="custom-card mb-0 h-100 d-flex flex-column justify-content-between">
-          <div>
-            <h5 class="fw-bold mb-2 text-dark">${nama}</h5>
-            <p class="text-muted mb-3" style="font-size: 14.5px;">
-              Kapasitas <strong>${kapasitas}</strong> siswa
-            </p>
-          </div>
-          <button type="button" class="btn-delete-pill w-100 text-center" onclick="hapusRuang(this, '${nama}')">
-            Hapus
-          </button>
-        </div>
-      `;
-      container.appendChild(newCardCol);
+      try {
+        const params = new URLSearchParams({
+          name: nama,
+          capacity: String(kapasitas || 5)
+        });
+        const data = await callApi(`/api/ruang/tambah?${params.toString()}`);
+        if (!data || !data.success) throw new Error((data && data.error) || 'Gagal menyimpan data ruang');
 
-      // Reset form input
-      document.getElementById('inputNamaRuang').value = '';
-      document.getElementById('inputKapasitas').value = '5';
-
-      alert(`Ruang "${nama}" berhasil ditambahkan!`);
-    }
-
-    // 3. Fungsi Hapus Ruang
-    function hapusRuang(buttonElement, namaRuang) {
-      if (confirm(`Apakah Anda yakin ingin menghapus "${namaRuang}"?`)) {
-        const cardCol = buttonElement.closest('.col-12');
-        cardCol.remove();
+        document.getElementById('inputNamaRuang').value = '';
+        document.getElementById('inputKapasitas').value = '5';
+        await muatRuangDariNeon();
+        alert(`Ruang "${nama}" berhasil disimpan ke Neon PostgreSQL!`);
+      } catch (err) {
+        alert(`Gagal menyimpan ke Neon PostgreSQL:\n${err.message}`);
       }
     }
+
+    // 3. Fungsi Hapus Ruang dari Neon PostgreSQL
+    async function hapusRuang(buttonElement, namaRuang, roomId) {
+      if (!confirm(`Yakin ingin menghapus ruang "${namaRuang}" dari database Neon?`)) {
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams(roomId ? { id: String(roomId) } : { name: namaRuang });
+        const data = await callApi(`/api/ruang/hapus?${params.toString()}`);
+        if (!data || !data.success) throw new Error((data && data.error) || 'Ruang tidak ditemukan di database');
+
+        await muatRuangDariNeon();
+      } catch (err) {
+        alert(`Gagal menghapus dari Neon PostgreSQL:\n${err.message}`);
+      }
+    }
+
+    function lihatRuang(namaRuang, roomId) {
+      const params = new URLSearchParams({
+        room_id: String(roomId || ''),
+        name: namaRuang || 'Ruang Belajar'
+      });
+      window.location.href = `ruang_belajar_detail.html?${params.toString()}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', muatRuangDariNeon);
   </script>
 </body>
 </html>
