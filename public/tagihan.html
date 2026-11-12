@@ -64,12 +64,13 @@
               </tr>
             </thead>
             <tbody id="tagihanListBody">
-              <!-- Default Kosong Sesuai Gambar: "Belum ada tagihan pada periode ini." -->
+              <!-- DATA_TAGIHAN_START -->
               <tr id="emptyRow">
                 <td colspan="5" class="text-center py-5 text-muted" style="font-size: 14.5px;">
                   Belum ada tagihan pada periode ini.
                 </td>
               </tr>
+              <!-- DATA_TAGIHAN_END -->
             </tbody>
           </table>
         </div>
@@ -81,51 +82,101 @@
   <!-- Panggil JavaScript Sidebar Reusable -->
   <script src="js/sidebar.js"></script>
   <script>
-    // 1. Aktifkan menu 'Tagihan' di sidebar otomatis
     renderSidebar('tagihan');
 
-    // 2. Data Siswa & Tarif Tagihan per Program
-    const dataSiswaTagihan = [
-      { no: 'TGH-202610-001', nama: 'Alya Putri', program: 'Calistung', nominal: 'Rp 200.000' },
-      { no: 'TGH-202610-002', nama: 'Bagas Pratama', program: 'Matematika SMP', nominal: 'Rp 300.000' },
-      { no: 'TGH-202610-003', nama: 'Citra Maharani', program: 'Persiapan UTBK', nominal: 'Rp 450.000' },
-      { no: 'TGH-202610-004', nama: 'Dimas Aditya', program: 'Matematika SMP', nominal: 'Rp 300.000' },
-      { no: 'TGH-202610-005', nama: 'Eka Lestari', program: 'Matematika SD', nominal: 'Rp 250.000' }
-    ];
+    const API_BASE = (window.location.protocol === 'file:') ? 'http://localhost:8000' : '';
 
-    // 3. Fungsi Terbitkan Tagihan Massal
-    function terbitkanTagihan() {
-      const periode = document.getElementById('selectPeriode').value;
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text ?? '';
+      return div.innerHTML;
+    }
+
+    function formatRupiah(nominal) {
+      return 'Rp ' + Math.round(Number(nominal || 0)).toLocaleString('id-ID');
+    }
+
+    async function callApi(pathWithQuery) {
+      let res = await fetch(`${API_BASE}${pathWithQuery}`);
+      if (res.status === 404 && API_BASE === '' && !['8000', '8080'].includes(window.location.port)) {
+        res = await fetch(`http://localhost:8000${pathWithQuery}`);
+      }
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (_) {
+        data = null;
+      }
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('HTTP 404: Endpoint tidak ditemukan. Jalankan ulang "python3 database.py standby" dan akses lewat http://localhost:8000/tagihan.html');
+        }
+        throw new Error((data && data.error) ? data.error : `HTTP ${res.status} (${res.statusText})`);
+      }
+      return data;
+    }
+
+    function renderTagihanTabel(bills, periode) {
       const tbody = document.getElementById('tagihanListBody');
-
-      // Tampilkan notifikasi konfirmasi
-      if (confirm(`Apakah Anda yakin ingin menerbitkan tagihan untuk seluruh siswa aktif pada periode ${periode}?`)) {
-        // Render baris data tagihan yang telah terbit
-        tbody.innerHTML = dataSiswaTagihan.map(item => `
-          <tr>
-            <td><code>${item.no}</code></td>
-            <td><strong>${item.nama}</strong></td>
-            <td>${item.program}</td>
-            <td>${periode}</td>
-            <td class="text-end pe-4"><strong>${item.nominal}</strong></td>
+      if (!bills || bills.length === 0) {
+        tbody.innerHTML = `
+          <tr id="emptyRow">
+            <td colspan="5" class="text-center py-5 text-muted" style="font-size: 14.5px;">
+              Belum ada tagihan pada periode ini.
+            </td>
           </tr>
-        `).join('');
+        `;
+        return;
+      }
 
-        alert(`✅ Sukses! Tagihan periode ${periode} berhasil diterbitkan untuk 5 siswa aktif.`);
+      tbody.innerHTML = bills.map(b => {
+        const badgeStatus = b.is_lunas
+          ? '<span class="badge-status badge-status-lunas ms-2" style="font-size: 11px; padding: 2px 10px;">Sudah Bayar</span>'
+          : '<span class="badge-status badge-status-belum ms-2" style="font-size: 11px; padding: 2px 10px;">Belum Bayar</span>';
+
+        return `
+          <tr>
+            <td><code>${escapeHtml(b.invoice_no)}</code></td>
+            <td><strong>${escapeHtml(b.student_name)}</strong>${badgeStatus}</td>
+            <td>${escapeHtml(b.program_name)}</td>
+            <td>${escapeHtml(b.period || periode)}</td>
+            <td class="text-end pe-4"><strong>${formatRupiah(b.total_amount || b.amount)}</strong></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function gantiPeriode() {
+      const periode = document.getElementById('selectPeriode').value;
+      try {
+        const data = await callApi(`/api/tagihan/list?periode=${encodeURIComponent(periode)}`);
+        if (data && data.success) {
+          renderTagihanTabel(data.bills, periode);
+        }
+      } catch (_) {
+        // Fallback default
+        renderTagihanTabel([], periode);
       }
     }
 
-    // 4. Fungsi saat Periode Diubah (Bisa kembali ke tampilan default kosong)
-    function gantiPeriode() {
-      const tbody = document.getElementById('tagihanListBody');
-      tbody.innerHTML = `
-        <tr id="emptyRow">
-          <td colspan="5" class="text-center py-5 text-muted" style="font-size: 14.5px;">
-            Belum ada tagihan pada periode ini.
-          </td>
-        </tr>
-      `;
+    async function terbitkanTagihan() {
+      const periode = document.getElementById('selectPeriode').value;
+      if (!confirm(`Apakah Anda yakin ingin menerbitkan tagihan untuk seluruh siswa aktif pada periode ${periode}?`)) {
+        return;
+      }
+
+      try {
+        const data = await callApi(`/api/tagihan/terbitkan?periode=${encodeURIComponent(periode)}`);
+        if (data && data.success) {
+          renderTagihanTabel(data.bills, periode);
+          alert(`✅ Sukses! Tagihan periode ${periode} berhasil diterbitkan untuk ${data.bills.length} siswa aktif.`);
+        }
+      } catch (err) {
+        alert(`Gagal menerbitkan tagihan:\n${err.message}`);
+      }
     }
+
+    document.addEventListener('DOMContentLoaded', gantiPeriode);
   </script>
 </body>
 </html>

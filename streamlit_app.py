@@ -9,7 +9,7 @@ import database
 _db_file = getattr(database, "__file__", None)
 if _db_file and os.path.exists(_db_file):
     _db_mtime = os.path.getmtime(_db_file)
-    if st.session_state.get("_db_mtime") != _db_mtime or not hasattr(database, "get_tutors"):
+    if st.session_state.get("_db_mtime") != _db_mtime or not hasattr(database, "get_tutors") or not hasattr(database, "get_billing_summary") or not hasattr(database, "publish_bills_for_period"):
         importlib.reload(database)
         st.session_state["_db_mtime"] = _db_mtime
 
@@ -606,6 +606,147 @@ st.markdown("""
     .badge-status-nonaktif {
         background-color: #e8ecf2;
         color: #475569;
+    }
+
+    .badge-status-lunas {
+        background-color: #e6f4ea;
+        color: #137333;
+    }
+
+    .badge-status-belum {
+        background-color: #fef7e0;
+        color: #92400e;
+    }
+
+    .badge-status-menunggak {
+        background-color: #fce8e6;
+        color: #c5221f;
+    }
+
+    /* Card putih untuk kontainer non-form (misal Card Periode Tagihan) */
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .card-box-marker),
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .card-box-marker),
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .card-box-marker),
+    div[data-testid="stVerticalBlockBorderWrapper"]:has(> [data-testid="stVerticalBlock"] > [data-testid="element-container"] .card-box-marker) {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--card-border) !important;
+        border-radius: 16px !important;
+        padding: 24px 28px !important;
+        margin-bottom: 24px !important;
+        box-shadow: 0 2px 8px rgba(18, 24, 38, 0.02) !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .card-box-marker),
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .card-box-marker) {
+        background-color: var(--card-bg) !important;
+        border: 1px solid var(--card-border) !important;
+        border-radius: 16px !important;
+        padding: 24px 28px !important;
+        margin-bottom: 24px !important;
+        box-shadow: 0 2px 8px rgba(18, 24, 38, 0.02) !important;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .card-box-marker),
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .card-box-marker) {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    [data-testid="stElementContainer"]:has(.card-box-marker),
+    [data-testid="element-container"]:has(.card-box-marker) {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .card-box-marker) [data-testid="stHorizontalBlock"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .card-box-marker) [data-testid="stHorizontalBlock"] {
+        align-items: flex-end !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .card-box-marker) [data-testid="stWidgetLabel"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .card-box-marker) [data-testid="stWidgetLabel"] p {
+        font-size: 13.5px !important;
+        font-weight: 600 !important;
+        color: #475569 !important;
+        margin: 0 !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .card-box-marker) div[data-baseweb="select"] > div,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .card-box-marker) div[data-baseweb="select"] > div {
+        background-color: #ffffff !important;
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .card-box-marker) button[kind="primary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .card-box-marker) button[data-testid="baseButton-primary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .card-box-marker) button[data-testid="stBaseButton-primary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .card-box-marker) button[kind="primary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .card-box-marker) button[data-testid="baseButton-primary"],
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .card-box-marker) button[data-testid="stBaseButton-primary"] {
+        background-color: var(--primary-blue) !important;
+        color: #ffffff !important;
+        border-radius: 10px !important;
+        border: none !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        padding: 0 24px !important;
+        font-weight: 600 !important;
+        font-size: 14.5px !important;
+        white-space: nowrap !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .card-box-marker) button[kind="primary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .card-box-marker) button[data-testid="baseButton-primary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .card-box-marker) button[data-testid="stBaseButton-primary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .card-box-marker) button[kind="primary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .card-box-marker) button[data-testid="baseButton-primary"] p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .card-box-marker) button[data-testid="stBaseButton-primary"] p {
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        font-size: 14.5px !important;
+        margin: 0 !important;
+    }
+
+    /* Stat Cards Pembayaran */
+    .stat-card {
+        border-radius: 16px;
+        padding: 16px 22px;
+        min-height: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        margin-bottom: 18px;
+    }
+    .stat-label {
+        font-size: 11.5px;
+        font-weight: 800;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+    .stat-value {
+        font-size: 30px;
+        font-weight: 800;
+        line-height: 1;
+    }
+    .stat-card-lunas {
+        background-color: #eaf7ee;
+        color: #137333;
+    }
+    .stat-card-belum {
+        background-color: #fef7e0;
+        color: #92400e;
+    }
+    .stat-card-menunggak {
+        background-color: #fce8e6;
+        color: #c5221f;
     }
 
     /* Tombol Hapus rata kanan & gaya outline pill merah */
@@ -1579,15 +1720,286 @@ elif menu == "Jadwal":
 
 
 # =============================================================================
+# 3E. KONTEN UTAMA: HALAMAN TERBITKAN TAGIHAN (PERSIS PUBLIC/TAGIHAN.HTML)
+# =============================================================================
+elif menu == "Tagihan":
+    # TOP HEADER (PERSIS GAMBAR REFERENSI)
+    st.markdown("""
+        <div class="top-header">
+            <div>
+                <h1 class="page-title">Terbitkan Tagihan</h1>
+                <p class="page-subtitle">Nominal diambil dari tarif program yang diikuti tiap siswa.</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # CARD 1: FORM PERIODE & TOMBOL TERBITKAN (Ganti periode langsung update tabel)
+    with st.container(border=True):
+        st.markdown('<div class="card-box-marker"></div>', unsafe_allow_html=True)
+        c_p1, c_p2, _ = st.columns([5, 3, 4])
+        with c_p1:
+            sel_periode = st.selectbox(
+                "Periode tagihan",
+                ["Oktober 2026", "November 2026", "Desember 2026"],
+                key="tagihan_periode_select",
+            )
+        with c_p2:
+            btn_terbitkan = st.button("Terbitkan untuk semua siswa", key="btn_terbitkan_tagihan", type="primary")
+
+        if btn_terbitkan:
+            try:
+                published = database.publish_bills_for_period(sel_periode)
+                try:
+                    database.sync_tagihan_ke_html(sel_periode)
+                    database.sync_pembayaran_ke_html()
+                except Exception:
+                    pass
+                st.toast(f"✓ Tagihan periode {sel_periode} berhasil diterbitkan untuk {len(published)} siswa!", icon="🎉")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Gagal menerbitkan tagihan: {e}")
+
+    # CARD 2: TABEL DAFTAR TAGIHAN PERIODE
+    with st.container(border=True):
+        st.markdown('<div class="table-card-marker"></div>', unsafe_allow_html=True)
+
+        th1, th2, th3, th4, th5 = st.columns([2.5, 2.5, 2.0, 1.5, 1.5])
+        with th1:
+            st.markdown('<div class="table-th table-header-marker">NO. TAGIHAN</div>', unsafe_allow_html=True)
+        with th2:
+            st.markdown('<div class="table-th">SISWA</div>', unsafe_allow_html=True)
+        with th3:
+            st.markdown('<div class="table-th">PROGRAM</div>', unsafe_allow_html=True)
+        with th4:
+            st.markdown('<div class="table-th">PERIODE</div>', unsafe_allow_html=True)
+        with th5:
+            st.markdown('<div class="table-th" style="text-align:right;">NOMINAL</div>', unsafe_allow_html=True)
+
+        try:
+            period_bills = database.get_bills_by_period(sel_periode)
+            if not period_bills:
+                st.markdown(
+                    "<p style='text-align: center; color: #64748b; padding: 48px 20px; margin: 0; font-size: 14.5px;'>"
+                    "Belum ada tagihan pada periode ini.</p>",
+                    unsafe_allow_html=True,
+                )
+            else:
+                for b in period_bills:
+                    r1, r2, r3, r4, r5 = st.columns([2.5, 2.5, 2.0, 1.5, 1.5])
+                    with r1:
+                        st.markdown(
+                            f'<code style="font-size:13px; color:#d63384;">{html.escape(b["invoice_no"])}</code>',
+                            unsafe_allow_html=True,
+                        )
+                    with r2:
+                        badge_status = (
+                            '<span class="badge-status badge-status-lunas" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;">Sudah Bayar</span>'
+                            if b.get("is_lunas")
+                            else '<span class="badge-status badge-status-belum" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;">Belum Bayar</span>'
+                        )
+                        st.markdown(
+                            f'<div class="program-name-cell">{html.escape(b["student_name"])} {badge_status}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r3:
+                        st.markdown(
+                            f'<div class="table-text-cell">{html.escape(b["program_name"])}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r4:
+                        st.markdown(
+                            f'<div class="table-text-cell">{html.escape(str(b.get("period") or sel_periode))}</div>',
+                            unsafe_allow_html=True,
+                        )
+                    with r5:
+                        amt = b.get("total_amount") or b.get("amount") or 0
+                        st.markdown(
+                            f'<div class="program-name-cell" style="text-align:right;">{database.format_rupiah(amt)}</div>',
+                            unsafe_allow_html=True,
+                        )
+        except Exception as e:
+            st.error(f"Gagal mengambil data tagihan periode dari database Neon: {e}")
+
+
+# =============================================================================
+# 3F. KONTEN UTAMA: HALAMAN CATAT PEMBAYARAN (CRUD KE NEON POSTGRESQL)
+# =============================================================================
+elif menu == "Pembayaran":
+    st.markdown("""
+        <div class="top-header">
+            <div>
+                <h1 class="page-title">Catat Pembayaran</h1>
+                <p class="page-subtitle">Status dihitung dari total bayar dan jatuh tempo secara real-time di Neon PostgreSQL.</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    summary = {"bills": [], "stats": {"lunas": 0, "belum_lunas": 0, "menunggak": 0}}
+    pay_load_err = None
+    try:
+        summary = database.get_billing_summary()
+    except Exception as e:
+        pay_load_err = e
+
+    bills = summary["bills"]
+    stats = summary["stats"]
+
+    # 3 Kartu Ringkasan
+    sc1, sc2, sc3 = st.columns(3)
+    with sc1:
+        st.markdown(f"""
+            <div class="stat-card stat-card-lunas">
+                <div class="stat-label">LUNAS</div>
+                <div class="stat-value">{stats['lunas']}</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with sc2:
+        st.markdown(f"""
+            <div class="stat-card stat-card-belum">
+                <div class="stat-label">BELUM LUNAS</div>
+                <div class="stat-value">{stats['belum_lunas']}</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with sc3:
+        st.markdown(f"""
+            <div class="stat-card stat-card-menunggak">
+                <div class="stat-label">MENUNGGAK</div>
+                <div class="stat-value">{stats['menunggak']}</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    # CARD 1: FORM CATAT PEMBAYARAN
+    with st.form("form_add_payment", clear_on_submit=True):
+        st.markdown('<div class="card-heading">Catat pembayaran</div>', unsafe_allow_html=True)
+        p1, p2, p3 = st.columns([5, 4, 3])
+        with p1:
+            if bills:
+                sel_bill = st.selectbox(
+                    "Tagihan",
+                    bills,
+                    format_func=lambda b: f"{b['student_name']} · sisa {database.format_rupiah(b['remaining_amount'])}",
+                )
+            else:
+                sel_bill = None
+                st.text_input("Tagihan", value="Belum ada tagihan", disabled=True)
+        with p2:
+            pay_amount = st.number_input("Jumlah dibayar (Rp)", min_value=0, value=0, step=10000)
+        with p3:
+            btn_catat = st.form_submit_button("Catat pembayaran", type="primary", use_container_width=True)
+
+        if btn_catat:
+            if not sel_bill:
+                st.warning("Tidak ada tagihan yang dipilih.")
+            elif int(pay_amount) <= 0:
+                st.warning("Masukkan nominal pembayaran lebih dari Rp 0.")
+            else:
+                try:
+                    database.add_payment(sel_bill["bill_id"], int(pay_amount))
+                    try:
+                        database.sync_pembayaran_ke_html()
+                        database.sync_tagihan_ke_html()
+                    except Exception:
+                        pass
+                    st.toast(f"✓ Pembayaran untuk {sel_bill['student_name']} berhasil dicatat ke Neon!", icon="🎉")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Gagal mencatat pembayaran: {e}")
+
+    # Tambah Tagihan Siswa Baru (Opsional)
+    with st.expander("+ Buat Tagihan Siswa Baru"):
+        with st.form("form_add_bill", clear_on_submit=True):
+            b1, b2, b3, b4 = st.columns([3, 3, 2, 2])
+            with b1:
+                new_student = st.text_input("Nama siswa", placeholder="contoh: Budi Santoso")
+            with b2:
+                new_program = st.text_input("Program", placeholder="contoh: Matematika SD")
+            with b3:
+                new_amount = st.number_input("Nominal (Rp)", min_value=1000, value=250000, step=10000)
+            with b4:
+                new_due = st.date_input("Jatuh tempo")
+            if st.form_submit_button("Simpan Tagihan", type="primary"):
+                if not new_student.strip():
+                    st.warning("Nama siswa wajib diisi.")
+                else:
+                    try:
+                        database.add_bill(new_student.strip(), new_program.strip(), int(new_amount), due_date=new_due)
+                        try:
+                            database.sync_pembayaran_ke_html()
+                            database.sync_tagihan_ke_html()
+                        except Exception:
+                            pass
+                        st.toast(f"✓ Tagihan baru untuk {new_student.strip()} ditambahkan!", icon="🎉")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Gagal menambahkan tagihan: {e}")
+
+    # CARD 2: TABEL DATA PEMBAYARAN
+    with st.container(border=True):
+        st.markdown('<div class="table-card-marker"></div>', unsafe_allow_html=True)
+
+        th1, th2, th3, th4, th5, th6, th7 = st.columns([2.0, 1.4, 1.4, 1.4, 1.4, 1.2, 1.2])
+        with th1:
+            st.markdown('<div class="table-th table-header-marker">SISWA</div>', unsafe_allow_html=True)
+        with th2:
+            st.markdown('<div class="table-th">JATUH TEMPO</div>', unsafe_allow_html=True)
+        with th3:
+            st.markdown('<div class="table-th">TAGIHAN</div>', unsafe_allow_html=True)
+        with th4:
+            st.markdown('<div class="table-th">DIBAYAR</div>', unsafe_allow_html=True)
+        with th5:
+            st.markdown('<div class="table-th">SISA</div>', unsafe_allow_html=True)
+        with th6:
+            st.markdown('<div class="table-th">STATUS</div>', unsafe_allow_html=True)
+        with th7:
+            st.markdown('<div class="table-th"></div>', unsafe_allow_html=True)
+
+        if pay_load_err is not None:
+            st.error(f"Gagal mengambil data pembayaran dari Neon: {pay_load_err}")
+        elif not bills:
+            st.markdown(
+                "<p style='text-align: center; color: #64748b; padding: 28px 20px; margin: 0;'>"
+                "Belum ada data tagihan pembayaran di database Neon.</p>",
+                unsafe_allow_html=True,
+            )
+        else:
+            for b in bills:
+                r1, r2, r3, r4, r5, r6, r7 = st.columns([2.0, 1.4, 1.4, 1.4, 1.4, 1.2, 1.2])
+                with r1:
+                    st.markdown(f'<div class="program-name-cell">{html.escape(b["student_name"])}</div>', unsafe_allow_html=True)
+                with r2:
+                    st.markdown(f'<div class="table-text-cell">{html.escape(b["due_date_str"])}</div>', unsafe_allow_html=True)
+                with r3:
+                    st.markdown(f'<div class="table-text-cell">{database.format_rupiah(b["total_amount"])}</div>', unsafe_allow_html=True)
+                with r4:
+                    st.markdown(f'<div class="table-text-cell">{database.format_rupiah(b["paid_amount"])}</div>', unsafe_allow_html=True)
+                with r5:
+                    st.markdown(f'<div class="table-text-cell">{database.format_rupiah(b["remaining_amount"])}</div>', unsafe_allow_html=True)
+                with r6:
+                    st.markdown(f'<span class="{html.escape(b["badge_class"])}">{html.escape(b["status"])}</span>', unsafe_allow_html=True)
+                with r7:
+                    btn_lbl = "Reset" if b["paid_amount"] > 0 else "Hapus"
+                    if st.button(btn_lbl, key=f"btn_del_pay_{b['bill_id']}", type="secondary"):
+                        try:
+                            database.delete_bill_payment(b["bill_id"])
+                            try:
+                                database.sync_pembayaran_ke_html()
+                                database.sync_tagihan_ke_html()
+                            except Exception:
+                                pass
+                            st.toast(f"✓ Data pembayaran {b['student_name']} diperbarui!", icon="🗑️")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Gagal memproses: {e}")
+
+
+# =============================================================================
 # 4. MENU LAINNYA: TAMPILKAN FILE HTML DARI FOLDER PUBLIC/
 # =============================================================================
 else:
     file_map = {
         "Dashboard": "dashboard.html",
         "Siswa dan Wali": "siswa.html",
-        "Kelompok Belajar": "kelompok_belajar.html",
-        "Tagihan": "tagihan.html",
-        "Pembayaran": "pembayaran.html"
+        "Kelompok Belajar": "kelompok_belajar.html"
     }
 
     target_file = file_map.get(menu, "dashboard.html")

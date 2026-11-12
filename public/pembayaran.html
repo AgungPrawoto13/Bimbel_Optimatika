@@ -20,7 +20,7 @@
       <div class="top-header">
         <div>
           <h1 class="page-title">Catat Pembayaran</h1>
-          <p class="page-subtitle">Status dihitung dari total bayar dan jatuh tempo. Tanggal acuan: 29 Oktober 2026.</p>
+          <p class="page-subtitle">Status dihitung dari total bayar dan jatuh tempo secara real-time di Neon PostgreSQL.</p>
         </div>
       </div>
 
@@ -29,43 +29,73 @@
         <div class="col-12 col-md-4">
           <div class="stat-card stat-card-lunas">
             <div class="stat-label">LUNAS</div>
-            <div class="stat-value">1</div>
+            <div class="stat-value" id="statLunas">1</div>
           </div>
         </div>
         <div class="col-12 col-md-4">
           <div class="stat-card stat-card-belum">
             <div class="stat-label">BELUM LUNAS</div>
-            <div class="stat-value">2</div>
+            <div class="stat-value" id="statBelum">2</div>
           </div>
         </div>
         <div class="col-12 col-md-4">
           <div class="stat-card stat-card-menunggak">
             <div class="stat-label">MENUNGGAK</div>
-            <div class="stat-value">2</div>
+            <div class="stat-value" id="statMenunggak">2</div>
           </div>
         </div>
       </div>
 
       <!-- Form Catat Pembayaran -->
       <div class="custom-card mb-4">
-        <form onsubmit="event.preventDefault(); alert('Pembayaran berhasil dicatat!');">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="card-heading mb-0">Catat pembayaran</div>
+          <button type="button" class="btn btn-sm btn-outline-primary rounded-3" onclick="toggleTambahTagihan()">+ Tagihan Baru</button>
+        </div>
+        <form onsubmit="event.preventDefault(); handleCatatPembayaran();">
           <div class="row g-3 align-items-end">
             <div class="col-12 col-md-5">
-              <label class="form-label-custom">Tagihan</label>
-              <select class="form-select-custom">
-                <option selected>Alya Putri · sisa Rp 0</option>
-                <option>Bagas Pratama · sisa Rp 150.000</option>
-                <option>Citra Maharani · sisa Rp 450.000</option>
-                <option>Dimas Aditya · sisa Rp 300.000</option>
-                <option>Eka Lestari · sisa Rp 150.000</option>
+              <label for="selectTagihan" class="form-label-custom">Tagihan</label>
+              <select class="form-select-custom" id="selectTagihan" onchange="isiSisaOtomatis()">
+                <option value="1" data-sisa="0" selected>Alya Putri · sisa Rp 0</option>
+                <option value="2" data-sisa="150000">Bagas Pratama · sisa Rp 150.000</option>
+                <option value="3" data-sisa="450000">Citra Maharani · sisa Rp 450.000</option>
+                <option value="4" data-sisa="300000">Dimas Aditya · sisa Rp 300.000</option>
+                <option value="5" data-sisa="150000">Eka Lestari · sisa Rp 150.000</option>
               </select>
             </div>
             <div class="col-12 col-md-4">
-              <label class="form-label-custom">Jumlah dibayar (Rp)</label>
-              <input type="number" class="form-control-custom" placeholder="Masukkan nominal">
+              <label for="inputJumlahBayar" class="form-label-custom">Jumlah dibayar (Rp)</label>
+              <input type="number" class="form-control-custom" id="inputJumlahBayar" placeholder="Masukkan nominal" min="1" required>
             </div>
             <div class="col-12 col-md-3">
               <button type="submit" class="btn-primary-custom w-100">Catat pembayaran</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Form Tambah Tagihan Siswa Baru (Opsional) -->
+        <form id="formTambahTagihan" class="mt-4 pt-3 border-top d-none" onsubmit="event.preventDefault(); handleTambahTagihan();">
+          <div class="fw-semibold mb-2" style="font-size: 14px; color: #334155;">Buat Tagihan Siswa Baru</div>
+          <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+              <label class="form-label-custom">Nama siswa</label>
+              <input type="text" class="form-control-custom" id="newBillStudent" placeholder="contoh: Budi" required>
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label-custom">Program</label>
+              <input type="text" class="form-control-custom" id="newBillProgram" placeholder="contoh: Matematika SD" required>
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label-custom">Nominal (Rp)</label>
+              <input type="number" class="form-control-custom" id="newBillAmount" value="250000" min="1000" required>
+            </div>
+            <div class="col-12 col-md-2">
+              <label class="form-label-custom">Jatuh tempo</label>
+              <input type="date" class="form-control-custom" id="newBillDue">
+            </div>
+            <div class="col-12 col-md-2">
+              <button type="submit" class="btn-primary-custom w-100" style="padding: 0 16px;">Simpan</button>
             </div>
           </div>
         </form>
@@ -83,9 +113,11 @@
                 <th>DIBAYAR</th>
                 <th>SISA</th>
                 <th>STATUS</th>
+                <th style="text-align: right; padding-right: 28px;"></th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="pembayaranListBody">
+              <!-- DATA_PEMBAYARAN_START -->
               <tr>
                 <td><strong>Alya Putri</strong></td>
                 <td>10/10/2026</td>
@@ -93,6 +125,9 @@
                 <td>Rp 200.000</td>
                 <td>Rp 0</td>
                 <td><span class="badge-status badge-status-lunas">Lunas</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusPembayaran(1, 'Alya Putri', 200000)">Reset Bayar</button>
+                </td>
               </tr>
               <tr>
                 <td><strong>Bagas Pratama</strong></td>
@@ -101,6 +136,9 @@
                 <td>Rp 150.000</td>
                 <td>Rp 150.000</td>
                 <td><span class="badge-status badge-status-menunggak">Menunggak</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusPembayaran(2, 'Bagas Pratama', 150000)">Reset Bayar</button>
+                </td>
               </tr>
               <tr>
                 <td><strong>Citra Maharani</strong></td>
@@ -109,6 +147,9 @@
                 <td>Rp 0</td>
                 <td>Rp 450.000</td>
                 <td><span class="badge-status badge-status-belum">Belum lunas</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusPembayaran(3, 'Citra Maharani', 0)">Hapus</button>
+                </td>
               </tr>
               <tr>
                 <td><strong>Dimas Aditya</strong></td>
@@ -117,6 +158,9 @@
                 <td>Rp 0</td>
                 <td>Rp 300.000</td>
                 <td><span class="badge-status badge-status-menunggak">Menunggak</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusPembayaran(4, 'Dimas Aditya', 0)">Hapus</button>
+                </td>
               </tr>
               <tr>
                 <td><strong>Eka Lestari</strong></td>
@@ -125,7 +169,11 @@
                 <td>Rp 100.000</td>
                 <td>Rp 150.000</td>
                 <td><span class="badge-status badge-status-belum">Belum lunas</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusPembayaran(5, 'Eka Lestari', 100000)">Reset Bayar</button>
+                </td>
               </tr>
+              <!-- DATA_PEMBAYARAN_END -->
             </tbody>
           </table>
         </div>
@@ -136,8 +184,163 @@
   <!-- Panggil JavaScript Sidebar -->
   <script src="js/sidebar.js"></script>
   <script>
-    // Panggil fungsi renderSidebar dengan nama menu yang aktif
     renderSidebar('pembayaran');
+
+    const API_BASE = (window.location.protocol === 'file:') ? 'http://localhost:8000' : '';
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text ?? '';
+      return div.innerHTML;
+    }
+
+    function formatRupiah(nominal) {
+      return 'Rp ' + Math.round(Number(nominal || 0)).toLocaleString('id-ID');
+    }
+
+    function toggleTambahTagihan() {
+      document.getElementById('formTambahTagihan').classList.toggle('d-none');
+    }
+
+    function isiSisaOtomatis() {
+      const sel = document.getElementById('selectTagihan');
+      const opt = sel.options[sel.selectedIndex];
+      const sisa = opt ? Number(opt.getAttribute('data-sisa') || 0) : 0;
+      document.getElementById('inputJumlahBayar').value = sisa > 0 ? sisa : '';
+    }
+
+    async function callApi(pathWithQuery) {
+      let res = await fetch(`${API_BASE}${pathWithQuery}`);
+      if (res.status === 404 && API_BASE === '' && !['8000', '8080'].includes(window.location.port)) {
+        res = await fetch(`http://localhost:8000${pathWithQuery}`);
+      }
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (_) {
+        data = null;
+      }
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('HTTP 404: Endpoint /api/pembayaran tidak ditemukan. Jalankan ulang "python3 database.py standby" dan akses lewat http://localhost:8000/pembayaran.html');
+        }
+        throw new Error((data && data.error) ? data.error : `HTTP ${res.status} (${res.statusText})`);
+      }
+      return data;
+    }
+
+    function renderPembayaran(data) {
+      const bills = data.bills || [];
+      const stats = data.stats || { lunas: 0, belum_lunas: 0, menunggak: 0 };
+
+      document.getElementById('statLunas').textContent = stats.lunas ?? 0;
+      document.getElementById('statBelum').textContent = stats.belum_lunas ?? 0;
+      document.getElementById('statMenunggak').textContent = stats.menunggak ?? 0;
+
+      const sel = document.getElementById('selectTagihan');
+      const prevVal = sel.value;
+      sel.innerHTML = bills.map(b =>
+        `<option value="${Number(b.bill_id)}" data-sisa="${Number(b.remaining_amount)}">${escapeHtml(b.student_name)} · sisa ${formatRupiah(b.remaining_amount)}</option>`
+      ).join('') || '<option value="">Belum ada tagihan</option>';
+      if (prevVal) sel.value = prevVal;
+
+      const tbody = document.getElementById('pembayaranListBody');
+      if (bills.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">Belum ada data tagihan pembayaran di database Neon.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = bills.map(b => {
+        const jsName = String(b.student_name).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const btnLabel = b.paid_amount > 0 ? 'Reset Bayar' : 'Hapus';
+        return `
+          <tr>
+            <td><strong>${escapeHtml(b.student_name)}</strong></td>
+            <td>${escapeHtml(b.due_date_str)}</td>
+            <td>${formatRupiah(b.total_amount)}</td>
+            <td>${formatRupiah(b.paid_amount)}</td>
+            <td>${formatRupiah(b.remaining_amount)}</td>
+            <td><span class="${escapeHtml(b.badge_class)}">${escapeHtml(b.status)}</span></td>
+            <td class="text-end pe-4">
+              <button type="button" class="btn-delete-pill" onclick="hapusPembayaran(${Number(b.bill_id)}, '${jsName}', ${Number(b.paid_amount)})">${btnLabel}</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function muatPembayaranDariNeon() {
+      try {
+        const data = await callApi('/api/pembayaran/list');
+        if (data && data.success) {
+          renderPembayaran(data);
+        }
+      } catch (_) {
+        // Fallback diam jika statis
+      }
+    }
+
+    async function handleCatatPembayaran() {
+      const billId = document.getElementById('selectTagihan').value;
+      const amount = document.getElementById('inputJumlahBayar').value;
+
+      if (!billId || !amount || Number(amount) <= 0) {
+        alert('Pilih tagihan dan masukkan nominal pembayaran yang valid!');
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams({
+          bill_id: billId,
+          amount: amount
+        });
+        await callApi(`/api/pembayaran/catat?${params.toString()}`);
+        document.getElementById('inputJumlahBayar').value = '';
+        await muatPembayaranDariNeon();
+        alert('✅ Pembayaran berhasil dicatat ke Neon PostgreSQL!');
+      } catch (err) {
+        alert(`Gagal mencatat pembayaran:\n${err.message}`);
+      }
+    }
+
+    async function handleTambahTagihan() {
+      const studentName = document.getElementById('newBillStudent').value.trim();
+      const programName = document.getElementById('newBillProgram').value.trim();
+      const amount = document.getElementById('newBillAmount').value;
+      const dueDate = document.getElementById('newBillDue').value;
+
+      try {
+        const params = new URLSearchParams({
+          student_name: studentName,
+          program_name: programName,
+          amount: amount
+        });
+        if (dueDate) params.set('due_date', dueDate);
+        await callApi(`/api/pembayaran/tambah_tagihan?${params.toString()}`);
+        document.getElementById('formTambahTagihan').reset();
+        document.getElementById('formTambahTagihan').classList.add('d-none');
+        await muatPembayaranDariNeon();
+      } catch (err) {
+        alert(`Gagal menambah tagihan:\n${err.message}`);
+      }
+    }
+
+    async function hapusPembayaran(billId, studentName, paidAmount) {
+      const msg = paidAmount > 0
+        ? `Reset / hapus riwayat pembayaran milik "${studentName}"? Status tagihan akan kembali menjadi belum lunas.`
+        : `Hapus data tagihan "${studentName}" dari database Neon?`;
+
+      if (!confirm(msg)) return;
+
+      try {
+        await callApi(`/api/pembayaran/hapus?bill_id=${encodeURIComponent(billId)}`);
+        await muatPembayaranDariNeon();
+      } catch (err) {
+        alert(`Gagal memproses penghapusan:\n${err.message}`);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', muatPembayaranDariNeon);
   </script>
 </body>
 </html>

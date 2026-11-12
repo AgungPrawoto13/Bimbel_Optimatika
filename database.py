@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 import html as html_lib
 import os
 import re
@@ -29,6 +29,8 @@ HTML_FILE = os.path.join(PUBLIC_DIR, 'program.html')
 TUTOR_HTML_FILE = os.path.join(PUBLIC_DIR, 'tutor.html')
 ROOM_HTML_FILE = os.path.join(PUBLIC_DIR, 'ruang_belajar.html')
 JADWAL_HTML_FILE = os.path.join(PUBLIC_DIR, 'jadwal.html')
+PEMBAYARAN_HTML_FILE = os.path.join(PUBLIC_DIR, 'pembayaran.html')
+TAGIHAN_HTML_FILE = os.path.join(PUBLIC_DIR, 'tagihan.html')
 
 
 # =============================================================================
@@ -443,6 +445,357 @@ delete_schedule = delete_room_schedule
 
 
 # =============================================================================
+# 2D. FUNGSI PENGELOLAAN DATA TAGIHAN & PEMBAYARAN (CRUD)
+# =============================================================================
+
+def format_rupiah(nominal):
+    """Memformat angka menjadi string Rp xxx.xxx"""
+    val = int(round(float(nominal or 0)))
+    return f"Rp {val:,}".replace(",", ".")
+
+
+def _ensure_billing_tables_and_seed(conn):
+    """Memastikan tabel bills & payments ada dan mengisi data awal jika masih kosong."""
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS bills (
+                id SERIAL PRIMARY KEY,
+                invoice_no VARCHAR(50) UNIQUE NOT NULL,
+                student_id INTEGER,
+                student_name VARCHAR(150),
+                program_name VARCHAR(100),
+                amount NUMERIC(12, 2) NOT NULL,
+                due_date DATE NOT NULL,
+                status VARCHAR(20) DEFAULT 'Belum Lunas',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+        cur.execute("ALTER TABLE bills ADD COLUMN IF NOT EXISTS student_name VARCHAR(150);")
+        cur.execute("ALTER TABLE bills ADD COLUMN IF NOT EXISTS program_name VARCHAR(100);")
+        cur.execute("ALTER TABLE bills ADD COLUMN IF NOT EXISTS period VARCHAR(50) DEFAULT 'Oktober 2026';")
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS payments (
+                id SERIAL PRIMARY KEY,
+                receipt_no VARCHAR(50) UNIQUE NOT NULL,
+                bill_id INTEGER REFERENCES bills(id) ON DELETE CASCADE,
+                amount NUMERIC(12, 2) NOT NULL,
+                payment_date DATE NOT NULL,
+                payment_method VARCHAR(50) DEFAULT 'Transfer Bank',
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+
+        cur.execute("SELECT COUNT(*) FROM bills;")
+        bill_count = cur.fetchone()[0]
+        if bill_count == 0:
+            today_wib = datetime.now(timezone(timedelta(hours=7))).date()
+            future_due = today_wib + timedelta(days=14)
+            past_due = today_wib - timedelta(days=14)
+
+            seed_bills = [
+                ("TGH-202610-001", "Alya Putri", "Calistung", 200000, past_due, "Lunas", 200000, "KWT-202610-001", "Oktober 2026"),
+                ("TGH-202610-002", "Bagas Pratama", "Matematika SMP", 300000, past_due, "Belum Lunas", 150000, "KWT-202610-002", "Oktober 2026"),
+                ("TGH-202610-003", "Citra Maharani", "Persiapan UTBK", 450000, future_due, "Belum Lunas", 0, None, "Oktober 2026"),
+                ("TGH-202610-004", "Dimas Aditya", "Matematika SMP", 300000, past_due, "Belum Lunas", 0, None, "Oktober 2026"),
+                ("TGH-202610-005", "Eka Lestari", "Matematika SD", 250000, future_due, "Belum Lunas", 100000, "KWT-202610-003", "Oktober 2026"),
+            ]
+            for inv, sname, pname, amt, ddate, st, paid_amt, rcpt, prd in seed_bills:
+                cur.execute(
+                    """
+                    INSERT INTO bills (invoice_no, student_name, program_name, amount, due_date, status, period)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id;
+                    """,
+                    (inv, sname, pname, amt, ddate, st, prd),
+                )
+                b_id = cur.fetchone()[0]
+                if paid_amt > 0 and rcpt:
+                    cur.execute(
+                        """
+                        INSERT INTO payments (receipt_no, bill_id, amount, payment_date, payment_method, notes)
+                        VALUES (%s, %s, %s, %s, %s, %s);
+                        """,
+                        (rcpt, b_id, paid_amt, today_wib, "Transfer Bank", "Pembayaran awal"),
+                    )
+    conn.commit()
+
+
+def get_billing_summary():
+    """Mengambil daftar tagihan beserta total dibayar, sisa, status, dan ringkasan angka."""
+    conn = create_new_connection()
+    try:
+        _ensure_billing_tables_and_seed(conn)
+        query = """
+            SELECT
+                b.id AS bill_id,
+                b.invoice_no,
+                COALESCE(st.name, b.student_name, 'Siswa') AS student_name,
+                COALESCE(pr.name, b.program_name, 'Bimbel') AS program_name,
+                COALESCE(b.period, 'Oktober 2026') AS period,
+                b.amount AS total_amount,
+                b.due_date,
+                COALESCE(SUM(p.amount), 0) AS paid_amount,
+                COUNT(p.id) AS payment_count
+            FROM bills b
+            LEFT JOIN students st ON b.student_id = st.id
+            LEFT JOIN programs pr ON st.program_id = pr.id
+            LEFT JOIN payments p ON b.id = p.bill_id
+            GROUP BY b.id, b.invoice_no, st.name, b.student_name, pr.name, b.program_name, b.period, b.amount, b.due_date
+            ORDER BY b.id ASC;
+        """
+        if PSYCOPG_V3:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(query)
+                rows = cur.fetchall()
+        else:
+            with conn.cursor(cursor_factory=psycopg.extras.RealDictCursor) as cur:
+                cur.execute(query)
+                rows = [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+    today_wib = datetime.now(timezone(timedelta(hours=7))).date()
+    bills = []
+    stats = {"lunas": 0, "belum_lunas": 0, "menunggak": 0, "sudah_bayar": 0, "belum_bayar": 0}
+
+    for r in rows:
+        total_amt = int(round(float(r.get("total_amount") or 0)))
+        paid_amt = int(round(float(r.get("paid_amount") or 0)))
+        remaining = max(0, total_amt - paid_amt)
+
+        due_raw = r.get("due_date")
+        if isinstance(due_raw, datetime):
+            due_dt = due_raw.date()
+        elif isinstance(due_raw, date):
+            due_dt = due_raw
+        else:
+            try:
+                due_dt = datetime.strptime(str(due_raw)[:10], "%Y-%m-%d").date()
+            except Exception:
+                due_dt = today_wib
+
+        if remaining <= 0:
+            status_label = "Lunas"
+            badge_class = "badge-status badge-status-lunas"
+            is_lunas = True
+            stats["lunas"] += 1
+            stats["sudah_bayar"] += 1
+        elif today_wib > due_dt:
+            status_label = "Menunggak"
+            badge_class = "badge-status badge-status-menunggak"
+            is_lunas = False
+            stats["menunggak"] += 1
+            stats["belum_bayar"] += 1
+        else:
+            status_label = "Belum lunas"
+            badge_class = "badge-status badge-status-belum"
+            is_lunas = False
+            stats["belum_lunas"] += 1
+            stats["belum_bayar"] += 1
+
+        bills.append({
+            "bill_id": int(r["bill_id"]),
+            "invoice_no": str(r["invoice_no"]),
+            "student_name": str(r["student_name"]),
+            "program_name": str(r["program_name"]),
+            "period": str(r.get("period") or "Oktober 2026"),
+            "total_amount": total_amt,
+            "paid_amount": paid_amt,
+            "remaining_amount": remaining,
+            "due_date": due_dt.isoformat(),
+            "due_date_str": due_dt.strftime("%d/%m/%Y"),
+            "status": status_label,
+            "badge_class": badge_class,
+            "is_lunas": is_lunas,
+            "payment_count": int(r.get("payment_count") or 0),
+        })
+
+    return {"bills": bills, "stats": stats}
+
+
+def add_bill(student_name, program_name, amount, due_date=None):
+    """Menambahkan tagihan siswa baru ke Neon PostgreSQL."""
+    amt = int(round(float(amount or 0)))
+    if not student_name or amt <= 0:
+        raise ValueError("Nama siswa dan nominal tagihan valid wajib diisi.")
+
+    today_wib = datetime.now(timezone(timedelta(hours=7))).date()
+    if not due_date:
+        due_date = today_wib + timedelta(days=14)
+
+    conn = create_new_connection()
+    try:
+        _ensure_billing_tables_and_seed(conn)
+        with conn.cursor() as cur:
+            inv_no = f"TGH-{datetime.now().strftime('%Y%m%d')}-{int(time.time() * 1000) % 10000:04d}"
+            cur.execute(
+                """
+                INSERT INTO bills (invoice_no, student_name, program_name, amount, due_date, status)
+                VALUES (%s, %s, %s, %s, %s, 'Belum Lunas')
+                RETURNING id;
+                """,
+                (inv_no, student_name.strip(), (program_name or "Bimbel").strip(), amt, due_date),
+            )
+            bill_id = cur.fetchone()[0]
+        conn.commit()
+        return bill_id
+    finally:
+        conn.close()
+
+
+def add_payment(bill_id, amount, payment_method="Transfer Bank", notes=None):
+    """Mencatat pembayaran untuk tagihan siswa ke tabel payments di Neon PostgreSQL."""
+    amt = int(round(float(amount or 0)))
+    if amt <= 0:
+        raise ValueError("Nominal pembayaran harus lebih besar dari 0.")
+
+    today_wib = datetime.now(timezone(timedelta(hours=7))).date()
+    conn = create_new_connection()
+    try:
+        _ensure_billing_tables_and_seed(conn)
+        with conn.cursor() as cur:
+            cur.execute("SELECT amount FROM bills WHERE id = %s;", (int(bill_id),))
+            row = cur.fetchone()
+            if not row:
+                raise ValueError("Data tagihan tidak ditemukan.")
+            bill_total = float(row[0] or 0)
+
+            cur.execute("SELECT COALESCE(SUM(amount), 0) FROM payments WHERE bill_id = %s;", (int(bill_id),))
+            already_paid = float(cur.fetchone()[0] or 0)
+
+            rcpt_no = f"KWT-{datetime.now().strftime('%Y%m%d')}-{int(time.time() * 1000) % 10000:04d}"
+            cur.execute(
+                """
+                INSERT INTO payments (receipt_no, bill_id, amount, payment_date, payment_method, notes)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING id;
+                """,
+                (rcpt_no, int(bill_id), amt, today_wib, payment_method, notes or "Pembayaran tagihan"),
+            )
+            pay_id = cur.fetchone()[0]
+
+            new_status = "Lunas" if (already_paid + amt) >= bill_total else "Belum Lunas"
+            cur.execute("UPDATE bills SET status = %s WHERE id = %s;", (new_status, int(bill_id)))
+        conn.commit()
+        return pay_id
+    finally:
+        conn.close()
+
+
+def delete_bill_payment(bill_id):
+    """
+    Jika tagihan punya riwayat pembayaran, menghapus seluruh pembayaran pada tagihan tsb (reset ke belum bayar).
+    Jika belum ada pembayaran sama sekali, menghapus tagihan tsb.
+    """
+    conn = create_new_connection()
+    try:
+        _ensure_billing_tables_and_seed(conn)
+        with conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM payments WHERE bill_id = %s;", (int(bill_id),))
+            pay_count = cur.fetchone()[0]
+            if pay_count > 0:
+                cur.execute("DELETE FROM payments WHERE bill_id = %s;", (int(bill_id),))
+                cur.execute("UPDATE bills SET status = 'Belum Lunas' WHERE id = %s;", (int(bill_id),))
+                action_type = "reset_payment"
+            else:
+                cur.execute("DELETE FROM bills WHERE id = %s;", (int(bill_id),))
+                action_type = "deleted_bill"
+        conn.commit()
+        return action_type
+    finally:
+        conn.close()
+
+
+def get_bills_by_period(period="Oktober 2026"):
+    """Mengambil daftar tagihan berdasarkan periode tertentu dari Neon PostgreSQL."""
+    summary = get_billing_summary()
+    all_bills = summary["bills"]
+    filtered = [
+        b for b in all_bills
+        if str(b.get("period") or "Oktober 2026").strip().lower() == str(period).strip().lower()
+    ]
+    return filtered
+
+
+def publish_bills_for_period(period="Oktober 2026"):
+    """
+    Menerbitkan tagihan untuk seluruh siswa aktif pada periode tertentu di Neon PostgreSQL.
+    Jika sudah terbit di periode tsb, mengembalikan daftar tagihannya.
+    """
+    existing = get_bills_by_period(period)
+    if existing:
+        return existing
+
+    conn = create_new_connection()
+    try:
+        _ensure_billing_tables_and_seed(conn)
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT s.id, s.name, COALESCE(p.name, 'Bimbel') AS program_name
+                FROM students s
+                LEFT JOIN programs p ON s.program_id = p.id
+                WHERE LOWER(s.status) = 'aktif'
+                ORDER BY s.id ASC;
+            """)
+            students = cur.fetchall()
+
+            if not students:
+                students_data = [
+                    (None, "Alya Putri", "Calistung", 200000),
+                    (None, "Bagas Pratama", "Matematika SMP", 300000),
+                    (None, "Citra Maharani", "Persiapan UTBK", 450000),
+                    (None, "Dimas Aditya", "Matematika SMP", 300000),
+                    (None, "Eka Lestari", "Matematika SD", 250000),
+                ]
+            else:
+                tarif_map = {
+                    "calistung": 200000,
+                    "matematika sd": 250000,
+                    "matematika smp": 300000,
+                    "ipa terpadu": 300000,
+                    "persiapan utbk": 450000,
+                }
+                students_data = []
+                for s in students:
+                    s_id, s_name, p_name = s[0], s[1], s[2] or "Bimbel"
+                    tarif = tarif_map.get(p_name.strip().lower(), 250000)
+                    students_data.append((s_id, s_name, p_name, tarif))
+
+            m = re.search(r'(\w+)\s+(\d{4})', str(period))
+            if m:
+                bln_name = m.group(1).lower()
+                year = m.group(2)
+                bln_map = {
+                    'januari': '01', 'februari': '02', 'maret': '03', 'april': '04',
+                    'mei': '05', 'juni': '06', 'juli': '07', 'agustus': '08',
+                    'september': '09', 'oktober': '10', 'november': '11', 'desember': '12',
+                }
+                ym = f"{year}{bln_map.get(bln_name, '10')}"
+            else:
+                ym = datetime.now().strftime('%Y%m')
+
+            today_wib = datetime.now(timezone(timedelta(hours=7))).date()
+            due_dt = today_wib + timedelta(days=14)
+
+            for idx, (s_id, s_name, p_name, amt) in enumerate(students_data, start=1):
+                inv_no = f"TGH-{ym}-{idx:03d}"
+                cur.execute(
+                    """
+                    INSERT INTO bills (invoice_no, student_id, student_name, program_name, amount, due_date, status, period)
+                    VALUES (%s, %s, %s, %s, %s, %s, 'Belum Lunas', %s)
+                    ON CONFLICT (invoice_no) DO NOTHING;
+                    """,
+                    (inv_no, s_id, s_name, p_name, amt, due_dt, period),
+                )
+        conn.commit()
+        return get_bills_by_period(period)
+    finally:
+        conn.close()
+
+
+# =============================================================================
 # 3. FUNGSI SINKRONISASI OTOMATIS KE FILE HTML
 # =============================================================================
 
@@ -690,6 +1043,115 @@ def sync_jadwal_ke_html():
         f.write(new_content)
 
     return len(schedules)
+
+
+def sync_pembayaran_ke_html():
+    """Menyinkronkan data tagihan & pembayaran terbaru ke public/pembayaran.html."""
+    if not os.path.exists(PEMBAYARAN_HTML_FILE):
+        raise FileNotFoundError(f"File tidak ditemukan: {PEMBAYARAN_HTML_FILE}")
+
+    summary = get_billing_summary()
+    bills = summary["bills"]
+    stats = summary["stats"]
+
+    if not bills:
+        rows_html = '              <tr><td colspan="7" class="text-center py-4 text-muted">Belum ada data tagihan pembayaran di database Neon.</td></tr>\n'
+    else:
+        rows_list = []
+        for b in bills:
+            safe_name = html_lib.escape(b["student_name"])
+            js_name = b["student_name"].replace("\\", "\\\\").replace("'", "\\'")
+            btn_label = "Reset Bayar" if b["paid_amount"] > 0 else "Hapus"
+            row = f"""              <tr>
+                <td><strong>{safe_name}</strong></td>
+                <td>{html_lib.escape(b["due_date_str"])}</td>
+                <td>{format_rupiah(b["total_amount"])}</td>
+                <td>{format_rupiah(b["paid_amount"])}</td>
+                <td>{format_rupiah(b["remaining_amount"])}</td>
+                <td><span class="{b["badge_class"]}">{html_lib.escape(b["status"])}</span></td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-delete-pill" onclick="hapusPembayaran({b['bill_id']}, '{js_name}', {b['paid_amount']})">{btn_label}</button>
+                </td>
+              </tr>"""
+            rows_list.append(row)
+        rows_html = "\n".join(rows_list) + "\n"
+
+    options_html = "\n".join(
+        f'                <option value="{b["bill_id"]}" data-sisa="{b["remaining_amount"]}">{html_lib.escape(b["student_name"])} · sisa {format_rupiah(b["remaining_amount"])}</option>'
+        for b in bills
+    )
+
+    with open(PEMBAYARAN_HTML_FILE, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    start_tag = '<!-- DATA_PEMBAYARAN_START -->'
+    end_tag = '<!-- DATA_PEMBAYARAN_END -->'
+    if start_tag in content and end_tag in content:
+        before = content.split(start_tag)[0]
+        after = content.split(end_tag)[1]
+        content = f"{before}{start_tag}\n{rows_html}              {end_tag}{after}"
+
+    content = re.sub(r'(<div class="stat-value" id="statLunas">)(.*?)(</div>)', f'\\1{stats["lunas"]}\\3', content, flags=re.DOTALL)
+    content = re.sub(r'(<div class="stat-value" id="statBelum">)(.*?)(</div>)', f'\\1{stats["belum_lunas"]}\\3', content, flags=re.DOTALL)
+    content = re.sub(r'(<div class="stat-value" id="statMenunggak">)(.*?)(</div>)', f'\\1{stats["menunggak"]}\\3', content, flags=re.DOTALL)
+    content = re.sub(
+        r'(<select class="form-select-custom" id="selectTagihan">)(.*?)(</select>)',
+        f'\\1\n{options_html}\n              \\3',
+        content,
+        flags=re.DOTALL,
+    )
+
+    with open(PEMBAYARAN_HTML_FILE, 'w', encoding='utf-8') as f:
+        f.write(content)
+
+    return len(bills)
+
+
+def sync_tagihan_ke_html(period="Oktober 2026"):
+    """Menyinkronkan daftar tagihan per periode ke public/tagihan.html dengan format asli (NO. TAGIHAN, SISWA, PROGRAM, PERIODE, NOMINAL)."""
+    if not os.path.exists(TAGIHAN_HTML_FILE):
+        raise FileNotFoundError(f"File tidak ditemukan: {TAGIHAN_HTML_FILE}")
+
+    bills = get_bills_by_period(period)
+
+    if not bills:
+        rows_html = """              <tr id="emptyRow">
+                <td colspan="5" class="text-center py-5 text-muted" style="font-size: 14.5px;">
+                  Belum ada tagihan pada periode ini.
+                </td>
+              </tr>\n"""
+    else:
+        rows_list = []
+        for b in bills:
+            badge_status = (
+                '<span class="badge-status badge-status-lunas ms-2" style="font-size: 11px; padding: 2px 10px;">Sudah Bayar</span>'
+                if b["is_lunas"]
+                else '<span class="badge-status badge-status-belum ms-2" style="font-size: 11px; padding: 2px 10px;">Belum Bayar</span>'
+            )
+            row = f"""              <tr>
+                <td><code>{html_lib.escape(b["invoice_no"])}</code></td>
+                <td><strong>{html_lib.escape(b["student_name"])}</strong>{badge_status}</td>
+                <td>{html_lib.escape(b["program_name"])}</td>
+                <td>{html_lib.escape(b.get("period") or period)}</td>
+                <td class="text-end pe-4"><strong>{format_rupiah(b["total_amount"])}</strong></td>
+              </tr>"""
+            rows_list.append(row)
+        rows_html = "\n".join(rows_list) + "\n"
+
+    with open(TAGIHAN_HTML_FILE, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    start_tag = '<!-- DATA_TAGIHAN_START -->'
+    end_tag = '<!-- DATA_TAGIHAN_END -->'
+    if start_tag in content and end_tag in content:
+        before = content.split(start_tag)[0]
+        after = content.split(end_tag)[1]
+        content = f"{before}{start_tag}\n{rows_html}              {end_tag}{after}"
+
+    with open(TAGIHAN_HTML_FILE, 'w', encoding='utf-8') as f:
+        f.write(content)
+
+    return len(bills)
 
 
 # =============================================================================
@@ -970,7 +1432,93 @@ class StandbyHandler(SimpleHTTPRequestHandler):
                 self._send_json(500, {"success": False, "error": str(e)})
             return
 
-        # 6. Default: sajikan file HTML/CSS/JS
+        # 6. Endpoint CRUD Pembayaran & Read Tagihan (pembayaran.html & tagihan.html)
+        elif parsed.path == '/api/pembayaran/list':
+            try:
+                summary = get_billing_summary()
+                self._send_json(200, {"success": True, **summary})
+            except Exception as e:
+                self._send_json(500, {"success": False, "error": str(e)})
+            return
+
+        elif parsed.path == '/api/tagihan/list':
+            params = parse_qs(parsed.query)
+            periode = params.get('periode', [None])[0]
+            try:
+                if periode:
+                    bills = get_bills_by_period(periode)
+                    self._send_json(200, {"success": True, "bills": bills, "periode": periode})
+                else:
+                    summary = get_billing_summary()
+                    self._send_json(200, {"success": True, **summary})
+            except Exception as e:
+                self._send_json(500, {"success": False, "error": str(e)})
+            return
+
+        elif parsed.path == '/api/tagihan/terbitkan':
+            params = parse_qs(parsed.query)
+            periode = params.get('periode', ['Oktober 2026'])[0].strip() or 'Oktober 2026'
+            try:
+                bills = publish_bills_for_period(periode)
+                sync_tagihan_ke_html(periode)
+                sync_pembayaran_ke_html()
+                self._send_json(200, {"success": True, "bills": bills, "periode": periode})
+            except Exception as e:
+                self._send_json(500, {"success": False, "error": str(e)})
+            return
+
+        elif parsed.path == '/api/pembayaran/catat':
+            params = parse_qs(parsed.query)
+            bill_id = params.get('bill_id', [None])[0]
+            amount = params.get('amount', [0])[0]
+            method = params.get('method', ['Transfer Bank'])[0]
+            if not bill_id or not str(bill_id).isdigit():
+                self._send_json(400, {"success": False, "error": "Tagihan wajib dipilih"})
+                return
+            try:
+                pay_id = add_payment(int(bill_id), amount, payment_method=method)
+                sync_pembayaran_ke_html()
+                sync_tagihan_ke_html()
+                self._send_json(200, {"success": True, "id": pay_id})
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"success": False, "error": str(e)})
+            return
+
+        elif parsed.path == '/api/pembayaran/tambah_tagihan':
+            params = parse_qs(parsed.query)
+            student_name = params.get('student_name', [''])[0].strip()
+            program_name = params.get('program_name', ['Bimbel'])[0].strip()
+            amount = params.get('amount', [0])[0]
+            due_date = params.get('due_date', [None])[0]
+            try:
+                b_id = add_bill(student_name, program_name, amount, due_date=due_date)
+                sync_pembayaran_ke_html()
+                sync_tagihan_ke_html()
+                self._send_json(200, {"success": True, "id": b_id})
+            except ValueError as e:
+                self._send_json(400, {"success": False, "error": str(e)})
+            except Exception as e:
+                self._send_json(500, {"success": False, "error": str(e)})
+            return
+
+        elif parsed.path == '/api/pembayaran/hapus':
+            params = parse_qs(parsed.query)
+            bill_id = params.get('bill_id', [None])[0]
+            if not bill_id or not str(bill_id).isdigit():
+                self._send_json(400, {"success": False, "error": "bill_id tidak valid"})
+                return
+            try:
+                action_type = delete_bill_payment(int(bill_id))
+                sync_pembayaran_ke_html()
+                sync_tagihan_ke_html()
+                self._send_json(200, {"success": True, "action": action_type})
+            except Exception as e:
+                self._send_json(500, {"success": False, "error": str(e)})
+            return
+
+        # 7. Default: sajikan file HTML/CSS/JS
         super().do_GET()
 
     def log_message(self, format, *args):
@@ -990,7 +1538,9 @@ def start_standby_mode(port=8000):
         total_tutors = sync_tutor_ke_html()
         total_rooms = sync_ruang_ke_html()
         total_jadwal = sync_jadwal_ke_html()
-        print(f"[{time.strftime('%H:%M:%S')}] ✓ Sinkronisasi awal sukses. Total: {total} program, {total_tutors} tutor, {total_rooms} ruang, {total_jadwal} jadwal di database.")
+        total_bayar = sync_pembayaran_ke_html()
+        sync_tagihan_ke_html()
+        print(f"[{time.strftime('%H:%M:%S')}] ✓ Sinkronisasi awal sukses. Total: {total} program, {total_tutors} tutor, {total_rooms} ruang, {total_jadwal} jadwal, {total_bayar} tagihan.")
     except Exception as e:
         print(f"[{time.strftime('%H:%M:%S')}] ! Peringatan sinkronisasi awal: {e}")
 
@@ -1064,12 +1614,14 @@ if __name__ == '__main__':
             print("✓ Sukses terhubung ke database Neon PostgreSQL!")
             conn.close()
 
-            print("\n2. Melakukan sinkronisasi data ke public/program.html, public/tutor.html, public/ruang_belajar.html, & public/jadwal.html...")
+            print("\n2. Melakukan sinkronisasi data ke semua file HTML...")
             total = sync_ke_html()
             total_tutors = sync_tutor_ke_html()
             total_rooms = sync_ruang_ke_html()
             total_jadwal = sync_jadwal_ke_html()
-            print(f"✓ Sukses! program ({total}), tutor ({total_tutors}), ruang ({total_rooms}), jadwal ({total_jadwal}) berhasil diperbarui.")
+            total_bayar = sync_pembayaran_ke_html()
+            sync_tagihan_ke_html()
+            print(f"✓ Sukses! program ({total}), tutor ({total_tutors}), ruang ({total_rooms}), jadwal ({total_jadwal}), tagihan/pembayaran ({total_bayar}) berhasil diperbarui.")
 
             print("\n3. Daftar Program Belajar Saat Ini:")
             programs = get_programs()
