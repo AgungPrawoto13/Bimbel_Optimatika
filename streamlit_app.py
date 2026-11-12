@@ -1,8 +1,17 @@
 import html
+import importlib
 import os
 import streamlit as st
 import streamlit.components.v1 as components
 import database
+
+# Pastikan modul database ikut ter-reload saat file database.py berubah (anti-cache di Streamlit Cloud)
+_db_file = getattr(database, "__file__", None)
+if _db_file and os.path.exists(_db_file):
+    _db_mtime = os.path.getmtime(_db_file)
+    if st.session_state.get("_db_mtime") != _db_mtime or not hasattr(database, "get_tutors"):
+        importlib.reload(database)
+        st.session_state["_db_mtime"] = _db_mtime
 
 # =============================================================================
 # 1. KONFIGURASI HALAMAN STREAMLIT
