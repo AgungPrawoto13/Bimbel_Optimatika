@@ -37,10 +37,21 @@
               <input type="text" class="form-control-custom" id="inputNamaTutor" required>
             </div>
 
-            <!-- Mata pelajaran -->
+            <!-- Mata pelajaran (Pilihan dari Program Belajar) -->
             <div class="col-12 col-md-3">
-              <label for="inputMapel" class="form-label-custom">Mata pelajaran</label>
-              <input type="text" class="form-control-custom" id="inputMapel" required>
+              <label for="inputMapel" class="form-label-custom">Mata pelajaran (Program)</label>
+              <select class="form-select-custom w-100" id="inputMapel" required>
+                <option value="">Pilih Program / Mapel...</option>
+                <optgroup label="Program Resmi Optimatika">
+                  <option value="PANCA (Pandai Membaca)">PANCA (Pandai Membaca)</option>
+                  <option value="FONKA (Fondasi Matematika)">FONKA (Fondasi Matematika)</option>
+                  <option value="PRIME (English)">PRIME (Preschool &amp; Primary English)</option>
+                  <option value="MATIK SD (Mahir Matematika)" selected>MATIK SD (Mahir Matematika)</option>
+                  <option value="MATIK SMP (Mahir Matematika)">MATIK SMP (Mahir Matematika)</option>
+                  <option value="SADHA SD (Sains Dan Bahasa)">SADHA SD (Sains Dan Bahasa)</option>
+                  <option value="SADHA SMP (Sains Dan Bahasa)">SADHA SMP (Sains Dan Bahasa)</option>
+                </optgroup>
+              </select>
             </div>
 
             <!-- No. telepon -->
@@ -81,7 +92,8 @@
                 <td>0812-5566-1101</td>
                 <td><span class="badge-status badge-status-aktif">Aktif</span></td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Rina Wijaya')">Hapus</button>
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEditTutor(1, 'Kak Rina Wijaya', 'Matematika', '0812-5566-1101', 'Aktif')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Rina Wijaya', 1)">Hapus</button>
                 </td>
               </tr>
 
@@ -92,7 +104,8 @@
                 <td>0813-4455-2202</td>
                 <td><span class="badge-status badge-status-aktif">Aktif</span></td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Fajar Nugroho')">Hapus</button>
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEditTutor(2, 'Kak Fajar Nugroho', 'IPA', '0813-4455-2202', 'Aktif')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Fajar Nugroho', 2)">Hapus</button>
                 </td>
               </tr>
 
@@ -103,7 +116,8 @@
                 <td>0857-3344-3303</td>
                 <td><span class="badge-status badge-status-aktif">Aktif</span></td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Dewi Anggraini')">Hapus</button>
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEditTutor(3, 'Kak Dewi Anggraini', 'Bahasa Inggris', '0857-3344-3303', 'Aktif')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, 'Kak Dewi Anggraini', 3)">Hapus</button>
                 </td>
               </tr>
               <!-- DATA_TUTOR_END -->
@@ -115,6 +129,59 @@
     </main>
   </div>
 
+  <!-- MODAL EDIT TUTOR (BOOTSTRAP 5) -->
+  <div class="modal fade" id="modalEditTutor" tabindex="-1" aria-labelledby="modalEditTutorLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+        <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 20px 24px;">
+          <h5 class="modal-title" id="modalEditTutorLabel" style="font-size: 18px; font-weight: 700; color: #1e293b;">Edit Data Tutor</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="formEditTutor" onsubmit="event.preventDefault(); handleSimpanEditTutor();">
+          <div class="modal-body" style="padding: 24px;">
+            <input type="hidden" id="editTutorId">
+            <div class="mb-3">
+              <label for="editNamaTutor" class="form-label-custom">Nama tutor</label>
+              <input type="text" class="form-control-custom w-100" id="editNamaTutor" required>
+            </div>
+            <div class="mb-3">
+              <label for="editMapelTutor" class="form-label-custom">Mata pelajaran (Program)</label>
+              <select class="form-select-custom w-100" id="editMapelTutor" required>
+                <option value="">Pilih Program / Mapel...</option>
+                <optgroup label="Program Resmi Optimatika">
+                  <option value="PANCA (Pandai Membaca)">PANCA (Pandai Membaca)</option>
+                  <option value="FONKA (Fondasi Matematika)">FONKA (Fondasi Matematika)</option>
+                  <option value="PRIME (English)">PRIME (Preschool &amp; Primary English)</option>
+                  <option value="MATIK SD (Mahir Matematika)">MATIK SD (Mahir Matematika)</option>
+                  <option value="MATIK SMP (Mahir Matematika)">MATIK SMP (Mahir Matematika)</option>
+                  <option value="SADHA SD (Sains Dan Bahasa)">SADHA SD (Sains Dan Bahasa)</option>
+                  <option value="SADHA SMP (Sains Dan Bahasa)">SADHA SMP (Sains Dan Bahasa)</option>
+                </optgroup>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editTeleponTutor" class="form-label-custom">No. telepon</label>
+              <input type="tel" class="form-control-custom w-100" id="editTeleponTutor" placeholder="08..." required>
+            </div>
+            <div class="mb-3">
+              <label for="editStatusTutor" class="form-label-custom">Status</label>
+              <select class="form-select-custom w-100" id="editStatusTutor">
+                <option value="Aktif">Aktif</option>
+                <option value="Nonaktif">Nonaktif</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 16px 24px;">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 600; font-size: 14px; padding: 8px 18px;">Batal</button>
+            <button type="submit" class="btn-primary-custom" style="padding: 8px 22px;">Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Panggil JavaScript Sidebar Reusable -->
   <script src="js/sidebar.js"></script>
   <script>
@@ -122,6 +189,17 @@
     renderSidebar('tutor');
 
     const API_BASE = (window.location.protocol === 'file:') ? 'http://localhost:8000' : '';
+
+    let editTutorModalInstance = null;
+    function getEditTutorModal() {
+      if (!editTutorModalInstance) {
+        const modalEl = document.getElementById('modalEditTutor');
+        if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+          editTutorModalInstance = new bootstrap.Modal(modalEl);
+        }
+      }
+      return editTutorModalInstance;
+    }
 
     function escapeHtml(text) {
       const div = document.createElement('div');
@@ -142,6 +220,9 @@
         const isAktif = status.trim().toLowerCase() === 'aktif';
         const badgeClass = isAktif ? 'badge-status badge-status-aktif' : 'badge-status badge-status-nonaktif';
         const jsName = String(t.name).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const jsSpecialty = String(t.specialty || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const jsPhone = String(t.phone || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const jsStatus = String(status).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         return `
           <tr>
             <td><strong>${escapeHtml(t.name)}</strong></td>
@@ -149,6 +230,7 @@
             <td>${escapeHtml(t.phone)}</td>
             <td><span class="${badgeClass}">${escapeHtml(status)}</span></td>
             <td class="text-end pe-4">
+              <button type="button" class="btn-edit-pill" onclick="bukaModalEditTutor(${Number(t.id)}, '${jsName}', '${jsSpecialty}', '${jsPhone}', '${jsStatus}')">Edit</button>
               <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, '${jsName}', ${Number(t.id)})">Hapus</button>
             </td>
           </tr>
@@ -178,11 +260,51 @@
       return data;
     }
 
+    function updateDropdownMapel(programs) {
+      if (!programs || !Array.isArray(programs) || programs.length === 0) return;
+      const inputMapel = document.getElementById('inputMapel');
+      const editMapelTutor = document.getElementById('editMapelTutor');
+
+      let optionsHtml = '<option value="">Pilih Program / Mapel...</option>';
+      optionsHtml += '<optgroup label="Daftar Program (Tabel programs)">';
+      programs.forEach(p => {
+        const pName = p.name ? String(p.name).trim() : '';
+        if (pName && pName.toLowerCase() !== 'matematika sd & smp') {
+          const pLvl = p.level ? ` (${p.level})` : '';
+          optionsHtml += `<option value="${escapeHtml(pName)}">${escapeHtml(pName)}${escapeHtml(pLvl)}</option>`;
+        }
+      });
+      optionsHtml += '</optgroup>';
+
+      if (inputMapel) {
+        const curVal = inputMapel.value;
+        inputMapel.innerHTML = optionsHtml;
+        if (curVal) inputMapel.value = curVal;
+      }
+      if (editMapelTutor) {
+        const curVal = editMapelTutor.value;
+        editMapelTutor.innerHTML = optionsHtml;
+        if (curVal) editMapelTutor.value = curVal;
+      }
+    }
+
     async function muatTutorDariNeon() {
       try {
         const data = await callApi('/api/tutor/list');
-        if (data && data.success && Array.isArray(data.tutors)) {
-          renderTutorRows(data.tutors);
+        if (data && data.success) {
+          if (Array.isArray(data.tutors)) {
+            renderTutorRows(data.tutors);
+          }
+          if (Array.isArray(data.programs)) {
+            updateDropdownMapel(data.programs);
+          } else {
+            try {
+              const pData = await callApi('/api/program/list');
+              if (pData && pData.success && Array.isArray(pData.programs)) {
+                updateDropdownMapel(pData.programs);
+              }
+            } catch (_) {}
+          }
         }
       } catch (_) {
         // Fallback diam jika dibuka sebagai file statis tanpa server standby
@@ -218,7 +340,84 @@
       }
     }
 
-    // 3. Fungsi Hapus Tutor dari Neon PostgreSQL
+    // 3. Fungsi Buka Modal Edit Tutor
+    function bukaModalEditTutor(id, nama, mapel, telepon, status) {
+      document.getElementById('editTutorId').value = id || '';
+      document.getElementById('editNamaTutor').value = nama || '';
+
+      const editMapelSelect = document.getElementById('editMapelTutor');
+      const targetMapel = String(mapel || '').trim().toLowerCase();
+      let matched = false;
+      for (let opt of editMapelSelect.options) {
+        if (opt.value && opt.value.trim().toLowerCase() === targetMapel) {
+          editMapelSelect.value = opt.value;
+          matched = true;
+          break;
+        }
+      }
+      // Jika data lama tidak cocok (misal string legacy 'Matematika SD & SMP'), cari opsi yang paling mendekati tanpa menambah opsi baru
+      if (!matched && targetMapel) {
+        for (let opt of editMapelSelect.options) {
+          const valLow = opt.value.toLowerCase();
+          if ((targetMapel.includes('matematika') || targetMapel.includes('sd')) && (valLow.includes('matik sd') || valLow.includes('matematika'))) {
+            editMapelSelect.value = opt.value;
+            matched = true;
+            break;
+          }
+        }
+      }
+      if (!matched) {
+        editMapelSelect.selectedIndex = editMapelSelect.options.length > 1 ? 1 : 0;
+      }
+
+      document.getElementById('editTeleponTutor').value = telepon || '';
+      document.getElementById('editStatusTutor').value = (status || 'Aktif');
+
+      const modal = getEditTutorModal();
+      if (modal) {
+        modal.show();
+      } else {
+        const modalEl = document.getElementById('modalEditTutor');
+        modalEl.classList.add('show');
+        modalEl.style.display = 'block';
+      }
+    }
+
+    // 4. Fungsi Simpan Perubahan Edit Tutor
+    async function handleSimpanEditTutor() {
+      const id = document.getElementById('editTutorId').value;
+      const nama = document.getElementById('editNamaTutor').value.trim();
+      const mapel = document.getElementById('editMapelTutor').value.trim();
+      const telepon = document.getElementById('editTeleponTutor').value.trim();
+      const status = document.getElementById('editStatusTutor').value;
+
+      if (!id || !nama || !mapel || !telepon) {
+        alert('Nama tutor, mata pelajaran, dan no. telepon wajib diisi!');
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams({
+          id: String(id),
+          name: nama,
+          specialty: mapel,
+          phone: telepon,
+          status: status
+        });
+        const data = await callApi(`/api/tutor/ubah?${params.toString()}`);
+        if (!data || !data.success) throw new Error((data && data.error) || 'Gagal memperbarui data tutor');
+
+        const modal = getEditTutorModal();
+        if (modal) modal.hide();
+
+        await muatTutorDariNeon();
+        alert(`✓ Data tutor "${nama}" berhasil diperbarui di Neon PostgreSQL!`);
+      } catch (err) {
+        alert(`Gagal memperbarui data tutor ke Neon PostgreSQL:\n${err.message}`);
+      }
+    }
+
+    // 5. Fungsi Hapus Tutor dari Neon PostgreSQL
     async function hapusTutor(buttonElement, namaTutor, tutorId) {
       if (!confirm(`Yakin ingin menghapus tutor "${namaTutor}" dari database Neon?`)) {
         return;

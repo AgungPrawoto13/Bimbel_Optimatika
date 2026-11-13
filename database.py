@@ -94,6 +94,10 @@ def add_program(name, level, sessions=8):
     conn = create_new_connection()
     try:
         with conn.cursor() as cur:
+            try:
+                cur.execute("ALTER TABLE programs ALTER COLUMN level TYPE VARCHAR(60);")
+            except Exception:
+                pass
             cur.execute(
                 "INSERT INTO programs (name, level, sessions_per_month) VALUES (%s, %s, %s) RETURNING id;",
                 (name, level, sessions)
@@ -121,6 +125,32 @@ def delete_program(identifier):
         conn.close()
 
 
+def update_program(identifier, name, level, sessions=8):
+    """Memperbarui data program berdasarkan ID atau Nama di database Neon PostgreSQL"""
+    conn = create_new_connection()
+    try:
+        with conn.cursor() as cur:
+            try:
+                cur.execute("ALTER TABLE programs ALTER COLUMN level TYPE VARCHAR(60);")
+            except Exception:
+                pass
+            if isinstance(identifier, int) or (isinstance(identifier, str) and identifier.isdigit()):
+                cur.execute(
+                    "UPDATE programs SET name = %s, level = %s, sessions_per_month = %s WHERE id = %s;",
+                    (name, level, int(sessions), int(identifier))
+                )
+            else:
+                cur.execute(
+                    "UPDATE programs SET level = %s, sessions_per_month = %s WHERE name = %s;",
+                    (level, int(sessions), identifier)
+                )
+            updated = cur.rowcount > 0
+        conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
 # =============================================================================
 # 2B. FUNGSI PENGELOLAAN DATA TUTOR (CRUD)
 # =============================================================================
@@ -129,14 +159,43 @@ def get_tutors():
     """Mengambil semua daftar tutor dari database Neon PostgreSQL"""
     conn = create_new_connection()
     try:
+        # Pembersihan otomatis jika masih ada data legacy 'Matematika SD & SMP' di tabel tutors
+        try:
+            with conn.cursor() as cur_clean:
+                cur_clean.execute(
+                    """
+                    UPDATE tutors
+                    SET specialty = COALESCE(
+                        (SELECT name FROM programs WHERE name ILIKE '%MATIK SD%' LIMIT 1),
+                        (SELECT name FROM programs WHERE name ILIKE '%Matematika SD%' LIMIT 1),
+                        (SELECT name FROM programs ORDER BY id ASC LIMIT 1),
+                        'MATIK SD'
+                    )
+                    WHERE specialty ILIKE '%Matematika SD & SMP%';
+                    """
+                )
+            conn.commit()
+        except Exception:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
+
         if PSYCOPG_V3:
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute("SELECT id, name, specialty, phone, email, status FROM tutors ORDER BY id ASC;")
-                return cur.fetchall()
+                rows = cur.fetchall()
         else:
             with conn.cursor(cursor_factory=psycopg.extras.RealDictCursor) as cur:
                 cur.execute("SELECT id, name, specialty, phone, email, status FROM tutors ORDER BY id ASC;")
-                return [dict(r) for r in cur.fetchall()]
+                rows = [dict(r) for r in cur.fetchall()]
+
+        # Pastikan tidak ada string legacy 'Matematika SD & SMP' yang lolos
+        for t in rows:
+            if "matematika sd & smp" in str(t.get('specialty') or "").strip().lower():
+                t['specialty'] = 'MATIK SD'
+
+        return rows
     finally:
         conn.close()
 
@@ -169,6 +228,28 @@ def delete_tutor(identifier):
             deleted = cur.rowcount > 0
         conn.commit()
         return deleted
+    finally:
+        conn.close()
+
+
+def update_tutor(tutor_id, name, specialty, phone, status='Aktif', email=None):
+    """Memperbarui data tutor berdasarkan ID di database Neon PostgreSQL"""
+    conn = create_new_connection()
+    try:
+        with conn.cursor() as cur:
+            if email:
+                cur.execute(
+                    "UPDATE tutors SET name = %s, specialty = %s, phone = %s, status = %s, email = %s WHERE id = %s;",
+                    (name, specialty, phone, status, email, int(tutor_id))
+                )
+            else:
+                cur.execute(
+                    "UPDATE tutors SET name = %s, specialty = %s, phone = %s, status = %s WHERE id = %s;",
+                    (name, specialty, phone, status, int(tutor_id))
+                )
+            updated = cur.rowcount > 0
+        conn.commit()
+        return updated
     finally:
         conn.close()
 
@@ -324,11 +405,10 @@ def get_all_schedules():
     return _fetch_schedules(room_id=None)
 
 
-def _check_schedule_conflict(cur, day, start_time, end_time, room_id=None, tutor_id=None):
+def _check_schedule_conflict(cur, day, start_time, end_time, room_id=None, tutor_id=None, exclude_schedule_id=None):
     """Memeriksa bentrok ruang maupun bentrok tutor pada hari yang sama dengan irisan jam."""
     if room_id:
-        cur.execute(
-            """
+        room_query = """
             SELECT COALESCE(r.name, 'Ruang'), s.start_time, s.end_time, COALESCE(p.name, sg.name)
             FROM schedules s
             JOIN study_groups sg ON s.study_group_id = sg.id
@@ -338,10 +418,14 @@ def _check_schedule_conflict(cur, day, start_time, end_time, room_id=None, tutor
               AND sg.room_id = %s
               AND s.start_time < %s
               AND %s < s.end_time
-            LIMIT 1;
-            """,
-            (day, int(room_id), end_time, start_time),
-        )
+        """
+        params = [day, int(room_id), end_time, start_time]
+        if exclude_schedule_id:
+            room_query += " AND s.id != %s"
+            params.append(int(exclude_schedule_id))
+        room_query += " LIMIT 1;"
+
+        cur.execute(room_query, tuple(params))
         room_hit = cur.fetchone()
         if room_hit:
             raise ValueError(
@@ -350,8 +434,7 @@ def _check_schedule_conflict(cur, day, start_time, end_time, room_id=None, tutor
             )
 
     if tutor_id:
-        cur.execute(
-            """
+        tutor_query = """
             SELECT COALESCE(t.name, 'Tutor'), s.start_time, s.end_time, COALESCE(r.name, 'Ruang')
             FROM schedules s
             JOIN study_groups sg ON s.study_group_id = sg.id
@@ -361,10 +444,14 @@ def _check_schedule_conflict(cur, day, start_time, end_time, room_id=None, tutor
               AND sg.tutor_id = %s
               AND s.start_time < %s
               AND %s < s.end_time
-            LIMIT 1;
-            """,
-            (day, int(tutor_id), end_time, start_time),
-        )
+        """
+        params = [day, int(tutor_id), end_time, start_time]
+        if exclude_schedule_id:
+            tutor_query += " AND s.id != %s"
+            params.append(int(exclude_schedule_id))
+        tutor_query += " LIMIT 1;"
+
+        cur.execute(tutor_query, tuple(params))
         tutor_hit = cur.fetchone()
         if tutor_hit:
             raise ValueError(
@@ -373,13 +460,13 @@ def _check_schedule_conflict(cur, day, start_time, end_time, room_id=None, tutor
             )
 
 
-def check_conflict(day, start_time, end_time, room_id=None, tutor_id=None):
+def check_conflict(day, start_time, end_time, room_id=None, tutor_id=None, exclude_schedule_id=None):
     """Memeriksa apakah terdapat bentrok jadwal pada hari, jam, ruang, atau tutor tertentu di Neon PostgreSQL."""
     conn = create_new_connection()
     try:
         with conn.cursor() as cur:
             try:
-                _check_schedule_conflict(cur, day, start_time, end_time, room_id=room_id, tutor_id=tutor_id)
+                _check_schedule_conflict(cur, day, start_time, end_time, room_id=room_id, tutor_id=tutor_id, exclude_schedule_id=exclude_schedule_id)
                 return {"conflict": False, "message": "Jadwal dan ruangan aman (tidak bentrok)."}
             except ValueError as e:
                 return {"conflict": True, "message": str(e)}
@@ -457,6 +544,69 @@ def delete_room_schedule(schedule_id):
 
 
 delete_schedule = delete_room_schedule
+
+
+def update_room_schedule(schedule_id, room_id, tutor_id, program_id, day, start_time, end_time, group_name=None):
+    """Memeriksa bentrok lalu memperbarui jadwal kelas di schedules & study_groups Neon PostgreSQL."""
+    start_clean = str(start_time or "").strip()
+    end_clean = str(end_time or "").strip()
+    if not start_clean or not end_clean:
+        raise ValueError("Jam mulai dan jam selesai wajib diisi.")
+    if start_clean >= end_clean:
+        raise ValueError("Jam selesai harus lebih akhir dari jam mulai.")
+
+    conn = create_new_connection()
+    try:
+        with conn.cursor() as cur:
+            _check_schedule_conflict(cur, day, start_clean, end_clean, room_id=room_id, tutor_id=tutor_id, exclude_schedule_id=int(schedule_id))
+
+            cur.execute("SELECT study_group_id FROM schedules WHERE id = %s;", (int(schedule_id),))
+            row = cur.fetchone()
+            if not row:
+                raise ValueError(f"Jadwal dengan ID {schedule_id} tidak ditemukan.")
+            sg_id = row[0]
+
+            if not group_name:
+                prog_label = "Kelas"
+                if program_id:
+                    cur.execute("SELECT name FROM programs WHERE id = %s;", (int(program_id),))
+                    prow = cur.fetchone()
+                    if prow and prow[0]:
+                        prog_label = prow[0]
+                group_name = prog_label
+
+            if sg_id:
+                cur.execute(
+                    """
+                    UPDATE study_groups
+                    SET name = %s, program_id = %s, tutor_id = %s, room_id = %s
+                    WHERE id = %s;
+                    """,
+                    (
+                        group_name,
+                        int(program_id) if program_id else None,
+                        int(tutor_id) if tutor_id else None,
+                        int(room_id) if room_id else None,
+                        sg_id,
+                    ),
+                )
+
+            cur.execute(
+                """
+                UPDATE schedules
+                SET day = %s, start_time = %s, end_time = %s
+                WHERE id = %s;
+                """,
+                (day, start_clean, end_clean, int(schedule_id)),
+            )
+            updated = cur.rowcount > 0
+        conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+update_schedule = update_room_schedule
 
 
 # =============================================================================
@@ -1032,20 +1182,30 @@ def sync_ke_html():
     else:
         rows_list = []
         for p in programs:
-            level = str(p.get('level', 'SD')).upper()
+            level_display = str(p.get('level') or 'SD I - VI').strip()
+            level_upper = level_display.upper()
             badge_class = "badge-level"
-            if level == "SMP":
+            if "PRASEKOLAH" in level_upper or "PRA" in level_upper:
+                badge_class += " badge-pra"
+            elif "SMP" in level_upper:
                 badge_class += " badge-smp"
-            elif level == "SMA":
+            elif "SMA" in level_upper:
                 badge_class += " badge-sma"
+            else:
+                badge_class += " badge-sd"
 
-            p_name = p['name'].replace("'", "\\'")
+            p_name = str(p['name']).replace("'", "\\'")
+            js_name = str(p['name']).replace("\\", "\\\\").replace("'", "\\'")
+            js_level = level_display.replace("\\", "\\\\").replace("'", "\\'")
+            safe_name = html_lib.escape(str(p['name']))
+            safe_level = html_lib.escape(level_display)
 
             row = f"""              <tr>
-                <td><strong>{p['name']}</strong></td>
-                <td><span class="{badge_class}">{level}</span></td>
+                <td><strong>{safe_name}</strong></td>
+                <td><span class="{badge_class}">{safe_level}</span></td>
                 <td><span class="session-count">{p['sessions_per_month']}×</span></td>
                 <td class="text-end pe-4">
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEditProgram({p['id']}, '{js_name}', '{js_level}', {p['sessions_per_month']})">Edit</button>
                   <a href="?page=program.html&action=hapus&id={p['id']}&name={p_name}" target="_top" class="btn-delete-pill" style="text-decoration: none; display: inline-block;" onclick="return confirm('Yakin ingin menghapus program \'{p_name}\' dari database Neon?');">Hapus</a>
                 </td>
               </tr>"""
@@ -1103,6 +1263,9 @@ def sync_tutor_ke_html():
             safe_phone = html_lib.escape(str(t['phone']))
             safe_status = html_lib.escape(status)
             js_name = str(t['name']).replace("\\", "\\\\").replace("'", "\\'")
+            js_specialty = str(t.get('specialty') or '').replace("\\", "\\\\").replace("'", "\\'")
+            js_phone = str(t.get('phone') or '').replace("\\", "\\\\").replace("'", "\\'")
+            js_status = str(status).replace("\\", "\\\\").replace("'", "\\'")
 
             row = f"""              <tr>
                 <td><strong>{safe_name}</strong></td>
@@ -1110,6 +1273,7 @@ def sync_tutor_ke_html():
                 <td>{safe_phone}</td>
                 <td><span class="{badge_class}">{safe_status}</span></td>
                 <td class="text-end pe-4">
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEditTutor({int(t['id'])}, '{js_name}', '{js_specialty}', '{js_phone}', '{js_status}')">Edit</button>
                   <button type="button" class="btn-delete-pill" onclick="hapusTutor(this, '{js_name}', {int(t['id'])})">Hapus</button>
                 </td>
               </tr>"""
@@ -1221,11 +1385,17 @@ def sync_jadwal_ke_html():
         rows_list = []
         for s in schedules:
             safe_day = html_lib.escape(str(s.get('day') or '-'))
-            safe_time = f"{html_lib.escape(str(s.get('start_time') or ''))}–{html_lib.escape(str(s.get('end_time') or ''))}"
+            safe_start = html_lib.escape(str(s.get('start_time') or ''))
+            safe_end = html_lib.escape(str(s.get('end_time') or ''))
+            safe_time = f"{safe_start}–{safe_end}"
             safe_group = html_lib.escape(str(s.get('program_name') or s.get('group_name') or '-'))
             safe_tutor = html_lib.escape(str(s.get('tutor_name') or '-'))
             safe_room = html_lib.escape(str(s.get('room_name') or '-'))
             js_info = f"{s.get('day')} - {s.get('program_name') or s.get('group_name')}".replace("\\", "\\\\").replace("'", "\\'")
+            js_day = str(s.get('day') or 'Senin').replace("\\", "\\\\").replace("'", "\\'")
+            prog_id = int(s.get('program_id') or 0)
+            tutor_id = int(s.get('tutor_id') or 0)
+            room_id = int(s.get('room_id') or 0)
 
             row = f"""              <tr data-hari="{safe_day}" data-ruang="{safe_room}" data-tutor="{safe_tutor}" data-waktu="{safe_time}">
                 <td><strong>{safe_day}</strong></td>
@@ -1234,6 +1404,7 @@ def sync_jadwal_ke_html():
                 <td>{safe_tutor}</td>
                 <td>{safe_room}</td>
                 <td class="text-end pe-4">
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEditJadwal({int(s['schedule_id'])}, '{js_day}', '{safe_start}', '{safe_end}', {prog_id}, {tutor_id}, {room_id})">Edit</button>
                   <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, '{js_info}', {int(s['schedule_id'])})">Hapus</button>
                 </td>
               </tr>"""
@@ -1500,11 +1671,42 @@ class StandbyHandler(SimpleHTTPRequestHandler):
                 self._send_json(200, {"success": True, "id": new_id})
                 return
 
+        elif parsed.path in ('/api/program/ubah', '/api/program/edit'):
+            params = parse_qs(parsed.query)
+            target = params.get('id', [None])[0] or params.get('name', [None])[0]
+            name = params.get('name', [''])[0].strip()
+            level = params.get('level', ['SD'])[0].strip()
+            try:
+                sessions = int(params.get('sessions', [8])[0])
+            except (ValueError, TypeError):
+                sessions = 8
+
+            if target and name:
+                try:
+                    success = update_program(target, name, level, sessions)
+                    sync_ke_html()
+                    print(f"[{time.strftime('%H:%M:%S')}] ✏️ Program '{target}' berhasil diperbarui ke Neon PostgreSQL ({name}, {level}, {sessions}x).")
+                    self._send_json(200, {"success": success, "message": f"Program '{name}' berhasil diperbarui"})
+                except Exception as e:
+                    self._send_json(500, {"success": False, "error": str(e)})
+                return
+            self._send_json(400, {"success": False, "error": "ID/Nama program dan nama baru wajib diisi"})
+            return
+
         # 3. Endpoint CRUD Tutor untuk public/tutor.html
         elif parsed.path == '/api/tutor/list':
             try:
                 tutors = get_tutors()
-                self._send_json(200, {"success": True, "tutors": tutors})
+                programs = get_programs()
+                self._send_json(200, {"success": True, "tutors": tutors, "programs": programs})
+            except Exception as e:
+                self._send_json(500, {"success": False, "error": str(e)})
+            return
+
+        elif parsed.path == '/api/program/list':
+            try:
+                programs = get_programs()
+                self._send_json(200, {"success": True, "programs": programs})
             except Exception as e:
                 self._send_json(500, {"success": False, "error": str(e)})
             return
@@ -1542,6 +1744,26 @@ class StandbyHandler(SimpleHTTPRequestHandler):
                     self._send_json(500, {"success": False, "error": str(e)})
                 return
             self._send_json(400, {"success": False, "error": "ID atau nama tutor tidak ditemukan"})
+            return
+
+        elif parsed.path in ('/api/tutor/ubah', '/api/tutor/edit'):
+            params = parse_qs(parsed.query)
+            t_id = params.get('id', [None])[0]
+            name = params.get('name', [''])[0].strip()
+            specialty = params.get('specialty', [''])[0].strip()
+            phone = params.get('phone', [''])[0].strip()
+            status = params.get('status', ['Aktif'])[0].strip() or 'Aktif'
+
+            if t_id and name and specialty:
+                try:
+                    success = update_tutor(int(t_id), name, specialty, phone, status=status)
+                    sync_tutor_ke_html()
+                    print(f"[{time.strftime('%H:%M:%S')}] ✏️ Tutor ID {t_id} ('{name}') berhasil diperbarui di Neon PostgreSQL.")
+                    self._send_json(200, {"success": success, "message": f"Tutor '{name}' berhasil diperbarui"})
+                except Exception as e:
+                    self._send_json(500, {"success": False, "error": str(e)})
+                return
+            self._send_json(400, {"success": False, "error": "ID tutor, nama, dan bidang wajib diisi"})
             return
 
         # 4. Endpoint CRUD Ruang Belajar untuk public/ruang_belajar.html
@@ -1717,6 +1939,43 @@ class StandbyHandler(SimpleHTTPRequestHandler):
                 success = delete_schedule(int(sched_id))
                 sync_jadwal_ke_html()
                 self._send_json(200, {"success": success})
+            except Exception as e:
+                self._send_json(500, {"success": False, "error": str(e)})
+            return
+
+        elif parsed.path in ('/api/jadwal/ubah', '/api/jadwal/edit'):
+            params = parse_qs(parsed.query)
+            sched_id = params.get('id', [None])[0]
+            room_id = params.get('room_id', [None])[0]
+            tutor_id = params.get('tutor_id', [None])[0]
+            program_id = params.get('program_id', [None])[0]
+            group_name = params.get('group_name', [None])[0]
+            day = params.get('day', ['Senin'])[0].strip() or 'Senin'
+            start_time = params.get('start_time', ['15:00'])[0].strip() or '15:00'
+            end_time = params.get('end_time', ['16:30'])[0].strip() or '16:30'
+
+            if not sched_id or not str(sched_id).isdigit():
+                self._send_json(400, {"success": False, "error": "id jadwal tidak valid"})
+                return
+            if not room_id or not str(room_id).isdigit() or not tutor_id or not str(tutor_id).isdigit():
+                self._send_json(400, {"success": False, "error": "Ruang dan Tutor wajib dipilih"})
+                return
+            try:
+                success = update_schedule(
+                    int(sched_id),
+                    int(room_id),
+                    int(tutor_id),
+                    int(program_id) if program_id and str(program_id).isdigit() else None,
+                    day,
+                    start_time,
+                    end_time,
+                    group_name=group_name,
+                )
+                sync_jadwal_ke_html()
+                print(f"[{time.strftime('%H:%M:%S')}] ✏️ Jadwal ID {sched_id} berhasil diperbarui di Neon PostgreSQL.")
+                self._send_json(200, {"success": success, "message": f"Jadwal ID {sched_id} berhasil diperbarui"})
+            except ValueError as e:
+                self._send_json(409, {"success": False, "error": str(e)})
             except Exception as e:
                 self._send_json(500, {"success": False, "error": str(e)})
             return

@@ -3,7 +3,7 @@ import importlib
 import os
 import streamlit as st
 import streamlit.components.v1 as components
-import database
+import database 
 
 # Pastikan modul database ikut ter-reload saat file database.py berubah (anti-cache di Streamlit Cloud)
 _db_file = getattr(database, "__file__", None)
@@ -546,6 +546,18 @@ st.markdown("""
         line-height: 1.4;
     }
 
+    .table-th-center {
+        text-align: center !important;
+        width: 100% !important;
+        display: block !important;
+    }
+
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .table-card-marker) [data-testid="stMarkdownContainer"]:has(.table-th-center),
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .table-card-marker) [data-testid="stMarkdownContainer"]:has(.table-th-center) {
+        width: 100% !important;
+        text-align: center !important;
+    }
+
     .program-name-cell {
         font-size: 14.5px;
         font-weight: 700;
@@ -563,16 +575,31 @@ st.markdown("""
         display: inline-block;
         letter-spacing: 0.2px;
         line-height: 1.4;
+        white-space: nowrap;
+    }
+
+    .badge-level.badge-pra {
+        background-color: #fef3c7;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+
+    .badge-level.badge-sd {
+        background-color: #e0f2fe;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
     }
 
     .badge-level.badge-smp {
-        background-color: #ebf4ff;
-        color: #3182ce;
+        background-color: #ede9fe;
+        color: #6d28d9;
+        border: 1px solid #ddd6fe;
     }
 
     .badge-level.badge-sma {
-        background-color: #e6f6ff;
-        color: #0284c7;
+        background-color: #dcfce7;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
     }
 
     .session-count {
@@ -1113,40 +1140,107 @@ if menu == "Program":
         </div>
     """, unsafe_allow_html=True)
 
-    # CARD 1: FORM TAMBAH PROGRAM (SATU CARD UTUH)
-    with st.form("form_add_program", clear_on_submit=True):
-        st.markdown('<div class="card-heading">Tambah program</div>', unsafe_allow_html=True)
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            nama_input = st.text_input("Nama program", placeholder="contoh: Matematika Dasar")
-        with col2:
-            jenjang_input = st.selectbox("Jenjang", ["SD", "SMP", "SMA"])
-        with col3:
-            sesi_input = st.number_input("Pertemuan per bulan", min_value=1, max_value=31, value=8, step=1)
-        with col4:
-            btn_simpan = st.form_submit_button("Simpan", type="primary", use_container_width=True)
+    # Daftar opsi jenjang sesuai program resmi Optimatika dari client
+    PROGRAM_LEVEL_OPTIONS = [
+        "Prasekolah - SD I",
+        "Prasekolah - SD VI",
+        "SD I - VI",
+        "SMP I - III",
+        "SD",
+        "SMP",
+        "SMA"
+    ]
 
-        if btn_simpan:
-            if not nama_input.strip():
-                st.warning("Nama program wajib diisi.")
-            else:
-                try:
-                    database.add_program(nama_input.strip(), jenjang_input, int(sesi_input))
+    # Ambil program untuk form edit atau tambah
+    programs = []
+    try:
+        programs = database.get_programs()
+    except Exception as e:
+        programs = []
+
+    editing_prog_id = st.session_state.get("editing_program_id")
+    editing_prog = next((p for p in programs if p["id"] == editing_prog_id), None) if editing_prog_id else None
+
+    if editing_prog:
+        # MODE EDIT PROGRAM
+        with st.form("form_edit_program"):
+            st.markdown(
+                f'<div class="card-heading">Edit program: <span style="color: var(--primary-blue);">{html.escape(str(editing_prog["name"]))}</span></div>',
+                unsafe_allow_html=True
+            )
+            col1, col2, col3, col4, col5 = st.columns([3.5, 2.5, 2, 1.5, 1.5])
+            with col1:
+                edit_nama_prog = st.text_input("Nama program", value=str(editing_prog.get("name") or ""))
+            with col2:
+                cur_lvl = str(editing_prog.get("level") or "SD I - VI").strip()
+                lvl_idx = 2
+                for idx, opt in enumerate(PROGRAM_LEVEL_OPTIONS):
+                    if opt.lower() == cur_lvl.lower():
+                        lvl_idx = idx
+                        break
+                edit_jenjang_prog = st.selectbox("Jenjang / Tingkatan", PROGRAM_LEVEL_OPTIONS, index=lvl_idx)
+            with col3:
+                cur_sessions = int(editing_prog.get("sessions_per_month") or 8)
+                edit_sesi_prog = st.number_input("Pertemuan per bulan", min_value=1, max_value=31, value=cur_sessions, step=1)
+            with col4:
+                btn_simpan_edit_prog = st.form_submit_button("Simpan", type="primary", use_container_width=True)
+            with col5:
+                btn_batal_edit_prog = st.form_submit_button("Batal", use_container_width=True)
+
+            if btn_simpan_edit_prog:
+                if not edit_nama_prog.strip():
+                    st.warning("Nama program wajib diisi.")
+                else:
                     try:
-                        database.sync_ke_html()
-                    except Exception:
-                        pass
-                    st.toast(f"✓ Program '{nama_input.strip()}' berhasil ditambahkan ke Neon!", icon="🎉")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Gagal menambahkan program: {e}")
+                        database.update_program(editing_prog["id"], edit_nama_prog.strip(), edit_jenjang_prog, int(edit_sesi_prog))
+                        try:
+                            database.sync_ke_html()
+                        except Exception:
+                            pass
+                        st.session_state["editing_program_id"] = None
+                        st.toast(f"✓ Program '{edit_nama_prog.strip()}' berhasil diperbarui di Neon!", icon="🎉")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Gagal memperbarui program: {e}")
+
+            if btn_batal_edit_prog:
+                st.session_state["editing_program_id"] = None
+                st.rerun()
+    else:
+        # MODE TAMBAH PROGRAM
+        with st.form("form_add_program", clear_on_submit=True):
+            st.markdown('<div class="card-heading">Tambah program</div>', unsafe_allow_html=True)
+            col1, col2, col3, col4 = st.columns([3.5, 2.5, 2, 2])
+            with col1:
+                nama_input = st.text_input("Nama program", placeholder="contoh: PANCA (Pandai Membaca)")
+            with col2:
+                jenjang_input = st.selectbox("Jenjang / Tingkatan", PROGRAM_LEVEL_OPTIONS, index=2)
+            with col3:
+                sesi_input = st.number_input("Pertemuan per bulan", min_value=1, max_value=31, value=8, step=1)
+            with col4:
+                btn_simpan = st.form_submit_button("Simpan", type="primary", use_container_width=True)
+
+            if btn_simpan:
+                if not nama_input.strip():
+                    st.warning("Nama program wajib diisi.")
+                else:
+                    try:
+                        database.add_program(nama_input.strip(), jenjang_input, int(sesi_input))
+                        try:
+                            database.sync_ke_html()
+                        except Exception:
+                            pass
+                        st.toast(f"✓ Program '{nama_input.strip()}' berhasil ditambahkan ke Neon!", icon="🎉")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Gagal menambahkan program: {e}")
 
     # CARD 2: TABEL DATA PROGRAM (SATU CARD UTUH)
     with st.container(border=True):
         st.markdown('<div class="table-card-marker"></div>', unsafe_allow_html=True)
 
         # Header Tabel
-        th1, th2, th3, th4 = st.columns([4.5, 2.5, 1.8, 1.2])
+        th1, th2, th3, th4 = st.columns([4.0, 2.8, 1.7, 1.5])
         with th1:
             st.markdown('<div class="table-th table-header-marker">PROGRAM</div>', unsafe_allow_html=True)
         with th2:
@@ -1154,51 +1248,59 @@ if menu == "Program":
         with th3:
             st.markdown('<div class="table-th">PERTEMUAN / BULAN</div>', unsafe_allow_html=True)
         with th4:
-            st.markdown('<div class="table-th"></div>', unsafe_allow_html=True)
+            st.markdown('<div class="table-th table-th-center" style="text-align: center; width: 100%; display: block;">AKSI</div>', unsafe_allow_html=True)
 
         # Baris Data Program dari Neon PostgreSQL
-        try:
-            programs = database.get_programs()
-            if not programs:
-                st.markdown(
-                    "<p style='text-align: center; color: #64748b; padding: 28px 20px; margin: 0;'>"
-                    "Belum ada data program di database Neon.</p>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                for p in programs:
-                    r1, r2, r3, r4 = st.columns([4.5, 2.5, 1.8, 1.2])
-                    with r1:
-                        safe_name = html.escape(str(p['name']))
-                        st.markdown(f'<div class="program-name-cell">{safe_name}</div>', unsafe_allow_html=True)
-                    with r2:
-                        lvl = str(p['level']).upper()
-                        badge_class = "badge-level"
-                        if lvl == "SMP":
-                            badge_class += " badge-smp"
-                        elif lvl == "SMA":
-                            badge_class += " badge-sma"
-                        st.markdown(f'<span class="{badge_class}">{html.escape(lvl)}</span>', unsafe_allow_html=True)
-                    with r3:
-                        st.markdown(
-                            f'<span class="session-count">{int(p["sessions_per_month"])}×</span>',
-                            unsafe_allow_html=True,
-                        )
-                    with r4:
-                        if st.button("Hapus", key=f"btn_del_{p['id']}", type="secondary"):
+        if not programs:
+            st.markdown(
+                "<p style='text-align: center; color: #64748b; padding: 28px 20px; margin: 0;'>"
+                "Belum ada data program di database Neon.</p>",
+                unsafe_allow_html=True,
+            )
+        else:
+            for p in programs:
+                r1, r2, r3, r4 = st.columns([4.0, 2.8, 1.7, 1.5])
+                with r1:
+                    safe_name = html.escape(str(p['name']))
+                    st.markdown(f'<div class="program-name-cell">{safe_name}</div>', unsafe_allow_html=True)
+                with r2:
+                    lvl_display = str(p.get('level') or 'SD I - VI').strip()
+                    lvl_upper = lvl_display.upper()
+                    badge_class = "badge-level"
+                    if "PRASEKOLAH" in lvl_upper or "PRA" in lvl_upper:
+                        badge_class += " badge-pra"
+                    elif "SMP" in lvl_upper:
+                        badge_class += " badge-smp"
+                    elif "SMA" in lvl_upper:
+                        badge_class += " badge-sma"
+                    else:
+                        badge_class += " badge-sd"
+                    st.markdown(f'<span class="{badge_class}">{html.escape(lvl_display)}</span>', unsafe_allow_html=True)
+                with r3:
+                    st.markdown(
+                        f'<span class="session-count">{int(p["sessions_per_month"])}×</span>',
+                        unsafe_allow_html=True,
+                    )
+                with r4:
+                    btn_c1, btn_c2 = st.columns(2)
+                    with btn_c1:
+                        if st.button("Edit", key=f"btn_edit_prog_{p['id']}"):
+                            st.session_state["editing_program_id"] = p['id']
+                            st.rerun()
+                    with btn_c2:
+                        if st.button("Hapus", key=f"btn_del_prog_{p['id']}", type="secondary"):
                             try:
                                 database.delete_program(p['id'])
                                 try:
                                     database.sync_ke_html()
                                 except Exception:
                                     pass
+                                if st.session_state.get("editing_program_id") == p['id']:
+                                    st.session_state["editing_program_id"] = None
                                 st.toast(f"✓ Program '{p['name']}' berhasil dihapus dari Neon!", icon="🗑️")
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Gagal menghapus: {e}")
-
-        except Exception as e:
-            st.error(f"Gagal mengambil data dari database Neon: {e}")
 
 
 # =============================================================================
@@ -1224,45 +1326,131 @@ elif menu == "Tutor":
         </div>
     """, unsafe_allow_html=True)
 
-    # CARD 1: FORM TAMBAH TUTOR
-    with st.form("form_add_tutor", clear_on_submit=True):
-        st.markdown('<div class="card-heading">Tambah tutor</div>', unsafe_allow_html=True)
-        col1, col2, col3, col4 = st.columns([4, 3, 3, 2])
-        with col1:
-            tutor_name = st.text_input("Nama tutor")
-        with col2:
-            tutor_specialty = st.text_input("Mata pelajaran")
-        with col3:
-            tutor_phone = st.text_input("No. telepon", placeholder="08...")
-        with col4:
-            btn_simpan_tutor = st.form_submit_button("Simpan", type="primary", use_container_width=True)
+    # Ambil daftar program langsung dari tabel programs (program.name)
+    programs_for_tutor = []
+    try:
+        programs_for_tutor = database.get_programs()
+    except Exception:
+        programs_for_tutor = []
 
-        if btn_simpan_tutor:
-            if not tutor_name.strip() or not tutor_specialty.strip() or not tutor_phone.strip():
-                st.warning("Nama tutor, mata pelajaran, dan no. telepon wajib diisi.")
-            else:
-                try:
-                    database.add_tutor(
-                        tutor_name.strip(),
-                        tutor_specialty.strip(),
-                        tutor_phone.strip(),
-                        status="Aktif",
-                    )
+    list_mapel_options = [
+        str(p['name']).strip() for p in programs_for_tutor 
+        if p.get('name') and str(p.get('name')).strip() != "Matematika SD & SMP"
+    ]
+
+    # CARD 1: FORM TAMBAH / FORM EDIT TUTOR
+    editing_tutor_id = st.session_state.get("editing_tutor_id")
+    editing_tutor = next((t for t in tutors if t["id"] == editing_tutor_id), None) if editing_tutor_id else None
+
+    if editing_tutor:
+        # MODE EDIT TUTOR
+        with st.form("form_edit_tutor"):
+            st.markdown(
+                f'<div class="card-heading">Edit tutor: <span style="color: var(--primary-blue);">{html.escape(str(editing_tutor["name"]))}</span></div>',
+                unsafe_allow_html=True
+            )
+            col1, col2, col3, col4, col5 = st.columns([3.5, 3, 2.5, 1.8, 1.5])
+            with col1:
+                edit_nama_tutor = st.text_input("Nama tutor", value=str(editing_tutor.get("name") or ""))
+            with col2:
+                cur_mapel = str(editing_tutor.get("specialty") or "").strip()
+                # Pilihan mata pelajaran murni hanya dari tabel programs (tanpa menyisipkan teks non-program seperti 'Matematika SD & SMP')
+                edit_mapel_opts = [opt for opt in list_mapel_options if opt != "Matematika SD & SMP"]
+                if not edit_mapel_opts:
+                    edit_mapel_opts = ["Pilih Program..."]
+
+                m_idx = 0
+                if cur_mapel in edit_mapel_opts:
+                    m_idx = edit_mapel_opts.index(cur_mapel)
+                else:
+                    # Jika cur_mapel adalah data lama yang tidak ada di tabel program, arahkan ke program yang relevan
+                    for idx, opt in enumerate(edit_mapel_opts):
+                        if "MATIK SD" in opt or "Matematika SD" in opt or "MATIK" in opt:
+                            m_idx = idx
+                            break
+                edit_mapel_tutor = st.selectbox("Mata pelajaran (Program)", edit_mapel_opts, index=m_idx)
+            with col3:
+                edit_phone_tutor = st.text_input("No. telepon", value=str(editing_tutor.get("phone") or ""))
+            with col4:
+                cur_status = str(editing_tutor.get("status") or "Aktif").strip()
+                st_idx = 1 if cur_status.lower() == "nonaktif" else 0
+                edit_status_tutor = st.selectbox("Status", ["Aktif", "Nonaktif"], index=st_idx)
+            with col5:
+                st.markdown('<div style="height: 28px;"></div>', unsafe_allow_html=True)
+                btn_simpan_edit_tutor = st.form_submit_button("Simpan", type="primary", use_container_width=True)
+
+            c_batal, _ = st.columns([1.5, 8.5])
+            with c_batal:
+                btn_batal_edit_tutor = st.form_submit_button("Batal", use_container_width=True)
+
+            if btn_simpan_edit_tutor:
+                if not edit_nama_tutor.strip() or not edit_mapel_tutor.strip() or not edit_phone_tutor.strip():
+                    st.warning("Nama tutor, mata pelajaran, dan no. telepon wajib diisi.")
+                else:
                     try:
-                        database.sync_tutor_ke_html()
-                    except Exception:
-                        pass
-                    st.toast(f"✓ Tutor '{tutor_name.strip()}' berhasil ditambahkan ke Neon!", icon="🎉")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Gagal menambahkan tutor: {e}")
+                        database.update_tutor(
+                            editing_tutor["id"],
+                            edit_nama_tutor.strip(),
+                            edit_mapel_tutor.strip(),
+                            edit_phone_tutor.strip(),
+                            status=edit_status_tutor
+                        )
+                        try:
+                            database.sync_tutor_ke_html()
+                        except Exception:
+                            pass
+                        st.session_state["editing_tutor_id"] = None
+                        st.toast(f"✓ Data tutor '{edit_nama_tutor.strip()}' berhasil diperbarui di Neon!", icon="🎉")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Gagal memperbarui tutor: {e}")
+
+            if btn_batal_edit_tutor:
+                st.session_state["editing_tutor_id"] = None
+                st.rerun()
+    else:
+        # MODE TAMBAH TUTOR
+        with st.form("form_add_tutor", clear_on_submit=True):
+            st.markdown('<div class="card-heading">Tambah tutor</div>', unsafe_allow_html=True)
+            col1, col2, col3, col4 = st.columns([4, 3, 3, 2])
+            with col1:
+                tutor_name = st.text_input("Nama tutor")
+            with col2:
+                add_opts = [opt for opt in list_mapel_options if opt != "Matematika SD & SMP"]
+                if not add_opts:
+                    add_opts = ["Pilih Program..."]
+                tutor_specialty = st.selectbox("Mata pelajaran (Program)", add_opts)
+            with col3:
+                tutor_phone = st.text_input("No. telepon", placeholder="08...")
+            with col4:
+                btn_simpan_tutor = st.form_submit_button("Simpan", type="primary", use_container_width=True)
+
+            if btn_simpan_tutor:
+                if not tutor_name.strip() or not str(tutor_specialty or "").strip() or not tutor_phone.strip():
+                    st.warning("Nama tutor, mata pelajaran (program), dan no. telepon wajib diisi.")
+                else:
+                    try:
+                        database.add_tutor(
+                            tutor_name.strip(),
+                            str(tutor_specialty).strip(),
+                            tutor_phone.strip(),
+                            status="Aktif",
+                        )
+                        try:
+                            database.sync_tutor_ke_html()
+                        except Exception:
+                            pass
+                        st.toast(f"✓ Tutor '{tutor_name.strip()}' berhasil ditambahkan ke Neon!", icon="🎉")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Gagal menambahkan tutor: {e}")
 
     # CARD 2: TABEL DATA TUTOR
     with st.container(border=True):
         st.markdown('<div class="table-card-marker"></div>', unsafe_allow_html=True)
 
         # Header Tabel
-        th1, th2, th3, th4, th5 = st.columns([3.0, 2.5, 2.3, 1.0, 1.2])
+        th1, th2, th3, th4, th5 = st.columns([2.8, 2.3, 2.2, 1.0, 1.7])
         with th1:
             st.markdown('<div class="table-th table-header-marker">TUTOR</div>', unsafe_allow_html=True)
         with th2:
@@ -1272,7 +1460,7 @@ elif menu == "Tutor":
         with th4:
             st.markdown('<div class="table-th">STATUS</div>', unsafe_allow_html=True)
         with th5:
-            st.markdown('<div class="table-th"></div>', unsafe_allow_html=True)
+            st.markdown('<div class="table-th table-th-center" style="text-align: center; width: 100%; display: block;">AKSI</div>', unsafe_allow_html=True)
 
         if tutor_load_error is not None:
             st.error(f"Gagal mengambil data tutor dari database Neon: {tutor_load_error}")
@@ -1284,15 +1472,18 @@ elif menu == "Tutor":
             )
         else:
             for t in tutors:
-                r1, r2, r3, r4, r5 = st.columns([3.0, 2.5, 2.3, 1.0, 1.2])
+                r1, r2, r3, r4, r5 = st.columns([2.8, 2.3, 2.2, 1.0, 1.7])
                 with r1:
                     st.markdown(
                         f'<div class="program-name-cell">{html.escape(str(t["name"]))}</div>',
                         unsafe_allow_html=True,
                     )
                 with r2:
+                    t_specialty = str(t.get("specialty") or "").strip()
+                    if "matematika sd & smp" in t_specialty.lower():
+                        t_specialty = next((opt for opt in list_mapel_options if "MATIK SD" in opt or "Matematika SD" in opt or "MATIK" in opt), "MATIK SD")
                     st.markdown(
-                        f'<div class="table-text-cell">{html.escape(str(t["specialty"]))}</div>',
+                        f'<div class="table-text-cell">{html.escape(t_specialty)}</div>',
                         unsafe_allow_html=True,
                     )
                 with r3:
@@ -1312,17 +1503,25 @@ elif menu == "Tutor":
                         unsafe_allow_html=True,
                     )
                 with r5:
-                    if st.button("Hapus", key=f"btn_del_tutor_{t['id']}", type="secondary"):
-                        try:
-                            database.delete_tutor(t['id'])
-                            try:
-                                database.sync_tutor_ke_html()
-                            except Exception:
-                                pass
-                            st.toast(f"✓ Tutor '{t['name']}' berhasil dihapus dari Neon!", icon="🗑️")
+                    btn_c1, btn_c2 = st.columns(2)
+                    with btn_c1:
+                        if st.button("Edit", key=f"btn_edit_tutor_{t['id']}"):
+                            st.session_state["editing_tutor_id"] = t['id']
                             st.rerun()
-                        except Exception as e:
-                            st.error(f"Gagal menghapus tutor: {e}")
+                    with btn_c2:
+                        if st.button("Hapus", key=f"btn_del_tutor_{t['id']}", type="secondary"):
+                            try:
+                                database.delete_tutor(t['id'])
+                                try:
+                                    database.sync_tutor_ke_html()
+                                except Exception:
+                                    pass
+                                if st.session_state.get("editing_tutor_id") == t['id']:
+                                    st.session_state["editing_tutor_id"] = None
+                                st.toast(f"✓ Tutor '{t['name']}' berhasil dihapus dari Neon!", icon="🗑️")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Gagal menghapus tutor: {e}")
 
 
 # =============================================================================
@@ -1612,90 +1811,185 @@ elif menu == "Jadwal":
         program_opts = database.get_programs()
         tutor_opts = database.get_tutors()
         room_opts = database.get_rooms()
+        all_schedules = database.get_all_schedules()
     except Exception as e:
-        program_opts, tutor_opts, room_opts = [], [], []
+        program_opts, tutor_opts, room_opts, all_schedules = [], [], [], []
         st.error(f"Gagal memuat data Program/Tutor/Ruang dari Neon: {e}")
 
-    # CARD 1: FORM TAMBAH JADWAL (PERSIS PUBLIC/JADWAL.HTML)
-    with st.form("form_add_schedule", clear_on_submit=False):
-        st.markdown('<div class="card-heading">Tambah jadwal</div>', unsafe_allow_html=True)
-        c1, c2, c3, c4, c5 = st.columns(5)
-        with c1:
-            if program_opts:
-                sel_prog = st.selectbox(
-                    "Kelompok",
+    # CARD 1: FORM TAMBAH / FORM EDIT JADWAL
+    editing_sched_id = st.session_state.get("editing_schedule_id")
+    editing_sched = next((s for s in all_schedules if s["schedule_id"] == editing_sched_id), None) if editing_sched_id else None
+
+    if editing_sched:
+        # MODE EDIT JADWAL
+        with st.form("form_edit_schedule"):
+            st.markdown(
+                f'<div class="card-heading">Edit jadwal: <span style="color: var(--primary-blue);">{html.escape(str(editing_sched.get("day")))} ({html.escape(str(editing_sched.get("program_name") or editing_sched.get("group_name") or "-"))})</span></div>',
+                unsafe_allow_html=True
+            )
+            c1, c2, c3, c4, c5 = st.columns(5)
+            with c1:
+                prog_ids = [p["id"] for p in program_opts]
+                cur_prog_id = editing_sched.get("program_id")
+                p_idx = prog_ids.index(cur_prog_id) if cur_prog_id in prog_ids else 0
+                edit_sel_prog = st.selectbox(
+                    "Kelompok / Program",
                     program_opts,
+                    index=p_idx if program_opts else 0,
                     format_func=lambda p: f"{p['name']} ({p['level']})",
-                )
-            else:
-                sel_prog = None
-                st.text_input("Kelompok", value="Belum ada program", disabled=True)
-        with c2:
-            if tutor_opts:
-                sel_tutor = st.selectbox(
+                ) if program_opts else None
+            with c2:
+                tutor_ids = [t["id"] for t in tutor_opts]
+                cur_tutor_id = editing_sched.get("tutor_id")
+                t_idx = tutor_ids.index(cur_tutor_id) if cur_tutor_id in tutor_ids else 0
+                edit_sel_tutor = st.selectbox(
                     "Tutor",
                     tutor_opts,
+                    index=t_idx if tutor_opts else 0,
                     format_func=lambda t: t["name"],
-                )
-            else:
-                sel_tutor = None
-                st.text_input("Tutor", value="Belum ada tutor", disabled=True)
-        with c3:
-            if room_opts:
-                sel_room = st.selectbox(
+                ) if tutor_opts else None
+            with c3:
+                room_ids = [r["id"] for r in room_opts]
+                cur_room_id = editing_sched.get("room_id")
+                r_idx = room_ids.index(cur_room_id) if cur_room_id in room_ids else 0
+                edit_sel_room = st.selectbox(
                     "Ruang",
                     room_opts,
+                    index=r_idx if room_opts else 0,
                     format_func=lambda r: r["name"],
-                )
-            else:
-                sel_room = None
-                st.text_input("Ruang", value="Belum ada ruang", disabled=True)
-        with c4:
-            sel_hari = st.selectbox(
-                "Hari",
-                ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
-            )
-        with c5:
-            jam_mulai = st.text_input("Mulai", value="15:00", placeholder="15:00")
+                ) if room_opts else None
+            with c4:
+                days_list = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"]
+                cur_day = str(editing_sched.get("day") or "Senin")
+                d_idx = days_list.index(cur_day) if cur_day in days_list else 0
+                edit_sel_hari = st.selectbox("Hari", days_list, index=d_idx)
+            with c5:
+                edit_jam_mulai = st.text_input("Mulai", value=str(editing_sched.get("start_time") or "15:00"))
 
-        s1, _ = st.columns([1, 4])
-        with s1:
-            jam_selesai = st.text_input("Selesai", value="16:30", placeholder="16:30")
+            s1, s2, _ = st.columns([1.5, 1.5, 4])
+            with s1:
+                edit_jam_selesai = st.text_input("Selesai", value=str(editing_sched.get("end_time") or "16:30"))
+            with s2:
+                st.markdown('<div style="height: 28px;"></div>', unsafe_allow_html=True)
+                btn_simpan_edit_jadwal = st.form_submit_button("Simpan", type="primary", use_container_width=True)
 
-        btn_simpan_jadwal = st.form_submit_button("Periksa dan simpan", type="primary")
+            c_batal, _ = st.columns([1.5, 8.5])
+            with c_batal:
+                btn_batal_edit_jadwal = st.form_submit_button("Batal", use_container_width=True)
 
-        if btn_simpan_jadwal:
-            if not sel_prog or not sel_tutor or not sel_room:
-                st.warning("Pastikan data Program, Tutor, dan Ruang Belajar sudah tersedia di Neon.")
-            else:
-                try:
-                    database.add_schedule(
-                        sel_room["id"],
-                        sel_tutor["id"],
-                        sel_prog["id"],
-                        sel_hari,
-                        jam_mulai.strip() or "15:00",
-                        jam_selesai.strip() or "16:30",
-                    )
+            if btn_simpan_edit_jadwal:
+                if not edit_sel_prog or not edit_sel_tutor or not edit_sel_room:
+                    st.warning("Pastikan data Program, Tutor, dan Ruang Belajar sudah dipilih.")
+                else:
                     try:
-                        database.sync_jadwal_ke_html()
-                    except Exception:
-                        pass
-                    st.toast(
-                        f"✓ Jadwal {sel_prog['name']} di {sel_room['name']} ({sel_hari}, {jam_mulai.strip()}–{jam_selesai.strip()}) tersimpan!",
-                        icon="🎉",
+                        database.update_schedule(
+                            editing_sched["schedule_id"],
+                            edit_sel_room["id"],
+                            edit_sel_tutor["id"],
+                            edit_sel_prog["id"],
+                            edit_sel_hari,
+                            edit_jam_mulai.strip() or "15:00",
+                            edit_jam_selesai.strip() or "16:30",
+                        )
+                        try:
+                            database.sync_jadwal_ke_html()
+                        except Exception:
+                            pass
+                        st.session_state["editing_schedule_id"] = None
+                        st.toast(
+                            f"✓ Jadwal {edit_sel_prog['name']} di {edit_sel_room['name']} ({edit_sel_hari}, {edit_jam_mulai.strip()}–{edit_jam_selesai.strip()}) diperbarui!",
+                            icon="🎉",
+                        )
+                        st.rerun()
+                    except ValueError as ve:
+                        st.warning(f"⚠️ {ve}")
+                    except Exception as e:
+                        st.error(f"Gagal memperbarui jadwal: {e}")
+
+            if btn_batal_edit_jadwal:
+                st.session_state["editing_schedule_id"] = None
+                st.rerun()
+    else:
+        # MODE TAMBAH JADWAL (PERSIS PUBLIC/JADWAL.HTML)
+        with st.form("form_add_schedule", clear_on_submit=False):
+            st.markdown('<div class="card-heading">Tambah jadwal</div>', unsafe_allow_html=True)
+            c1, c2, c3, c4, c5 = st.columns(5)
+            with c1:
+                if program_opts:
+                    sel_prog = st.selectbox(
+                        "Kelompok",
+                        program_opts,
+                        format_func=lambda p: f"{p['name']} ({p['level']})",
                     )
-                    st.rerun()
-                except ValueError as ve:
-                    st.warning(f"⚠️ {ve}")
-                except Exception as e:
-                    st.error(f"Gagal menyimpan jadwal: {e}")
+                else:
+                    sel_prog = None
+                    st.text_input("Kelompok", value="Belum ada program", disabled=True)
+            with c2:
+                if tutor_opts:
+                    sel_tutor = st.selectbox(
+                        "Tutor",
+                        tutor_opts,
+                        format_func=lambda t: t["name"],
+                    )
+                else:
+                    sel_tutor = None
+                    st.text_input("Tutor", value="Belum ada tutor", disabled=True)
+            with c3:
+                if room_opts:
+                    sel_room = st.selectbox(
+                        "Ruang",
+                        room_opts,
+                        format_func=lambda r: r["name"],
+                    )
+                else:
+                    sel_room = None
+                    st.text_input("Ruang", value="Belum ada ruang", disabled=True)
+            with c4:
+                sel_hari = st.selectbox(
+                    "Hari",
+                    ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"],
+                )
+            with c5:
+                jam_mulai = st.text_input("Mulai", value="15:00", placeholder="15:00")
+
+            s1, _ = st.columns([1, 4])
+            with s1:
+                jam_selesai = st.text_input("Selesai", value="16:30", placeholder="16:30")
+
+            btn_simpan_jadwal = st.form_submit_button("Periksa dan simpan", type="primary")
+
+            if btn_simpan_jadwal:
+                if not sel_prog or not sel_tutor or not sel_room:
+                    st.warning("Pastikan data Program, Tutor, dan Ruang Belajar sudah tersedia di Neon.")
+                else:
+                    try:
+                        database.add_schedule(
+                            sel_room["id"],
+                            sel_tutor["id"],
+                            sel_prog["id"],
+                            sel_hari,
+                            jam_mulai.strip() or "15:00",
+                            jam_selesai.strip() or "16:30",
+                        )
+                        try:
+                            database.sync_jadwal_ke_html()
+                        except Exception:
+                            pass
+                        st.toast(
+                            f"✓ Jadwal {sel_prog['name']} di {sel_room['name']} ({sel_hari}, {jam_mulai.strip()}–{jam_selesai.strip()}) tersimpan!",
+                            icon="🎉",
+                        )
+                        st.rerun()
+                    except ValueError as ve:
+                        st.warning(f"⚠️ {ve}")
+                    except Exception as e:
+                        st.error(f"Gagal menyimpan jadwal: {e}")
 
     # CARD 2: TABEL DATA JADWAL (PERSIS PUBLIC/JADWAL.HTML)
     with st.container(border=True):
         st.markdown('<div class="table-card-marker"></div>', unsafe_allow_html=True)
 
-        th1, th2, th3, th4, th5, th6 = st.columns([1.4, 1.8, 2.5, 2.0, 1.1, 1.2])
+        th1, th2, th3, th4, th5, th6 = st.columns([1.3, 1.7, 2.3, 1.9, 1.1, 1.7])
         with th1:
             st.markdown('<div class="table-th table-header-marker">HARI</div>', unsafe_allow_html=True)
         with th2:
@@ -1707,46 +2001,50 @@ elif menu == "Jadwal":
         with th5:
             st.markdown('<div class="table-th">RUANG</div>', unsafe_allow_html=True)
         with th6:
-            st.markdown('<div class="table-th"></div>', unsafe_allow_html=True)
+            st.markdown('<div class="table-th table-th-center" style="text-align: center; width: 100%; display: block;">AKSI</div>', unsafe_allow_html=True)
 
-        try:
-            all_schedules = database.get_all_schedules()
-            if not all_schedules:
-                st.markdown(
-                    "<p style='text-align: center; color: #64748b; padding: 28px 20px; margin: 0;'>"
-                    "Belum ada data jadwal belajar di database Neon.</p>",
-                    unsafe_allow_html=True,
-                )
-            else:
-                for s in all_schedules:
-                    r1, r2, r3, r4, r5, r6 = st.columns([1.4, 1.8, 2.5, 2.0, 1.1, 1.2])
-                    with r1:
-                        st.markdown(
-                            f'<div class="program-name-cell">{html.escape(str(s["day"]))}</div>',
-                            unsafe_allow_html=True,
-                        )
-                    with r2:
-                        st.markdown(
-                            f'<div class="table-text-cell">{html.escape(str(s["start_time"]))}–{html.escape(str(s["end_time"]))}</div>',
-                            unsafe_allow_html=True,
-                        )
-                    with r3:
-                        kelompok_txt = str(s.get("program_name") or s.get("group_name") or "-")
-                        st.markdown(
-                            f'<div class="table-text-cell">{html.escape(kelompok_txt)}</div>',
-                            unsafe_allow_html=True,
-                        )
-                    with r4:
-                        st.markdown(
-                            f'<div class="table-text-cell">{html.escape(str(s["tutor_name"]))}</div>',
-                            unsafe_allow_html=True,
-                        )
-                    with r5:
-                        st.markdown(
-                            f'<div class="table-text-cell">{html.escape(str(s["room_name"]))}</div>',
-                            unsafe_allow_html=True,
-                        )
-                    with r6:
+        if not all_schedules:
+            st.markdown(
+                "<p style='text-align: center; color: #64748b; padding: 28px 20px; margin: 0;'>"
+                "Belum ada data jadwal belajar di database Neon.</p>",
+                unsafe_allow_html=True,
+            )
+        else:
+            for s in all_schedules:
+                r1, r2, r3, r4, r5, r6 = st.columns([1.3, 1.7, 2.3, 1.9, 1.1, 1.7])
+                with r1:
+                    st.markdown(
+                        f'<div class="program-name-cell">{html.escape(str(s["day"]))}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with r2:
+                    st.markdown(
+                        f'<div class="table-text-cell">{html.escape(str(s["start_time"]))}–{html.escape(str(s["end_time"]))}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with r3:
+                    kelompok_txt = str(s.get("program_name") or s.get("group_name") or "-")
+                    st.markdown(
+                        f'<div class="table-text-cell">{html.escape(kelompok_txt)}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with r4:
+                    st.markdown(
+                        f'<div class="table-text-cell">{html.escape(str(s["tutor_name"]))}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with r5:
+                    st.markdown(
+                        f'<div class="table-text-cell">{html.escape(str(s["room_name"]))}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with r6:
+                    btn_c1, btn_c2 = st.columns(2)
+                    with btn_c1:
+                        if st.button("Edit", key=f"btn_edit_jadwal_{s['schedule_id']}"):
+                            st.session_state["editing_schedule_id"] = s["schedule_id"]
+                            st.rerun()
+                    with btn_c2:
                         if st.button("Hapus", key=f"btn_del_jadwal_{s['schedule_id']}", type="secondary"):
                             try:
                                 database.delete_schedule(s["schedule_id"])
@@ -1754,12 +2052,12 @@ elif menu == "Jadwal":
                                     database.sync_jadwal_ke_html()
                                 except Exception:
                                     pass
+                                if st.session_state.get("editing_schedule_id") == s["schedule_id"]:
+                                    st.session_state["editing_schedule_id"] = None
                                 st.toast("✓ Jadwal berhasil dihapus dari Neon!", icon="🗑️")
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"Gagal menghapus jadwal: {e}")
-        except Exception as e:
-            st.error(f"Gagal mengambil data jadwal dari database Neon: {e}")
 
 
 # =============================================================================
@@ -2186,7 +2484,7 @@ elif menu == "Siswa dan Wali":
         with th4:
             st.markdown('<div class="table-th">TELEPON</div>', unsafe_allow_html=True)
         with th5:
-            st.markdown('<div class="table-th" style="text-align: right;">AKSI</div>', unsafe_allow_html=True)
+            st.markdown('<div class="table-th table-th-center" style="text-align: center; width: 100%; display: block;">AKSI</div>', unsafe_allow_html=True)
 
         if student_load_error is not None:
             st.error(f"Gagal mengambil data siswa dari database Neon: {student_load_error}")

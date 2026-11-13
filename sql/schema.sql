@@ -7,7 +7,7 @@
 CREATE TABLE IF NOT EXISTS programs (
     id SERIAL PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
-    level VARCHAR(20) NOT NULL, -- SD, SMP, SMA, UMUM
+    level VARCHAR(60) NOT NULL, -- Prasekolah - SD I, Prasekolah - SD VI, SD I - VI, SMP I - III, SD, SMP, SMA
     sessions_per_month INTEGER NOT NULL DEFAULT 8,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -128,9 +128,9 @@ ON CONFLICT DO NOTHING;
 
 -- Data Awal Tutor
 INSERT INTO tutors (name, specialty, phone, email, status) VALUES
-('Kak Budi Santoso, S.Pd.', 'Matematika SD & SMP', '081234567890', 'budi@optimatika.id', 'Aktif'),
-('Kak Siti Aminah, M.Si.', 'IPA Terpadu & Fisika', '081298765432', 'siti@optimatika.id', 'Aktif'),
-('Kak Rizky Pratama, S.Si.', 'Matematika Saintek / UTBK', '085712345678', 'rizky@optimatika.id', 'Aktif')
+('Kak Budi Santoso, S.Pd.', 'MATIK SD', '081234567890', 'budi@optimatika.id', 'Aktif'),
+('Kak Siti Aminah, M.Si.', 'SADHA SD', '081298765432', 'siti@optimatika.id', 'Aktif'),
+('Kak Rizky Pratama, S.Si.', 'MATIK SMP', '085712345678', 'rizky@optimatika.id', 'Aktif')
 ON CONFLICT DO NOTHING;
 
 -- Data Awal Ruang Belajar

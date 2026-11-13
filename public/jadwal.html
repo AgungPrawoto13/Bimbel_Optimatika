@@ -125,7 +125,8 @@
                 <td>Kak Rina</td>
                 <td>Ruang A</td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, 'Senin - Matematika SMP 1')">Hapus</button>
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEditJadwal(1, 'Senin', '15:00', '16:30')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, 'Senin - Matematika SMP 1', 1)">Hapus</button>
                 </td>
               </tr>
 
@@ -137,7 +138,8 @@
                 <td>Kak Dewi</td>
                 <td>Ruang B</td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, 'Senin - Calistung 1')">Hapus</button>
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEditJadwal(2, 'Senin', '16:30', '18:00')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, 'Senin - Calistung 1', 2)">Hapus</button>
                 </td>
               </tr>
 
@@ -149,7 +151,8 @@
                 <td>Kak Fajar</td>
                 <td>Ruang A</td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, 'Rabu - IPA Terpadu 1')">Hapus</button>
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEditJadwal(3, 'Rabu', '15:00', '16:30')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, 'Rabu - IPA Terpadu 1', 3)">Hapus</button>
                 </td>
               </tr>
               <!-- DATA_JADWAL_END -->
@@ -161,6 +164,69 @@
     </main>
   </div>
 
+  <!-- MODAL EDIT JADWAL (BOOTSTRAP 5) -->
+  <div class="modal fade" id="modalEditJadwal" tabindex="-1" aria-labelledby="modalEditJadwalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+        <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 20px 24px;">
+          <h5 class="modal-title" id="modalEditJadwalLabel" style="font-size: 18px; font-weight: 700; color: #1e293b;">Edit Jadwal Belajar</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="formEditJadwal" onsubmit="event.preventDefault(); handleSimpanEditJadwal();">
+          <div class="modal-body" style="padding: 24px;">
+            <input type="hidden" id="editScheduleId">
+            <div class="mb-3">
+              <label for="editSelectKelompok" class="form-label-custom">Kelompok / Program</label>
+              <select class="form-select-custom w-100" id="editSelectKelompok" required>
+                <!-- Opsi otomatis diisi dari data Neon -->
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editSelectTutor" class="form-label-custom">Tutor</label>
+              <select class="form-select-custom w-100" id="editSelectTutor" required>
+                <!-- Opsi otomatis diisi dari data Neon -->
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editSelectRuang" class="form-label-custom">Ruang belajar</label>
+              <select class="form-select-custom w-100" id="editSelectRuang" required>
+                <!-- Opsi otomatis diisi dari data Neon -->
+              </select>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-12 col-md-4">
+                <label for="editSelectHari" class="form-label-custom">Hari</label>
+                <select class="form-select-custom w-100" id="editSelectHari" required>
+                  <option value="Senin">Senin</option>
+                  <option value="Selasa">Selasa</option>
+                  <option value="Rabu">Rabu</option>
+                  <option value="Kamis">Kamis</option>
+                  <option value="Jumat">Jumat</option>
+                  <option value="Sabtu">Sabtu</option>
+                  <option value="Minggu">Minggu</option>
+                </select>
+              </div>
+              <div class="col-6 col-md-4">
+                <label for="editTimeMulai" class="form-label-custom">Mulai</label>
+                <input type="time" class="form-control-custom w-100" id="editTimeMulai" required>
+              </div>
+              <div class="col-6 col-md-4">
+                <label for="editTimeSelesai" class="form-label-custom">Selesai</label>
+                <input type="time" class="form-control-custom w-100" id="editTimeSelesai" required>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 16px 24px;">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 600; font-size: 14px; padding: 8px 18px;">Batal</button>
+            <button type="submit" class="btn-primary-custom" style="padding: 8px 22px;">Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Panggil JavaScript Sidebar Reusable -->
   <script src="js/sidebar.js"></script>
   <script>
@@ -168,6 +234,17 @@
     renderSidebar('jadwal');
 
     const API_BASE = (window.location.protocol === 'file:') ? 'http://localhost:8000' : '';
+
+    let editJadwalModalInstance = null;
+    function getEditJadwalModal() {
+      if (!editJadwalModalInstance) {
+        const modalEl = document.getElementById('modalEditJadwal');
+        if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+          editJadwalModalInstance = new bootstrap.Modal(modalEl);
+        }
+      }
+      return editJadwalModalInstance;
+    }
 
     function escapeHtml(text) {
       const div = document.createElement('div');
@@ -208,6 +285,12 @@
         const tutor = s.tutor_name || '-';
         const ruang = s.room_name || '-';
         const jsInfo = `${s.day} - ${kelompok}`.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const jsDay = String(s.day || 'Senin').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const startTime = String(s.start_time || '');
+        const endTime = String(s.end_time || '');
+        const progId = Number(s.program_id || 0);
+        const tutorId = Number(s.tutor_id || 0);
+        const roomId = Number(s.room_id || 0);
 
         return `
           <tr data-hari="${escapeHtml(s.day)}" data-ruang="${escapeHtml(ruang)}" data-tutor="${escapeHtml(tutor)}" data-waktu="${escapeHtml(waktu)}">
@@ -217,6 +300,7 @@
             <td>${escapeHtml(tutor)}</td>
             <td>${escapeHtml(ruang)}</td>
             <td class="text-end pe-4">
+              <button type="button" class="btn-edit-pill" onclick="bukaModalEditJadwal(${Number(s.schedule_id)}, '${jsDay}', '${startTime}', '${endTime}', ${progId}, ${tutorId}, ${roomId})">Edit</button>
               <button type="button" class="btn-delete-pill" onclick="hapusJadwal(this, '${jsInfo}', ${Number(s.schedule_id)})">Hapus</button>
             </td>
           </tr>
@@ -224,30 +308,134 @@
       }).join('');
     }
 
+    let globalCachedData = null;
+
     async function muatJadwalDariNeon() {
       try {
         const data = await callApi('/api/jadwal/list');
         if (!data || !data.success) return;
+        globalCachedData = data;
 
         const selKelompok = document.getElementById('selectKelompok');
         const selTutor = document.getElementById('selectTutor');
         const selRuang = document.getElementById('selectRuang');
 
-        selKelompok.innerHTML = (data.programs || []).map(p =>
+        const editSelKelompok = document.getElementById('editSelectKelompok');
+        const editSelTutor = document.getElementById('editSelectTutor');
+        const editSelRuang = document.getElementById('editSelectRuang');
+
+        const optionsKelompok = (data.programs || []).map(p =>
           `<option value="${Number(p.id)}">${escapeHtml(p.name)} (${escapeHtml(p.level)})</option>`
         ).join('') || '<option value="">Belum ada program</option>';
 
-        selTutor.innerHTML = (data.tutors || []).map(t =>
+        const optionsTutor = (data.tutors || []).map(t =>
           `<option value="${Number(t.id)}">${escapeHtml(t.name)}</option>`
         ).join('') || '<option value="">Belum ada tutor</option>';
 
-        selRuang.innerHTML = (data.rooms || []).map(r =>
+        const optionsRuang = (data.rooms || []).map(r =>
           `<option value="${Number(r.id)}">${escapeHtml(r.name)}</option>`
         ).join('') || '<option value="">Belum ada ruang</option>';
+
+        selKelompok.innerHTML = optionsKelompok;
+        selTutor.innerHTML = optionsTutor;
+        selRuang.innerHTML = optionsRuang;
+
+        if (editSelKelompok) editSelKelompok.innerHTML = optionsKelompok;
+        if (editSelTutor) editSelTutor.innerHTML = optionsTutor;
+        if (editSelRuang) editSelRuang.innerHTML = optionsRuang;
 
         renderScheduleRows(data.schedules || []);
       } catch (_) {
         // Fallback diam jika dibuka sebagai file statis tanpa server standby
+      }
+    }
+
+    // 2. Fungsi Buka Modal Edit Jadwal
+    function bukaModalEditJadwal(scheduleId, day, start, end, programId, tutorId, roomId) {
+      document.getElementById('editScheduleId').value = scheduleId || '';
+      document.getElementById('editSelectHari').value = day || 'Senin';
+      document.getElementById('editTimeMulai').value = start || '15:00';
+      document.getElementById('editTimeSelesai').value = end || '16:30';
+
+      // Pastikan dropdown edit terisi jika belum
+      const editSelKelompok = document.getElementById('editSelectKelompok');
+      const editSelTutor = document.getElementById('editSelectTutor');
+      const editSelRuang = document.getElementById('editSelectRuang');
+
+      if (editSelKelompok && !editSelKelompok.innerHTML.trim() && document.getElementById('selectKelompok')) {
+        editSelKelompok.innerHTML = document.getElementById('selectKelompok').innerHTML;
+      }
+      if (editSelTutor && !editSelTutor.innerHTML.trim() && document.getElementById('selectTutor')) {
+        editSelTutor.innerHTML = document.getElementById('selectTutor').innerHTML;
+      }
+      if (editSelRuang && !editSelRuang.innerHTML.trim() && document.getElementById('selectRuang')) {
+        editSelRuang.innerHTML = document.getElementById('selectRuang').innerHTML;
+      }
+
+      if (programId && editSelKelompok) editSelKelompok.value = String(programId);
+      if (tutorId && editSelTutor) editSelTutor.value = String(tutorId);
+      if (roomId && editSelRuang) editSelRuang.value = String(roomId);
+
+      const modal = getEditJadwalModal();
+      if (modal) {
+        modal.show();
+      } else {
+        const modalEl = document.getElementById('modalEditJadwal');
+        modalEl.classList.add('show');
+        modalEl.style.display = 'block';
+      }
+    }
+
+    // 3. Simpan Perubahan Edit Jadwal ke Neon PostgreSQL
+    async function handleSimpanEditJadwal() {
+      const scheduleId = document.getElementById('editScheduleId').value;
+      const programId = document.getElementById('editSelectKelompok').value;
+      const tutorId = document.getElementById('editSelectTutor').value;
+      const roomId = document.getElementById('editSelectRuang').value;
+      const hari = document.getElementById('editSelectHari').value;
+      const mulai = document.getElementById('editTimeMulai').value;
+      const selesai = document.getElementById('editTimeSelesai').value;
+
+      if (!scheduleId) {
+        alert('ID jadwal tidak valid.');
+        return;
+      }
+
+      if (!programId || !tutorId || !roomId) {
+        alert('Program/Kelompok, Tutor, dan Ruang wajib dipilih!');
+        return;
+      }
+
+      if (!mulai || !selesai) {
+        alert('Jam mulai dan selesai wajib diisi!');
+        return;
+      }
+
+      if (mulai >= selesai) {
+        alert('Jam selesai harus lebih akhir dari jam mulai!');
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams({
+          id: String(scheduleId),
+          program_id: programId,
+          tutor_id: tutorId,
+          room_id: roomId,
+          day: hari,
+          start_time: mulai,
+          end_time: selesai
+        });
+        const res = await callApi(`/api/jadwal/ubah?${params.toString()}`);
+        if (!res || !res.success) throw new Error((res && res.error) || 'Gagal memperbarui jadwal');
+
+        const modal = getEditJadwalModal();
+        if (modal) modal.hide();
+
+        await muatJadwalDariNeon();
+        alert(`✅ Berhasil! Jadwal (${hari}, ${mulai}–${selesai}) berhasil diperbarui di Neon PostgreSQL!`);
+      } catch (err) {
+        alert(`⚠️ Gagal memperbarui jadwal:\n${err.message}`);
       }
     }
 
