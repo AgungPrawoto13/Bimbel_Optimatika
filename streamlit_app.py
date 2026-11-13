@@ -1,6 +1,7 @@
 import html
 import importlib
 import os
+import textwrap
 import streamlit as st
 import streamlit.components.v1 as components
 import database 
@@ -1076,37 +1077,344 @@ st.markdown("""
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PUBLIC_DIR = os.path.join(BASE_DIR, 'public')
 
-MENU_ITEMS = [
-    "Dashboard",
-    "Siswa dan Wali",
-    "Program",
-    "Tutor",
-    "Ruang Belajar",
-    "Kelompok Belajar",
-    "Jadwal",
-    "Tagihan",
-    "Pembayaran",
-]
+# =============================================================================
+# 1B. KONFIGURASI PENGGUNA & HAK AKSES SISTEM (AUTH & RBAC)
+# =============================================================================
+USER_ACCOUNTS = {
+    "admin": {
+        "password": "admin123",
+        "role": "admin",
+        "display_name": "Administrator",
+        "badge": "Admin",
+        "allowed_menus": [
+            "Dashboard",
+            "Siswa dan Wali",
+            "Program",
+            "Tutor",
+            "Ruang Belajar",
+            "Kelompok Belajar",
+            "Jadwal",
+            "Tagihan",
+            "Pembayaran",
+        ],
+        "default_menu": "Dashboard",
+    },
+    "owner": {
+        "password": "owner123",
+        "role": "pemilik",
+        "display_name": "Pemilik (Owner)",
+        "badge": "Pemilik",
+        "allowed_menus": ["Dashboard"],
+        "default_menu": "Dashboard",
+    },
+    "tutor": {
+        "password": "tutor123",
+        "role": "tutor",
+        "display_name": "Tutor Pengajar",
+        "badge": "Tutor",
+        "allowed_menus": ["Jadwal"],
+        "default_menu": "Jadwal",
+    },
+}
 
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "user_info" not in st.session_state:
+    st.session_state.user_info = None
 if "active_menu" not in st.session_state:
-    st.session_state.active_menu = "Program"
+    st.session_state.active_menu = "Dashboard"
 if "selected_room_detail" not in st.session_state:
     st.session_state.selected_room_detail = None
 
 
 # =============================================================================
-# 2. SIDEBAR DEEP NAVY (PERSIS PUBLIC/JS/SIDEBAR.JS)
+# 1C. GERBANG LOGIN (LOGIN GATE) JIKA BELUM TERAUTENTIKASI
 # =============================================================================
-with st.sidebar:
+if not st.session_state.get("logged_in") or not st.session_state.get("user_info"):
+    # Sembunyikan sidebar di halaman login & terapkan CSS persis gambar publik/index.html
     st.markdown("""
+        <style>
+            @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css');
+
+            section[data-testid="stSidebar"] { display: none !important; }
+            [data-testid="collapsedControl"] { display: none !important; }
+
+            /* Container 2-Kolom Split Card Persis Screenshot */
+            [data-testid="stHorizontalBlock"]:has(.login-card-left-marker) {
+                max-width: 1020px !important;
+                margin: 20px auto 30px auto !important;
+                background: #ffffff !important;
+                border-radius: 20px !important;
+                border: 1px solid #e2e8f0 !important;
+                box-shadow: 0 12px 40px rgba(19, 31, 56, 0.08) !important;
+                overflow: hidden !important;
+                gap: 0 !important;
+                align-items: stretch !important;
+            }
+
+            [data-testid="stHorizontalBlock"]:has(.login-card-left-marker) > [data-testid="stColumn"]:first-child {
+                background: #131f38 !important;
+                padding: 44px 38px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                position: relative !important;
+                overflow: hidden !important;
+            }
+
+            [data-testid="stHorizontalBlock"]:has(.login-card-left-marker) > [data-testid="stColumn"]:last-child {
+                background: #ffffff !important;
+                padding: 44px 42px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+            }
+
+            /* Elemen Hero Panel Kiri */
+            .brand-pill-active {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                background: #ffffff;
+                color: #131f38;
+                font-weight: 700;
+                font-size: 13px;
+                padding: 7px 18px;
+                border-radius: 9999px;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+                margin-bottom: 24px;
+                width: fit-content;
+            }
+            .brand-pill-active i {
+                color: #1e50bb;
+            }
+
+            .feature-card-item {
+                background: rgba(255, 255, 255, 0.04);
+                border: 1px solid rgba(255, 255, 255, 0.07);
+                border-radius: 14px;
+                padding: 14px 16px;
+                margin-bottom: 12px;
+                display: flex;
+                align-items: flex-start;
+                gap: 14px;
+            }
+            .feature-icon-box {
+                width: 36px;
+                height: 36px;
+                border-radius: 10px;
+                background: rgba(30, 80, 187, 0.25);
+                color: #8ea3c7;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 16px;
+                flex-shrink: 0;
+            }
+            .status-dot-pulse {
+                width: 8px;
+                height: 8px;
+                background-color: #22c55e;
+                border-radius: 50%;
+                box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
+                display: inline-block;
+            }
+
+            /* Styling Form Panel Kanan */
+            [data-testid="stHorizontalBlock"]:has(.login-card-left-marker) [data-testid="stForm"] {
+                border: none !important;
+                padding: 0 !important;
+            }
+            [data-testid="stHorizontalBlock"]:has(.login-card-left-marker) [data-testid="stTextInput"] {
+                margin-bottom: 8px !important;
+            }
+            [data-testid="stHorizontalBlock"]:has(.login-card-left-marker) [data-testid="stTextInput"] label p {
+                font-size: 13.5px !important;
+                font-weight: 600 !important;
+                color: #334155 !important;
+                margin-bottom: 4px !important;
+            }
+            [data-testid="stHorizontalBlock"]:has(.login-card-left-marker) [data-testid="stTextInput"] input {
+                height: 48px !important;
+                border-radius: 10px !important;
+                border: 1px solid #cbd5e1 !important;
+                font-size: 14.5px !important;
+                color: #121826 !important;
+                padding: 0 16px !important;
+                background: #ffffff !important;
+            }
+            [data-testid="stHorizontalBlock"]:has(.login-card-left-marker) [data-testid="stTextInput"] input:focus {
+                border-color: #1e50bb !important;
+                box-shadow: 0 0 0 3px rgba(30, 80, 187, 0.15) !important;
+            }
+            [data-testid="stHorizontalBlock"]:has(.login-card-left-marker) button[kind="primary"] {
+                height: 48px !important;
+                background-color: #1e50bb !important;
+                color: #ffffff !important;
+                font-weight: 600 !important;
+                font-size: 15px !important;
+                border-radius: 10px !important;
+                border: none !important;
+                box-shadow: 0 4px 12px rgba(30, 80, 187, 0.22) !important;
+                margin-top: 10px !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    col_left, col_right = st.columns([5, 7])
+    with col_left:
+        hero_left_html = textwrap.dedent("""
+<div class="login-card-left-marker" style="display:none;"></div>
+<div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+<div>
+<div class="brand-pill-active">
+<i class="bi bi-shield-check"></i>
+<span>Portal Masuk Admin</span>
+</div>
+<div style="margin-bottom: 24px;">
+<div style="font-size: 26px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">
+Optimatika <span style="font-weight: 500; color: #8ea3c7; font-size: 18px;">· Admin</span>
+</div>
+<p style="color: #8ea3c7; font-size: 13.5px; line-height: 1.6; margin-top: 8px;">
+Sistem administrasi bimbingan belajar modern untuk pengelolaan jadwal, peserta didik, tutor, dan tagihan SPP.
+</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px;">
+<div class="feature-card-item">
+<div class="feature-icon-box">
+<i class="bi bi-calendar2-week"></i>
+</div>
+<div>
+<div style="font-weight: 700; font-size: 13.5px; color: #ffffff;">Jadwal Anti-Bentrok</div>
+<div style="font-size: 12px; color: #8ea3c7; margin-top: 2px; line-height: 1.4;">
+Otomatis memeriksa bentrok ruang belajar &amp; tutor di hari yang sama.
+</div>
+</div>
+</div>
+<div class="feature-card-item">
+<div class="feature-icon-box">
+<i class="bi bi-mortarboard"></i>
+</div>
+<div>
+<div style="font-weight: 700; font-size: 13.5px; color: #ffffff;">Program &amp; Kurikulum</div>
+<div style="font-size: 12px; color: #8ea3c7; margin-top: 2px; line-height: 1.4;">
+Mendukung jenjang SD, SMP, SMA, hingga persiapan intensif UTBK.
+</div>
+</div>
+</div>
+<div class="feature-card-item">
+<div class="feature-icon-box">
+<i class="bi bi-wallet2"></i>
+</div>
+<div>
+<div style="font-weight: 700; font-size: 13.5px; color: #ffffff;">SPP &amp; Keuangan Terdata</div>
+<div style="font-size: 12px; color: #8ea3c7; margin-top: 2px; line-height: 1.4;">
+Pembuatan invoice tagihan otomatis &amp; kwitansi pembayaran langsung.
+</div>
+</div>
+</div>
+</div>
+</div>
+<div style="padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #8ea3c7;">
+<div style="display: flex; align-items: center; gap: 8px;">
+<span class="status-dot-pulse"></span>
+<span style="color: #8ea3c7; font-weight: 600;">Server v2.4 Online</span>
+</div>
+<span style="color: #64748b;">PostgreSQL &amp; SQLite</span>
+</div>
+</div>
+""").strip()
+        st.markdown(hero_left_html, unsafe_allow_html=True)
+
+    with col_right:
+        header_right_html = textwrap.dedent("""
+<div>
+<h2 style="font-size: 26px; font-weight: 800; color: #121826; margin-bottom: 4px; letter-spacing: -0.5px;">Masuk ke Akun</h2>
+<p style="color: #64748b; font-size: 13.5px; margin-bottom: 16px; line-height: 1.5;">
+Silakan masukkan username dan kata sandi pengelola untuk melanjutkan.
+</p>
+</div>
+""").strip()
+        st.markdown(header_right_html, unsafe_allow_html=True)
+
+        with st.form("form_login_portal"):
+            in_username = st.text_input("Username atau Email", placeholder="Masukkan username atau email admin")
+            in_password = st.text_input("Kata Sandi", type="password", placeholder="••••••••")
+            remember_me = st.checkbox("Ingat sesi masuk di perangkat ini", value=True)
+            btn_submit_login = st.form_submit_button("Masuk ke Sistem →", type="primary", use_container_width=True)
+
+            if btn_submit_login:
+                user_key = (in_username or "").strip().lower()
+                pass_key = (in_password or "").strip()
+                if not user_key or not pass_key:
+                    st.warning("Username dan kata sandi wajib diisi.")
+                elif user_key in USER_ACCOUNTS and USER_ACCOUNTS[user_key]["password"] == pass_key:
+                    st.session_state.logged_in = True
+                    st.session_state.user_info = USER_ACCOUNTS[user_key]
+                    st.session_state.active_menu = USER_ACCOUNTS[user_key]["default_menu"]
+                    st.toast(f"✓ Selamat datang, {USER_ACCOUNTS[user_key]['display_name']}!", icon="🎉")
+                    st.rerun()
+                else:
+                    st.error("Username atau kata sandi tidak cocok. Silakan periksa kembali!")
+
+        footer_right_html = textwrap.dedent("""
+<div style="background-color: #f8fafc; border: 1px solid #edf2f7; font-size: 12.5px; border-radius: 12px; padding: 14px 16px; margin-top: 18px;">
+<div style="font-weight: 700; color: #475569; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">
+<i class="bi bi-key-fill" style="color: #1e50bb; margin-right: 4px;"></i> HAK AKSES AKUN:
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<div><span style="background:#e0e7ff; color:#3730a3; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 11px;">Admin</span> <code style="margin-left: 4px; font-size: 12px; color: #dc2626;">admin</code> / <code style="font-size: 12px; color: #dc2626;">admin123</code></div>
+<span style="color: #64748b; font-size: 11.5px;">Semua Menu Sidebar</span>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<div><span style="background:#fef3c7; color:#92400e; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 11px;">Pemilik</span> <code style="margin-left: 4px; font-size: 12px; color: #dc2626;">owner</code> / <code style="font-size: 12px; color: #dc2626;">owner123</code></div>
+<span style="color: #64748b; font-size: 11.5px;">Hanya Dashboard</span>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<div><span style="background:#dcfce7; color:#166534; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 11px;">Tutor</span> <code style="margin-left: 4px; font-size: 12px; color: #dc2626;">tutor</code> / <code style="font-size: 12px; color: #dc2626;">tutor123</code></div>
+<span style="color: #64748b; font-size: 11.5px;">Hanya Jadwal Belajar</span>
+</div>
+</div>
+</div>
+<div style="margin-top: 18px; padding-top: 12px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; color: #94a3b8; font-size: 12px;">
+<span>&copy; 2026 Bimbel Optimatika</span>
+<span style="display: inline-flex; align-items: center; gap: 4px;">
+<i class="bi bi-lock-fill" style="color: #10b981;"></i> Koneksi Terenkripsi
+</span>
+</div>
+""").strip()
+        st.markdown(footer_right_html, unsafe_allow_html=True)
+
+    st.stop()
+
+
+# =============================================================================
+# 2. ROUTE GUARD & SIDEBAR ROLE-BASED ACCESS CONTROL (RBAC)
+# =============================================================================
+current_user = st.session_state.get("user_info") or USER_ACCOUNTS.get("admin", {})
+allowed_menus = current_user.get("allowed_menus", ["Dashboard"]) if current_user else ["Dashboard"]
+user_badge = current_user.get("badge", "Admin") if current_user else "Admin"
+user_name = current_user.get("display_name", "Pengguna") if current_user else "Pengguna"
+
+# Proteksi Navigasi: Jika menu aktif tidak diizinkan untuk role saat ini, redirect paksa
+if current_user and st.session_state.get("active_menu") not in allowed_menus:
+    st.session_state.active_menu = current_user.get("default_menu", allowed_menus[0])
+    st.rerun()
+
+with st.sidebar:
+    st.markdown(f"""
         <div class="brand-container">
             <div class="brand-title">
-                Optimatika <span class="brand-sub">· Admin</span>
+                Optimatika <span class="brand-sub">· {user_badge}</span>
+            </div>
+            <div style="font-size: 11.5px; color: #8ea3c7; margin-top: 4px; padding-left: 2px;">
+                Masuk: <strong style="color: #ffffff;">{user_name}</strong>
             </div>
         </div>
     """, unsafe_allow_html=True)
 
-    for item in MENU_ITEMS:
+    for item in allowed_menus:
         is_active = (st.session_state.active_menu == item)
         if st.button(
             item,
@@ -1120,8 +1428,11 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-footer-divider"></div>', unsafe_allow_html=True)
     if st.button("Keluar", key="btn_logout", type="secondary", use_container_width=True):
+        st.session_state.logged_in = False
+        st.session_state.user_info = None
         st.session_state.active_menu = "Dashboard"
-        st.toast("Anda telah keluar dari sesi Admin Optimatika.")
+        st.toast("Anda telah keluar dari sesi Optimatika.")
+        st.rerun()
 
 menu = st.session_state.active_menu
 

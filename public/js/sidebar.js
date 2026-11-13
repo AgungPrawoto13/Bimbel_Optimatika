@@ -1,10 +1,26 @@
 /**
- * Fungsi untuk memunculkan Sidebar & Topbar Mobile otomatis
+ * Fungsi untuk memunculkan Sidebar & Topbar Mobile otomatis dengan Role-Based Access Control (RBAC)
  * Cara pakai di HTML: renderSidebar('pembayaran');
  */
 function renderSidebar(activeMenu = 'dashboard') {
+  // Ambil data role pengguna dari localStorage (admin / pemilik / tutor)
+  const role = (localStorage.getItem('optimatika_role') || 'admin').toLowerCase();
+  const userName = localStorage.getItem('optimatika_label') || (role === 'pemilik' ? 'Pemilik (Owner)' : (role === 'tutor' ? 'Tutor Pengajar' : 'Administrator'));
+
+  // Route Guard: Proteksi akses halaman berdasarkan hak akses
+  if (role === 'pemilik' && activeMenu !== 'dashboard') {
+    alert('Akses Dibatasi: Akun Pemilik hanya memiliki hak akses ke Dashboard.');
+    window.location.href = 'dashboard.html';
+    return;
+  }
+  if (role === 'tutor' && activeMenu !== 'jadwal') {
+    alert('Akses Dibatasi: Akun Tutor hanya memiliki hak akses ke Jadwal Belajar.');
+    window.location.href = 'jadwal.html';
+    return;
+  }
+
   // Daftar semua menu dan link halamannya
-  const menuList = [
+  const allMenuList = [
     { id: 'dashboard', label: 'Dashboard', link: 'dashboard.html' },
     { id: 'siswa', label: 'Siswa dan Wali', link: 'siswa.html' },
     { id: 'program', label: 'Program', link: 'program.html' },
@@ -15,6 +31,18 @@ function renderSidebar(activeMenu = 'dashboard') {
     { id: 'tagihan', label: 'Tagihan', link: 'tagihan.html' },
     { id: 'pembayaran', label: 'Pembayaran', link: 'pembayaran.html' }
   ];
+
+  // Filter menu sesuai hak akses
+  let menuList = allMenuList;
+  let brandSub = '· Admin';
+
+  if (role === 'pemilik') {
+    menuList = allMenuList.filter(item => item.id === 'dashboard');
+    brandSub = '· Pemilik';
+  } else if (role === 'tutor') {
+    menuList = allMenuList.filter(item => item.id === 'jadwal');
+    brandSub = '· Tutor';
+  }
 
   // Susun tombol link menu secara dinamis
   let menuHtml = '';
@@ -33,7 +61,7 @@ function renderSidebar(activeMenu = 'dashboard') {
     <!-- Mobile Topbar (khusus layar HP) -->
     <div class="mobile-header d-lg-none w-100">
       <div class="brand-title">
-        Optimatika <span class="brand-sub">· Admin</span>
+        Optimatika <span class="brand-sub">${brandSub}</span>
       </div>
       <button class="mobile-menu-btn" id="mobileMenuToggle">
         <i class="bi bi-list"></i>
@@ -44,7 +72,10 @@ function renderSidebar(activeMenu = 'dashboard') {
     <aside class="sidebar-wrapper" id="sidebar">
       <div class="brand-container d-none d-lg-block">
         <div class="brand-title">
-          Optimatika <span class="brand-sub">· Admin</span>
+          Optimatika <span class="brand-sub">${brandSub}</span>
+        </div>
+        <div style="font-size: 11.5px; color: #8ea3c7; margin-top: 4px; padding-left: 2px;">
+          Masuk: <strong style="color: #ffffff;">${userName}</strong>
         </div>
       </div>
 
@@ -81,8 +112,10 @@ function renderSidebar(activeMenu = 'dashboard') {
  * Handler logout untuk kembali ke halaman login (index.html)
  */
 function handleLogout() {
-  if (confirm('Apakah Anda yakin ingin keluar dari sistem admin Optimatika?')) {
+  if (confirm('Apakah Anda yakin ingin keluar dari sistem Optimatika?')) {
     localStorage.removeItem('optimatika_admin_user');
+    localStorage.removeItem('optimatika_role');
+    localStorage.removeItem('optimatika_label');
     window.location.href = 'index.html';
   }
 }

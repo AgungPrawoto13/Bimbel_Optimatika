@@ -154,10 +154,31 @@
 
             <!-- Tombol Masuk -->
             <button type="submit" class="btn-login-submit" id="btnLogin">
-              <span id="btnText">Masuk ke Dashboard</span>
+              <span id="btnText">Masuk ke Sistem</span>
               <i class="bi bi-arrow-right" id="btnIcon"></i>
             </button>
           </form>
+
+          <!-- Kartu Petunjuk Akun Terdaftar -->
+          <div class="mt-4 p-3 rounded-3" style="background-color: #f8fafc; border: 1px solid #edf2f7; font-size: 12.5px;">
+            <div class="fw-bold text-muted small text-uppercase mb-2" style="letter-spacing: 0.5px;">
+              <i class="bi bi-key-fill text-primary me-1"></i> Hak Akses Akun:
+            </div>
+            <div class="d-flex flex-column gap-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <div><span class="badge bg-primary-subtle text-primary fw-bold px-2 py-1">Admin</span> <code class="ms-1">admin</code> / <code>admin123</code></div>
+                <span class="text-muted small">Semua Menu Sidebar</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div><span class="badge bg-warning-subtle text-warning-emphasis fw-bold px-2 py-1">Pemilik</span> <code class="ms-1">owner</code> / <code>owner123</code></div>
+                <span class="text-muted small">Hanya Dashboard</span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <div><span class="badge bg-success-subtle text-success fw-bold px-2 py-1">Tutor</span> <code class="ms-1">tutor</code> / <code>tutor123</code></div>
+                <span class="text-muted small">Hanya Jadwal Belajar</span>
+              </div>
+            </div>
+          </div>
 
           <!-- Footer Bawah Form -->
           <div class="mt-4 pt-3 border-top d-flex flex-wrap justify-content-between align-items-center text-muted" style="font-size: 12px;">
@@ -250,9 +271,16 @@
       alertBox.classList.remove('d-none');
     }
 
-    // 4. Proses Login
+    // 4. Konfigurasi Akun & Hak Akses
+    const ACCOUNTS = {
+      'admin': { pass: 'admin123', role: 'admin', label: 'Administrator', target: 'dashboard.html' },
+      'owner': { pass: 'owner123', role: 'pemilik', label: 'Pemilik (Owner)', target: 'dashboard.html' },
+      'tutor': { pass: 'tutor123', role: 'tutor', label: 'Tutor Pengajar', target: 'jadwal.html' }
+    };
+
+    // 5. Proses Login Sesuai Role
     function handleLoginProcess() {
-      const username = document.getElementById('usernameInput').value.trim();
+      const username = document.getElementById('usernameInput').value.trim().toLowerCase();
       const password = document.getElementById('passwordInput').value.trim();
       const rememberMe = document.getElementById('rememberMeCheckbox').checked;
       const btn = document.getElementById('btnLogin');
@@ -270,36 +298,28 @@
       btnText.textContent = 'Memverifikasi...';
       btnIcon.className = 'spinner-border spinner-border-sm';
 
-      // Simulasi autentikasi pengelola
       setTimeout(() => {
-        const isValid = (username.length >= 3 && password.length >= 4);
+        const account = ACCOUNTS[username];
+        if (account && account.pass === password) {
+          showAlert(`Login berhasil sebagai ${account.label}! Mengalihkan...`, 'success');
 
-        if (isValid) {
-          showAlert('Login berhasil! Mengalihkan ke dashboard...', 'success');
-
-          // Simpan sesi login
-          if (rememberMe) {
-            localStorage.setItem('optimatika_admin_user', username);
-            localStorage.setItem('optimatika_login_time', new Date().toISOString());
-          } else {
-            sessionStorage.setItem('optimatika_admin_user', username);
-          }
-
-          // Cek parameter redirect jika ada (misal ?redirect=jadwal.html)
-          const urlParams = new URLSearchParams(window.location.search);
-          const redirectTarget = urlParams.get('redirect') || 'dashboard.html';
+          // Simpan sesi login & role
+          localStorage.setItem('optimatika_admin_user', username);
+          localStorage.setItem('optimatika_role', account.role);
+          localStorage.setItem('optimatika_label', account.label);
+          localStorage.setItem('optimatika_login_time', new Date().toISOString());
 
           setTimeout(() => {
-            window.location.href = redirectTarget;
-          }, 800);
+            window.location.href = account.target;
+          }, 600);
         } else {
           btn.disabled = false;
           btn.style.opacity = '1';
-          btnText.textContent = 'Masuk ke Dashboard';
+          btnText.textContent = 'Masuk ke Sistem';
           btnIcon.className = 'bi bi-arrow-right';
-          showAlert('Username atau kata sandi tidak valid. Silakan periksa kembali data Anda.', 'danger');
+          showAlert('Username atau kata sandi tidak cocok. Silakan periksa kembali!', 'danger');
         }
-      }, 600);
+      }, 500);
     }
 
     // Cek apakah user sebelumnya sudah login dan ingin auto-fill
