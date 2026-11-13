@@ -31,6 +31,7 @@ ROOM_HTML_FILE = os.path.join(PUBLIC_DIR, 'ruang_belajar.html')
 JADWAL_HTML_FILE = os.path.join(PUBLIC_DIR, 'jadwal.html')
 PEMBAYARAN_HTML_FILE = os.path.join(PUBLIC_DIR, 'pembayaran.html')
 TAGIHAN_HTML_FILE = os.path.join(PUBLIC_DIR, 'tagihan.html')
+SISWA_HTML_FILE = os.path.join(PUBLIC_DIR, 'siswa.html')
 
 
 # =============================================================================
@@ -370,6 +371,20 @@ def _check_schedule_conflict(cur, day, start_time, end_time, room_id=None, tutor
                 f"TUTOR BENTROK! {tutor_hit[0]} sudah mengajar di {tutor_hit[3]} "
                 f"pada hari {day} pukul {tutor_hit[1]}–{tutor_hit[2]}."
             )
+
+
+def check_conflict(day, start_time, end_time, room_id=None, tutor_id=None):
+    """Memeriksa apakah terdapat bentrok jadwal pada hari, jam, ruang, atau tutor tertentu di Neon PostgreSQL."""
+    conn = create_new_connection()
+    try:
+        with conn.cursor() as cur:
+            try:
+                _check_schedule_conflict(cur, day, start_time, end_time, room_id=room_id, tutor_id=tutor_id)
+                return {"conflict": False, "message": "Jadwal dan ruangan aman (tidak bentrok)."}
+            except ValueError as e:
+                return {"conflict": True, "message": str(e)}
+    finally:
+        conn.close()
 
 
 def add_room_schedule(room_id, tutor_id, program_id, day, start_time, end_time, group_name=None):
@@ -796,6 +811,207 @@ def publish_bills_for_period(period="Oktober 2026"):
 
 
 # =============================================================================
+# 2E. FUNGSI PENGELOLAAN DATA SISWA DAN WALI (CRUD)
+# =============================================================================
+
+def _ensure_student_tables_and_seed(conn):
+    """Memastikan struktur tabel students lengkap dan data awal siswa tersedia di Neon PostgreSQL"""
+    try:
+        with conn.cursor() as cur:
+            # 1. Pastikan kolom level ada
+            cur.execute("ALTER TABLE students ADD COLUMN IF NOT EXISTS level VARCHAR(20) DEFAULT 'SD';")
+            try:
+                cur.execute("ALTER TABLE students ALTER COLUMN gender DROP NOT NULL;")
+            except Exception:
+                pass
+            try:
+                cur.execute("ALTER TABLE students ALTER COLUMN guardian_name DROP NOT NULL;")
+            except Exception:
+                pass
+            try:
+                cur.execute("ALTER TABLE students ALTER COLUMN phone DROP NOT NULL;")
+            except Exception:
+                pass
+
+            # 2. Cek apakah tabel siswa masih kosong
+            cur.execute("SELECT COUNT(*) FROM students;")
+            count = cur.fetchone()[0]
+            if count == 0:
+                demo_students = [
+                    ('OPT-2026-001', 'Alya Putri', 'P', 'SD', 'Ibu Ratna', '0812-3456-7801', 'Aktif'),
+                    ('OPT-2026-002', 'Bagas Pratama', 'L', 'SMP', 'Bapak Hendra', '0813-2211-4402', 'Aktif'),
+                    ('OPT-2026-003', 'Citra Maharani', 'P', 'SMA', 'Ibu Sari', '0857-9012-3305', 'Aktif'),
+                    ('OPT-2026-004', 'Dimas Aditya', 'L', 'SMP', 'Bapak Joko', '0821-7788-9906', 'Aktif'),
+                    ('OPT-2026-005', 'Eka Lestari', 'P', 'SD', 'Ibu Wulan', '0878-1234-5507', 'Aktif'),
+                ]
+                cur.executemany(
+                    """
+                    INSERT INTO students (nis, name, gender, level, guardian_name, phone, status)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (nis) DO NOTHING;
+                    """,
+                    demo_students,
+                )
+        conn.commit()
+    except Exception:
+        try:
+            conn.rollback()
+        except Exception:
+            pass
+
+
+def get_students():
+    """Mengambil semua daftar siswa dari database Neon PostgreSQL"""
+    conn = create_new_connection()
+    try:
+        _ensure_student_tables_and_seed(conn)
+        query = """
+            SELECT 
+                s.id, 
+                s.nis, 
+                s.name, 
+                COALESCE(s.gender, 'L') AS gender, 
+                COALESCE(s.level, 'SD') AS level, 
+                COALESCE(s.guardian_name, '-') AS guardian_name, 
+                COALESCE(s.phone, '-') AS phone, 
+                s.program_id, 
+                pr.name AS program_name,
+                COALESCE(s.status, 'Aktif') AS status,
+                s.created_at
+            FROM students s
+            LEFT JOIN programs pr ON s.program_id = pr.id
+            ORDER BY s.id ASC;
+        """
+        if PSYCOPG_V3:
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute(query)
+                return cur.fetchall()
+        else:
+            with conn.cursor(cursor_factory=psycopg.extras.RealDictCursor) as cur:
+                cur.execute(query)
+                return [dict(r) for r in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def add_student(name, level='SD', guardian_name='-', phone='-', gender='L', nis=None, status='Aktif', program_id=None):
+    """Menambahkan data siswa baru ke database Neon PostgreSQL"""
+    if not name or not str(name).strip():
+        raise ValueError("Nama siswa wajib diisi.")
+
+    clean_name = str(name).strip()
+    clean_level = (level or 'SD').strip().upper()
+    clean_guardian = (guardian_name or '-').strip()
+    clean_phone = (phone or '-').strip()
+    clean_gender = (gender or 'L').strip().upper()
+    clean_status = (status or 'Aktif').strip()
+
+    conn = create_new_connection()
+    try:
+        _ensure_student_tables_and_seed(conn)
+        with conn.cursor() as cur:
+            if not nis or not str(nis).strip():
+                cur.execute("SELECT COALESCE(MAX(id), 0) FROM students;")
+                max_id = cur.fetchone()[0] or 0
+                auto_nis = f"OPT-2026-{(int(max_id) + 1):03d}"
+                cur.execute("SELECT id FROM students WHERE nis = %s;", (auto_nis,))
+                if cur.fetchone():
+                    auto_nis = f"OPT-2026-{int(time.time()) % 10000:04d}"
+                final_nis = auto_nis
+            else:
+                final_nis = str(nis).strip()
+
+            cur.execute(
+                """
+                INSERT INTO students (nis, name, gender, level, guardian_name, phone, program_id, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id;
+                """,
+                (final_nis, clean_name, clean_gender, clean_level, clean_guardian, clean_phone, program_id, clean_status)
+            )
+            new_id = cur.fetchone()[0]
+        conn.commit()
+        return new_id
+    finally:
+        conn.close()
+
+
+def update_student(student_id, name=None, level=None, guardian_name=None, phone=None, gender=None, status=None, program_id=None, nis=None):
+    """Memperbarui data siswa di database Neon PostgreSQL"""
+    if not student_id:
+        raise ValueError("ID siswa wajib diisi.")
+
+    conn = create_new_connection()
+    try:
+        _ensure_student_tables_and_seed(conn)
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, nis, name, gender, level, guardian_name, phone, status, program_id FROM students WHERE id = %s;", (int(student_id),))
+            row = cur.fetchone()
+            if not row:
+                raise ValueError(f"Siswa dengan ID {student_id} tidak ditemukan.")
+
+            cur_nis, cur_name, cur_gender, cur_lvl, cur_guardian, cur_phone, cur_status, cur_prog = (
+                row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]
+            )
+
+            new_name = str(name).strip() if name and str(name).strip() else cur_name
+            new_level = (level or cur_lvl or 'SD').strip().upper()
+            new_guardian = str(guardian_name).strip() if guardian_name is not None and str(guardian_name).strip() else cur_guardian
+            new_phone = str(phone).strip() if phone is not None and str(phone).strip() else cur_phone
+            new_gender = (gender or cur_gender or 'L').strip().upper()
+            new_status = (status or cur_status or 'Aktif').strip()
+            new_nis = (nis or cur_nis).strip()
+            new_prog = program_id if program_id is not None else cur_prog
+
+            cur.execute(
+                """
+                UPDATE students 
+                SET nis = %s, name = %s, gender = %s, level = %s, guardian_name = %s, phone = %s, status = %s, program_id = %s
+                WHERE id = %s;
+                """,
+                (new_nis, new_name, new_gender, new_level, new_guardian, new_phone, new_status, new_prog, int(student_id))
+            )
+            updated = cur.rowcount > 0
+        conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+def delete_student(identifier):
+    """Menghapus siswa berdasarkan ID atau Nama atau NIS dari database Neon PostgreSQL"""
+    conn = create_new_connection()
+    try:
+        with conn.cursor() as cur:
+            s_id = None
+            if isinstance(identifier, int) or (isinstance(identifier, str) and identifier.isdigit()):
+                s_id = int(identifier)
+            else:
+                cur.execute("SELECT id FROM students WHERE nis = %s OR name = %s LIMIT 1;", (identifier, identifier))
+                res = cur.fetchone()
+                if res:
+                    s_id = res[0]
+
+            if s_id is not None:
+                try:
+                    cur.execute("UPDATE bills SET student_id = NULL WHERE student_id = %s;", (s_id,))
+                except Exception:
+                    pass
+                try:
+                    cur.execute("DELETE FROM attendances WHERE student_id = %s;", (s_id,))
+                except Exception:
+                    pass
+                cur.execute("DELETE FROM students WHERE id = %s;", (s_id,))
+                deleted = cur.rowcount > 0
+            else:
+                deleted = False
+        conn.commit()
+        return deleted
+    finally:
+        conn.close()
+
+
+# =============================================================================
 # 3. FUNGSI SINKRONISASI OTOMATIS KE FILE HTML
 # =============================================================================
 
@@ -1154,6 +1370,79 @@ def sync_tagihan_ke_html(period="Oktober 2026"):
     return len(bills)
 
 
+def sync_siswa_ke_html():
+    """
+    Mengambil data terbaru dari Neon PostgreSQL via get_students(),
+    lalu menuliskan langsung baris tabelnya ke dalam file public/siswa.html.
+    """
+    if not os.path.exists(SISWA_HTML_FILE):
+        raise FileNotFoundError(f"File tidak ditemukan: {SISWA_HTML_FILE}")
+
+    students = get_students()
+    total_count = len(students)
+
+    if not students:
+        rows_html = '              <tr><td colspan="5" class="text-center py-4 text-muted">Belum ada data siswa di database Neon.</td></tr>\n'
+    else:
+        rows_list = []
+        for s in students:
+            lvl = str(s.get('level') or 'SD').upper()
+            badge_class = "badge-level"
+            if lvl == "SMP":
+                badge_class += " badge-smp"
+            elif lvl == "SMA":
+                badge_class += " badge-sma"
+
+            safe_name = html_lib.escape(str(s['name']))
+            safe_nis = html_lib.escape(str(s.get('nis') or ''))
+            safe_guardian = html_lib.escape(str(s.get('guardian_name') or '-'))
+            safe_phone = html_lib.escape(str(s.get('phone') or '-'))
+            js_name = str(s['name']).replace("\\", "\\\\").replace("'", "\\'")
+            js_guardian = str(s.get('guardian_name') or '').replace("\\", "\\\\").replace("'", "\\'")
+            js_phone = str(s.get('phone') or '').replace("\\", "\\\\").replace("'", "\\'")
+
+            nis_badge = f' <small class="text-muted" style="font-size: 11px;">({safe_nis})</small>' if safe_nis else ''
+
+            row = f"""              <tr>
+                <td><strong>{safe_name}</strong>{nis_badge}</td>
+                <td><span class="{badge_class}">{lvl}</span></td>
+                <td>{safe_guardian}</td>
+                <td>{safe_phone}</td>
+                <td class="text-end pe-4">
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEdit({int(s['id'])}, '{js_name}', '{lvl}', '{js_guardian}', '{js_phone}')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, '{js_name}', {int(s['id'])})">Hapus</button>
+                </td>
+              </tr>"""
+            rows_list.append(row)
+        rows_html = "\n".join(rows_list) + "\n"
+
+    with open(SISWA_HTML_FILE, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    start_tag = '<!-- DATA_SISWA_START -->'
+    end_tag = '<!-- DATA_SISWA_END -->'
+
+    if start_tag in content and end_tag in content:
+        before = content.split(start_tag)[0]
+        after = content.split(end_tag)[1]
+        new_content = f"{before}{start_tag}\n{rows_html}              {end_tag}{after}"
+    else:
+        pattern = r'(<tbody id="studentListBody">)(.*?)(</tbody>)'
+        replacement = f'\\1\n              {start_tag}\n{rows_html}              {end_tag}\n            \\3'
+        new_content = re.sub(pattern, replacement, content, flags=re.DOTALL)
+
+    new_content = re.sub(
+        r'(<p class="page-subtitle" id="totalSiswaText">)(.*?)(</p>)',
+        f'\\1{total_count} siswa terdaftar\\3',
+        new_content
+    )
+
+    with open(SISWA_HTML_FILE, 'w', encoding='utf-8') as f:
+        f.write(new_content)
+
+    return total_count
+
+
 # =============================================================================
 # 4. HANDLER STANDBY: PENERIMA KLIK TOMBOL DARI BROWSER KE NEON
 # =============================================================================
@@ -1432,6 +1721,24 @@ class StandbyHandler(SimpleHTTPRequestHandler):
                 self._send_json(500, {"success": False, "error": str(e)})
             return
 
+        elif parsed.path == '/api/jadwal/cek_bentrok':
+            params = parse_qs(parsed.query)
+            day = params.get('day', ['Selasa'])[0].strip() or 'Selasa'
+            start_time = params.get('start_time', ['15:30'])[0].strip()
+            end_time = params.get('end_time', ['17:00'])[0].strip()
+            room_id = params.get('room_id', [None])[0]
+            tutor_id = params.get('tutor_id', [None])[0]
+
+            res = check_conflict(
+                day,
+                start_time,
+                end_time,
+                room_id=int(room_id) if room_id and str(room_id).isdigit() else None,
+                tutor_id=int(tutor_id) if tutor_id and str(tutor_id).isdigit() else None,
+            )
+            self._send_json(200, {"success": True, **res})
+            return
+
         # 6. Endpoint CRUD Pembayaran & Read Tagihan (pembayaran.html & tagihan.html)
         elif parsed.path == '/api/pembayaran/list':
             try:
@@ -1518,8 +1825,111 @@ class StandbyHandler(SimpleHTTPRequestHandler):
                 self._send_json(500, {"success": False, "error": str(e)})
             return
 
-        # 7. Default: sajikan file HTML/CSS/JS
+        # 7. Endpoint CRUD Siswa untuk public/siswa.html
+        elif parsed.path == '/api/siswa/list':
+            try:
+                students = get_students()
+                self._send_json(200, {"success": True, "students": students})
+            except Exception as e:
+                self._send_json(500, {"success": False, "error": str(e)})
+            return
+
+        elif parsed.path == '/api/siswa/tambah':
+            params = parse_qs(parsed.query)
+            name = params.get('name', [''])[0].strip()
+            level = params.get('level', ['SD'])[0].strip() or 'SD'
+            guardian = params.get('guardian_name', ['-'])[0].strip() or '-'
+            phone = params.get('phone', ['-'])[0].strip() or '-'
+            gender = params.get('gender', ['L'])[0].strip() or 'L'
+            status = params.get('status', ['Aktif'])[0].strip() or 'Aktif'
+            nis = params.get('nis', [None])[0]
+
+            if name:
+                try:
+                    new_id = add_student(name, level=level, guardian_name=guardian, phone=phone, gender=gender, nis=nis, status=status)
+                    try:
+                        sync_siswa_ke_html()
+                    except Exception:
+                        pass
+                    print(f"[{time.strftime('%H:%M:%S')}] ➕ Siswa baru '{name}' ({level}) berhasil ditambahkan ke Neon PostgreSQL (ID: {new_id}).")
+                    self._send_json(200, {"success": True, "id": new_id})
+                except Exception as e:
+                    self._send_json(500, {"success": False, "error": str(e)})
+                return
+            self._send_json(400, {"success": False, "error": "Nama siswa wajib diisi"})
+            return
+
+        elif parsed.path == '/api/siswa/ubah' or parsed.path == '/api/siswa/edit':
+            params = parse_qs(parsed.query)
+            s_id = params.get('id', [None])[0]
+            name = params.get('name', [None])[0]
+            level = params.get('level', [None])[0]
+            guardian = params.get('guardian_name', [None])[0]
+            phone = params.get('phone', [None])[0]
+            status = params.get('status', [None])[0]
+            gender = params.get('gender', [None])[0]
+            nis = params.get('nis', [None])[0]
+
+            if s_id and str(s_id).isdigit():
+                try:
+                    success = update_student(
+                        int(s_id),
+                        name=name,
+                        level=level,
+                        guardian_name=guardian,
+                        phone=phone,
+                        status=status,
+                        gender=gender,
+                        nis=nis,
+                    )
+                    try:
+                        sync_siswa_ke_html()
+                    except Exception:
+                        pass
+                    print(f"[{time.strftime('%H:%M:%S')}] ✏️ Siswa ID {s_id} berhasil diperbarui di Neon PostgreSQL.")
+                    self._send_json(200, {"success": success, "message": f"Siswa ID {s_id} diperbarui"})
+                except Exception as e:
+                    self._send_json(500, {"success": False, "error": str(e)})
+                return
+            self._send_json(400, {"success": False, "error": "ID siswa valid wajib diisi"})
+            return
+
+        elif parsed.path == '/api/siswa/hapus':
+            params = parse_qs(parsed.query)
+            target = params.get('id', [None])[0] or params.get('name', [None])[0]
+
+            if target:
+                try:
+                    success = delete_student(target)
+                    try:
+                        sync_siswa_ke_html()
+                    except Exception:
+                        pass
+                    print(f"[{time.strftime('%H:%M:%S')}] 🗑️ Siswa '{target}' dihapus dari Neon PostgreSQL.")
+                    self._send_json(200, {"success": success, "message": f"Siswa '{target}' dihapus"})
+                except Exception as e:
+                    self._send_json(500, {"success": False, "error": str(e)})
+                return
+            self._send_json(400, {"success": False, "error": "ID atau nama siswa tidak ditemukan"})
+            return
+
+        # 8. Default: sajikan file HTML/CSS/JS
         super().do_GET()
+
+    def do_POST(self):
+        content_length = int(self.headers.get('Content-Length', 0))
+        body = self.rfile.read(content_length).decode('utf-8') if content_length > 0 else ""
+        if self.headers.get('Content-Type', '').startswith('application/json') and body:
+            try:
+                data = json.loads(body)
+                from urllib.parse import urlencode
+                query_str = urlencode({k: str(v) for k, v in data.items()})
+                self.path = f"{self.path.split('?')[0]}?{query_str}"
+            except Exception:
+                pass
+        elif body and '=' in body:
+            self.path = f"{self.path.split('?')[0]}?{body}"
+        return self.do_GET()
 
     def log_message(self, format, *args):
         # Meredam log HTTP default agar tampilan terminal tetap bersih
@@ -1540,7 +1950,8 @@ def start_standby_mode(port=8000):
         total_jadwal = sync_jadwal_ke_html()
         total_bayar = sync_pembayaran_ke_html()
         sync_tagihan_ke_html()
-        print(f"[{time.strftime('%H:%M:%S')}] ✓ Sinkronisasi awal sukses. Total: {total} program, {total_tutors} tutor, {total_rooms} ruang, {total_jadwal} jadwal, {total_bayar} tagihan.")
+        total_students = sync_siswa_ke_html()
+        print(f"[{time.strftime('%H:%M:%S')}] ✓ Sinkronisasi awal sukses. Total: {total} program, {total_tutors} tutor, {total_rooms} ruang, {total_jadwal} jadwal, {total_students} siswa, {total_bayar} tagihan.")
     except Exception as e:
         print(f"[{time.strftime('%H:%M:%S')}] ! Peringatan sinkronisasi awal: {e}")
 

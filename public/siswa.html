@@ -45,7 +45,7 @@
             <!-- Nama Siswa -->
             <div class="col-12 col-md-3">
               <label for="inputNamaSiswa" class="form-label-custom">Nama siswa</label>
-              <input type="text" class="form-control-custom" id="inputNamaSiswa" required>
+              <input type="text" class="form-control-custom" id="inputNamaSiswa" placeholder="contoh: Alya Putri" required>
             </div>
 
             <!-- Jenjang -->
@@ -61,7 +61,7 @@
             <!-- Nama Orang Tua / Wali -->
             <div class="col-12 col-md-3">
               <label for="inputNamaWali" class="form-label-custom">Nama orang tua/wali</label>
-              <input type="text" class="form-control-custom" id="inputNamaWali" required>
+              <input type="text" class="form-control-custom" id="inputNamaWali" placeholder="contoh: Ibu Ratna" required>
             </div>
 
             <!-- No. Telepon Wali -->
@@ -72,7 +72,7 @@
 
             <!-- Tombol Simpan -->
             <div class="col-12 col-md-2">
-              <button type="submit" class="btn-primary-custom w-100">
+              <button type="submit" class="btn-primary-custom w-100" id="btnSaveStudent">
                 Simpan
               </button>
             </div>
@@ -86,68 +86,75 @@
           <table class="custom-table" id="tableSiswa">
             <thead>
               <tr>
-                <th style="width: 25%;">SISWA</th>
-                <th style="width: 15%;">JENJANG</th>
+                <th style="width: 26%;">SISWA</th>
+                <th style="width: 14%;">JENJANG</th>
                 <th style="width: 25%;">ORANG TUA/WALI</th>
-                <th style="width: 25%;">TELEPON</th>
-                <th style="width: 10%; text-align: right; padding-right: 28px;"></th>
+                <th style="width: 20%;">TELEPON</th>
+                <th style="width: 15%; text-align: right; padding-right: 28px;">AKSI</th>
               </tr>
             </thead>
             <tbody id="studentListBody">
+              <!-- DATA_SISWA_START -->
               <!-- Baris 1: Alya Putri -->
-              <tr>
+              <tr data-id="1">
                 <td><strong>Alya Putri</strong></td>
                 <td><span class="badge-level">SD</span></td>
                 <td>Ibu Ratna</td>
                 <td>0812-3456-7801</td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Alya Putri')">Hapus</button>
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEdit(1, 'Alya Putri', 'SD', 'Ibu Ratna', '0812-3456-7801')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Alya Putri', 1)">Hapus</button>
                 </td>
               </tr>
 
               <!-- Baris 2: Bagas Pratama -->
-              <tr>
+              <tr data-id="2">
                 <td><strong>Bagas Pratama</strong></td>
                 <td><span class="badge-level badge-smp">SMP</span></td>
                 <td>Bapak Hendra</td>
                 <td>0813-2211-4402</td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Bagas Pratama')">Hapus</button>
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEdit(2, 'Bagas Pratama', 'SMP', 'Bapak Hendra', '0813-2211-4402')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Bagas Pratama', 2)">Hapus</button>
                 </td>
               </tr>
 
               <!-- Baris 3: Citra Maharani -->
-              <tr>
+              <tr data-id="3">
                 <td><strong>Citra Maharani</strong></td>
                 <td><span class="badge-level badge-sma">SMA</span></td>
                 <td>Ibu Sari</td>
                 <td>0857-9012-3305</td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Citra Maharani')">Hapus</button>
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEdit(3, 'Citra Maharani', 'SMA', 'Ibu Sari', '0857-9012-3305')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Citra Maharani', 3)">Hapus</button>
                 </td>
               </tr>
 
               <!-- Baris 4: Dimas Aditya -->
-              <tr>
+              <tr data-id="4">
                 <td><strong>Dimas Aditya</strong></td>
                 <td><span class="badge-level badge-smp">SMP</span></td>
                 <td>Bapak Joko</td>
                 <td>0821-7788-9906</td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Dimas Aditya')">Hapus</button>
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEdit(4, 'Dimas Aditya', 'SMP', 'Bapak Joko', '0821-7788-9906')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Dimas Aditya', 4)">Hapus</button>
                 </td>
               </tr>
 
               <!-- Baris 5: Eka Lestari -->
-              <tr>
+              <tr data-id="5">
                 <td><strong>Eka Lestari</strong></td>
                 <td><span class="badge-level">SD</span></td>
                 <td>Ibu Wulan</td>
                 <td>0878-1234-5507</td>
                 <td class="text-end pe-4">
-                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Eka Lestari')">Hapus</button>
+                  <button type="button" class="btn-edit-pill" onclick="bukaModalEdit(5, 'Eka Lestari', 'SD', 'Ibu Wulan', '0878-1234-5507')">Edit</button>
+                  <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, 'Eka Lestari', 5)">Hapus</button>
                 </td>
               </tr>
+              <!-- DATA_SISWA_END -->
             </tbody>
           </table>
         </div>
@@ -156,68 +163,372 @@
     </main>
   </div>
 
+  <!-- MODAL EDIT DATA SISWA (BOOTSTRAP 5) -->
+  <div class="modal fade" id="modalEditSiswa" tabindex="-1" aria-labelledby="modalEditSiswaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content" style="border-radius: 16px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0,0,0,0.08);">
+        <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding: 20px 24px;">
+          <h5 class="modal-title" id="modalEditSiswaLabel" style="font-size: 18px; font-weight: 700; color: #1e293b;">Edit Data Siswa</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <form id="formEditStudent" onsubmit="event.preventDefault(); handleSimpanEditSiswa();">
+          <div class="modal-body" style="padding: 24px;">
+            <input type="hidden" id="editStudentId">
+            <div class="mb-3">
+              <label for="editNamaSiswa" class="form-label-custom">Nama siswa</label>
+              <input type="text" class="form-control-custom w-100" id="editNamaSiswa" required>
+            </div>
+            <div class="mb-3">
+              <label for="editSelectJenjang" class="form-label-custom">Jenjang</label>
+              <select class="form-select-custom w-100" id="editSelectJenjang">
+                <option value="SD">SD</option>
+                <option value="SMP">SMP</option>
+                <option value="SMA">SMA</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="editNamaWali" class="form-label-custom">Nama orang tua/wali</label>
+              <input type="text" class="form-control-custom w-100" id="editNamaWali" required>
+            </div>
+            <div class="mb-3">
+              <label for="editTeleponWali" class="form-label-custom">No. telepon wali</label>
+              <input type="tel" class="form-control-custom w-100" id="editTeleponWali" placeholder="08..." required>
+            </div>
+          </div>
+          <div class="modal-footer" style="border-top: 1px solid #f1f5f9; padding: 16px 24px;">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px; font-weight: 600; font-size: 14px; padding: 8px 18px;">Batal</button>
+            <button type="submit" class="btn-primary-custom" style="padding: 8px 22px;">Simpan Perubahan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap 5 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Panggil JavaScript Sidebar Reusable -->
   <script src="js/sidebar.js"></script>
   <script>
     // 1. Aktifkan menu 'Siswa dan Wali' di sidebar otomatis
     renderSidebar('siswa');
 
-    // 2. Fungsi Simpan Siswa Baru (Simulasi UI ramah skripsi)
-    function handleSimpanSiswa() {
-      const nama = document.getElementById('inputNamaSiswa').value;
-      const jenjang = document.getElementById('selectJenjang').value;
-      const wali = document.getElementById('inputNamaWali').value;
-      const telp = document.getElementById('inputTeleponWali').value;
+    const API_BASE = (window.location.protocol === 'file:') ? 'http://localhost:8000' : '';
+    const STORAGE_KEY = 'optimatika_students_cache';
 
-      // Tentukan class warna badge jenjang
-      let badgeClass = 'badge-level';
-      if (jenjang === 'SMP') badgeClass = 'badge-level badge-smp';
-      if (jenjang === 'SMA') badgeClass = 'badge-level badge-sma';
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text ?? '';
+      return div.innerHTML;
+    }
 
-      // Tambahkan baris baru ke tabel
+    function getBadgeClass(jenjang) {
+      const lvl = String(jenjang || 'SD').trim().toUpperCase();
+      if (lvl === 'SMP') return 'badge-level badge-smp';
+      if (lvl === 'SMA') return 'badge-level badge-sma';
+      return 'badge-level';
+    }
+
+    // Modal Instance
+    let editModalInstance = null;
+    function getEditModal() {
+      if (!editModalInstance) {
+        const modalEl = document.getElementById('modalEditSiswa');
+        if (modalEl && window.bootstrap && window.bootstrap.Modal) {
+          editModalInstance = new bootstrap.Modal(modalEl);
+        }
+      }
+      return editModalInstance;
+    }
+
+    async function callApi(pathWithQuery) {
+      let res = await fetch(`${API_BASE}${pathWithQuery}`);
+      if (res.status === 404 && API_BASE === '' && !['8000', '8080'].includes(window.location.port)) {
+        res = await fetch(`http://localhost:8000${pathWithQuery}`);
+      }
+      let data = null;
+      try {
+        data = await res.json();
+      } catch (_) {
+        data = null;
+      }
+      if (!res.ok) {
+        throw new Error((data && data.error) ? data.error : `HTTP ${res.status} (${res.statusText})`);
+      }
+      return data;
+    }
+
+    function renderStudentRows(students) {
       const tbody = document.getElementById('studentListBody');
+      if (!students || students.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Belum ada data siswa terdaftar.</td></tr>';
+        updateTotalSiswa();
+        return;
+      }
+
+      tbody.innerHTML = students.map(s => {
+        const id = s.id || Math.floor(Math.random() * 100000);
+        const name = s.name || '';
+        const level = (s.level || 'SD').toUpperCase();
+        const guardian = s.guardian_name || s.wali || '-';
+        const phone = s.phone || s.telepon || '-';
+        const nis = s.nis ? ` <small class="text-muted" style="font-size: 11px;">(${escapeHtml(s.nis)})</small>` : '';
+
+        const jsName = String(name).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const jsLevel = String(level).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const jsGuardian = String(guardian).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const jsPhone = String(phone).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+        return `
+          <tr data-id="${id}">
+            <td><strong>${escapeHtml(name)}</strong>${nis}</td>
+            <td><span class="${getBadgeClass(level)}">${escapeHtml(level)}</span></td>
+            <td>${escapeHtml(guardian)}</td>
+            <td>${escapeHtml(phone)}</td>
+            <td class="text-end pe-4">
+              <button type="button" class="btn-edit-pill" onclick="bukaModalEdit('${id}', '${jsName}', '${jsLevel}', '${jsGuardian}', '${jsPhone}')">Edit</button>
+              <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, '${jsName}', '${id}')">Hapus</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      updateTotalSiswa();
+    }
+
+    // Muat data dari Backend Neon API atau LocalStorage Cache
+    async function muatSiswaDariNeon() {
+      try {
+        const data = await callApi('/api/siswa/list');
+        if (data && data.success && Array.isArray(data.students)) {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data.students));
+          renderStudentRows(data.students);
+          return;
+        }
+      } catch (_) {
+        // Fallback jika API belum running (mode file:// atau offline)
+      }
+
+      // Cek cache localStorage jika ada
+      const cached = localStorage.getItem(STORAGE_KEY);
+      if (cached) {
+        try {
+          const list = JSON.parse(cached);
+          if (Array.isArray(list) && list.length > 0) {
+            renderStudentRows(list);
+            return;
+          }
+        } catch (_) {}
+      }
+
+      updateTotalSiswa();
+    }
+
+    // 2. Fungsi Simpan Siswa Baru (CRUD: Create)
+    async function handleSimpanSiswa() {
+      const nama = document.getElementById('inputNamaSiswa').value.trim();
+      const jenjang = document.getElementById('selectJenjang').value.trim();
+      const wali = document.getElementById('inputNamaWali').value.trim();
+      const telp = document.getElementById('inputTeleponWali').value.trim();
+
+      if (!nama || !wali || !telp) {
+        alert('Nama siswa, jenjang, nama orang tua/wali, dan no. telepon wajib diisi!');
+        return;
+      }
+
+      let newId = Date.now();
+      let savedToBackend = false;
+
+      try {
+        const params = new URLSearchParams({
+          name: nama,
+          level: jenjang,
+          guardian_name: wali,
+          phone: telp
+        });
+        const data = await callApi(`/api/siswa/tambah?${params.toString()}`);
+        if (data && data.success) {
+          if (data.id) newId = data.id;
+          savedToBackend = true;
+        }
+      } catch (err) {
+        // Mode offline/standalone tetap melanjutkan simpan ke DOM & LocalStorage
+      }
+
+      // Perbarui tampilan tabel & LocalStorage
+      const tbody = document.getElementById('studentListBody');
+      const emptyRow = tbody.querySelector('td[colspan]');
+      if (emptyRow) tbody.innerHTML = '';
+
+      const jsName = nama.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const jsWali = wali.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      const jsTelp = telp.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
       const newRow = document.createElement('tr');
+      newRow.setAttribute('data-id', newId);
       newRow.innerHTML = `
-        <td><strong>${nama}</strong></td>
-        <td><span class="${badgeClass}">${jenjang}</span></td>
-        <td>${wali}</td>
-        <td>${telp}</td>
+        <td><strong>${escapeHtml(nama)}</strong></td>
+        <td><span class="${getBadgeClass(jenjang)}">${escapeHtml(jenjang)}</span></td>
+        <td>${escapeHtml(wali)}</td>
+        <td>${escapeHtml(telp)}</td>
         <td class="text-end pe-4">
-          <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, '${nama}')">Hapus</button>
+          <button type="button" class="btn-edit-pill" onclick="bukaModalEdit('${newId}', '${jsName}', '${jenjang}', '${jsWali}', '${jsTelp}')">Edit</button>
+          <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, '${jsName}', '${newId}')">Hapus</button>
         </td>
       `;
       tbody.appendChild(newRow);
 
-      // Reset formulir
+      // Simpan ke localStorage cache
+      simpanStateKeLocalStorage();
+
+      // Reset form
       document.getElementById('formAddStudent').reset();
       updateTotalSiswa();
-      alert(`Data siswa "${nama}" berhasil disimpan!`);
+      
+      const info = savedToBackend ? ' dan tersinkron ke database Neon' : '';
+      alert(`Data siswa "${nama}" berhasil disimpan${info}!`);
     }
 
-    // 3. Fungsi Hapus Baris
-    function hapusBaris(buttonElement, namaSiswa) {
-      if (confirm(`Yakin ingin menghapus data siswa "${namaSiswa}"?`)) {
-        const row = buttonElement.closest('tr');
-        row.remove();
-        updateTotalSiswa();
+    // 3. Buka Modal Edit Siswa (CRUD: Read for Update)
+    function bukaModalEdit(id, nama, jenjang, wali, telp) {
+      document.getElementById('editStudentId').value = id || '';
+      document.getElementById('editNamaSiswa').value = nama || '';
+      document.getElementById('editSelectJenjang').value = (jenjang || 'SD').toUpperCase();
+      document.getElementById('editNamaWali').value = wali || '';
+      document.getElementById('editTeleponWali').value = telp || '';
+
+      const modal = getEditModal();
+      if (modal) {
+        modal.show();
+      } else {
+        // Fallback jika bootstrap modal belum siap
+        const modalEl = document.getElementById('modalEditSiswa');
+        modalEl.classList.add('show');
+        modalEl.style.display = 'block';
       }
     }
 
-    // 4. Update Jumlah Total Siswa Terdaftar
-    function updateTotalSiswa() {
-      const total = document.querySelectorAll('#studentListBody tr').length;
-      document.getElementById('totalSiswaText').textContent = `${total} siswa terdaftar`;
+    // 4. Simpan Perubahan Edit Siswa (CRUD: Update)
+    async function handleSimpanEditSiswa() {
+      const id = document.getElementById('editStudentId').value;
+      const nama = document.getElementById('editNamaSiswa').value.trim();
+      const jenjang = document.getElementById('editSelectJenjang').value.trim();
+      const wali = document.getElementById('editNamaWali').value.trim();
+      const telp = document.getElementById('editTeleponWali').value.trim();
+
+      if (!nama || !wali || !telp) {
+        alert('Semua bidang wajib diisi!');
+        return;
+      }
+
+      let savedToBackend = false;
+      try {
+        const params = new URLSearchParams({
+          id: String(id),
+          name: nama,
+          level: jenjang,
+          guardian_name: wali,
+          phone: telp
+        });
+        const data = await callApi(`/api/siswa/ubah?${params.toString()}`);
+        if (data && data.success) {
+          savedToBackend = true;
+        }
+      } catch (err) {
+        // Tetap update di DOM & LocalStorage
+      }
+
+      // Update baris di DOM
+      const targetRow = document.querySelector(`#studentListBody tr[data-id="${id}"]`);
+      if (targetRow) {
+        const jsName = nama.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const jsWali = wali.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const jsTelp = telp.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+        targetRow.children[0].innerHTML = `<strong>${escapeHtml(nama)}</strong>`;
+        targetRow.children[1].innerHTML = `<span class="${getBadgeClass(jenjang)}">${escapeHtml(jenjang)}</span>`;
+        targetRow.children[2].textContent = wali;
+        targetRow.children[3].textContent = telp;
+        targetRow.children[4].innerHTML = `
+          <button type="button" class="btn-edit-pill" onclick="bukaModalEdit('${id}', '${jsName}', '${jenjang}', '${jsWali}', '${jsTelp}')">Edit</button>
+          <button type="button" class="btn-delete-pill" onclick="hapusBaris(this, '${jsName}', '${id}')">Hapus</button>
+        `;
+      }
+
+      simpanStateKeLocalStorage();
+
+      // Tutup modal
+      const modal = getEditModal();
+      if (modal) {
+        modal.hide();
+      } else {
+        const modalEl = document.getElementById('modalEditSiswa');
+        modalEl.classList.remove('show');
+        modalEl.style.display = 'none';
+      }
+
+      const info = savedToBackend ? ' dan tersinkron ke database Neon' : '';
+      alert(`Data siswa "${nama}" berhasil diperbarui${info}!`);
     }
 
-    // 5. Fitur Pencarian Cepat Nama Siswa / Wali
+    // 5. Fungsi Hapus Baris Siswa (CRUD: Delete)
+    async function hapusBaris(buttonElement, namaSiswa, studentId) {
+      if (!confirm(`Yakin ingin menghapus data siswa "${namaSiswa}"?`)) {
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams(studentId ? { id: String(studentId) } : { name: namaSiswa });
+        await callApi(`/api/siswa/hapus?${params.toString()}`);
+      } catch (err) {
+        // Lanjutkan penghapusan di DOM & localStorage
+      }
+
+      const row = buttonElement.closest('tr');
+      if (row) row.remove();
+
+      simpanStateKeLocalStorage();
+      updateTotalSiswa();
+    }
+
+    // Helper: Simpan state tabel saat ini ke LocalStorage
+    function simpanStateKeLocalStorage() {
+      const rows = document.querySelectorAll('#studentListBody tr');
+      const list = [];
+      rows.forEach(r => {
+        if (r.children.length >= 4 && !r.querySelector('td[colspan]')) {
+          list.push({
+            id: r.getAttribute('data-id') || Date.now(),
+            name: r.children[0].innerText.trim(),
+            level: r.children[1].innerText.trim(),
+            guardian_name: r.children[2].innerText.trim(),
+            phone: r.children[3].innerText.trim()
+          });
+        }
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+    }
+
+    // 6. Update Jumlah Total Siswa Terdaftar
+    function updateTotalSiswa() {
+      const rows = document.querySelectorAll('#studentListBody tr:not([style*="display: none"])');
+      const realRows = Array.from(rows).filter(r => !r.querySelector('td[colspan]'));
+      const count = realRows.length;
+      document.getElementById('totalSiswaText').textContent = `${count} siswa terdaftar`;
+    }
+
+    // 7. Fitur Pencarian Cepat Nama Siswa / Wali / Telepon
     function filterSiswaTable() {
-      const keyword = document.getElementById('searchSiswaInput').value.toLowerCase();
+      const keyword = (document.getElementById('searchSiswaInput').value || '').toLowerCase().trim();
       const rows = document.querySelectorAll('#studentListBody tr');
       rows.forEach(row => {
+        if (row.querySelector('td[colspan]')) return;
         const text = row.innerText.toLowerCase();
         row.style.display = text.includes(keyword) ? '' : 'none';
       });
+      updateTotalSiswa();
     }
+
+    document.addEventListener('DOMContentLoaded', muatSiswaDariNeon);
   </script>
 </body>
 </html>

@@ -1,0 +1,8 @@
+[server]
+# Otomatis reload website secara live setiap kali file python/html disimpan (Ctrl + S)
+runOnSave = true
+fileWatcherType = "auto"
+headless = true
+
+[browser]
+gatherUsageStats = false

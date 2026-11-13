@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS students (
     id SERIAL PRIMARY KEY,
     nis VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(150) NOT NULL,
-    gender VARCHAR(10) NOT NULL, -- L / P
+    gender VARCHAR(10) NOT NULL DEFAULT 'L', -- L / P
+    level VARCHAR(20) DEFAULT 'SD', -- SD, SMP, SMA
     guardian_name VARCHAR(150) NOT NULL,
     phone VARCHAR(30) NOT NULL,
     program_id INTEGER REFERENCES programs(id) ON DELETE SET NULL,

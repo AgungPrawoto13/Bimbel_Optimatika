@@ -357,6 +357,28 @@ body {
   color: #b91c1c;
 }
 
+/* Button Edit (Outline Pill Biru) */
+.btn-edit-pill {
+  background: transparent;
+  color: var(--primary-blue);
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  margin-right: 6px;
+  display: inline-block;
+}
+
+.btn-edit-pill:hover {
+  background-color: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
 /* Mobile Toggle */
 .mobile-header {
   display: none;

@@ -9,7 +9,7 @@ import database
 _db_file = getattr(database, "__file__", None)
 if _db_file and os.path.exists(_db_file):
     _db_mtime = os.path.getmtime(_db_file)
-    if st.session_state.get("_db_mtime") != _db_mtime or not hasattr(database, "get_tutors") or not hasattr(database, "get_billing_summary") or not hasattr(database, "publish_bills_for_period"):
+    if st.session_state.get("_db_mtime") != _db_mtime or not hasattr(database, "get_tutors") or not hasattr(database, "get_students") or not hasattr(database, "get_billing_summary") or not hasattr(database, "publish_bills_for_period"):
         importlib.reload(database)
         st.session_state["_db_mtime"] = _db_mtime
 
@@ -17,7 +17,7 @@ if _db_file and os.path.exists(_db_file):
 # 1. KONFIGURASI HALAMAN STREAMLIT
 # =============================================================================
 st.set_page_config(
-    page_title="Optimatika · Data Program Belajar",
+    page_title="Optimatika · Bimbel Admin",
     page_icon="📚",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -623,6 +623,18 @@ st.markdown("""
         color: #c5221f;
     }
 
+    .badge-inhal-st {
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fde68a;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 7px;
+        border-radius: 6px;
+        display: inline-block;
+        margin-left: 6px;
+    }
+
     /* Card putih untuk kontainer non-form (misal Card Periode Tagihan) */
     div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"] .card-box-marker),
     div[data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"] > [data-testid="element-container"] .card-box-marker),
@@ -798,6 +810,37 @@ st.markdown("""
         background-color: var(--danger-bg-hover) !important;
         border-color: #f87171 !important;
         color: #b91c1c !important;
+    }
+
+    /* Tombol Edit di dalam Tabel (Pill Outline Biru) */
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .table-card-marker) button:has(p:contains("Edit")),
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .table-card-marker) button:has(p:contains("Edit")) {
+        background: transparent !important;
+        color: var(--primary-blue) !important;
+        border: 1px solid #bfdbfe !important;
+        border-radius: 8px !important;
+        padding: 6px 14px !important;
+        min-height: 0 !important;
+        height: auto !important;
+        width: 100% !important;
+    }
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .table-card-marker) button:has(p:contains("Edit")) p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .table-card-marker) button:has(p:contains("Edit")) p {
+        color: var(--primary-blue) !important;
+        font-size: 13.5px !important;
+        font-weight: 500 !important;
+        line-height: 1.4 !important;
+        margin: 0 !important;
+    }
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .table-card-marker) button:has(p:contains("Edit")):hover,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .table-card-marker) button:has(p:contains("Edit")):hover {
+        background-color: #eff6ff !important;
+        border-color: #93c5fd !important;
+        color: #1d4ed8 !important;
+    }
+    [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .table-card-marker) button:has(p:contains("Edit")):hover p,
+    [data-testid="stVerticalBlock"]:has(> [data-testid="element-container"] .table-card-marker) button:has(p:contains("Edit")):hover p {
+        color: #1d4ed8 !important;
     }
 
     [data-testid="stVerticalBlock"]:has(> [data-testid="stElementContainer"] .table-card-marker) button[kind="secondary"]:hover p,
@@ -1993,13 +2036,617 @@ elif menu == "Pembayaran":
 
 
 # =============================================================================
+# 3G. KONTEN UTAMA: HALAMAN SISWA DAN WALI (PERSIS PUBLIC/SISWA.HTML + CRUD NEON)
+# =============================================================================
+elif menu == "Siswa dan Wali":
+    students = []
+    student_load_error = None
+    try:
+        students = database.get_students()
+    except Exception as e:
+        student_load_error = e
+
+    total_siswa = len(students)
+
+    # TOP HEADER & KOTAK PENCARIAN (PERSIS PUBLIC/SISWA.HTML)
+    head_col1, head_col2 = st.columns([3.2, 1.3])
+    with head_col1:
+        st.markdown(f"""
+            <div class="top-header" style="margin-bottom: 0;">
+                <div>
+                    <h1 class="page-title">Data Siswa dan Orang Tua/Wali</h1>
+                    <p class="page-subtitle">{total_siswa} siswa terdaftar</p>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+    with head_col2:
+        st.markdown('<div style="height: 12px;"></div>', unsafe_allow_html=True)
+        search_query = st.text_input(
+            "Cari siswa",
+            placeholder="Cari nama siswa atau wali...",
+            label_visibility="collapsed",
+            key="search_siswa_input"
+        )
+
+    # CARD 1: FORM TAMBAH / FORM EDIT SISWA
+    editing_id = st.session_state.get("editing_student_id")
+    editing_student = next((s for s in students if s["id"] == editing_id), None) if editing_id else None
+
+    if editing_student:
+        # MODE EDIT DATA SISWA
+        with st.form("form_edit_student"):
+            st.markdown(
+                f'<div class="card-heading">Edit data siswa: <span style="color: var(--primary-blue);">{html.escape(str(editing_student["name"]))}</span></div>',
+                unsafe_allow_html=True
+            )
+            col1, col2, col3, col4 = st.columns([3, 2, 3, 2])
+            with col1:
+                edit_nama = st.text_input("Nama siswa", value=str(editing_student.get("name") or ""))
+            with col2:
+                cur_lvl = str(editing_student.get("level") or "SD").upper()
+                lvl_idx = ["SD", "SMP", "SMA"].index(cur_lvl) if cur_lvl in ["SD", "SMP", "SMA"] else 0
+                edit_jenjang = st.selectbox("Jenjang", ["SD", "SMP", "SMA"], index=lvl_idx)
+            with col3:
+                edit_wali = st.text_input("Nama orang tua/wali", value=str(editing_student.get("guardian_name") or ""))
+            with col4:
+                edit_telp = st.text_input("No. telepon wali", value=str(editing_student.get("phone") or ""))
+
+            btn_col1, btn_col2, _ = st.columns([2, 1.5, 4.5])
+            with btn_col1:
+                btn_simpan_edit = st.form_submit_button("Simpan Perubahan", type="primary", use_container_width=True)
+            with btn_col2:
+                btn_batal_edit = st.form_submit_button("Batal", use_container_width=True)
+
+            if btn_simpan_edit:
+                if not edit_nama.strip() or not edit_wali.strip() or not edit_telp.strip():
+                    st.warning("Nama siswa, jenjang, wali, dan no. telepon wajib diisi.")
+                else:
+                    try:
+                        database.update_student(
+                            editing_student["id"],
+                            name=edit_nama.strip(),
+                            level=edit_jenjang,
+                            guardian_name=edit_wali.strip(),
+                            phone=edit_telp.strip()
+                        )
+                        try:
+                            database.sync_siswa_ke_html()
+                        except Exception:
+                            pass
+                        st.session_state["editing_student_id"] = None
+                        st.toast(f"✓ Data siswa '{edit_nama.strip()}' berhasil diperbarui di Neon!", icon="🎉")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Gagal memperbarui data siswa: {e}")
+
+            if btn_batal_edit:
+                st.session_state["editing_student_id"] = None
+                st.rerun()
+    else:
+        # MODE TAMBAH SISWA BARU
+        with st.form("form_add_student", clear_on_submit=True):
+            st.markdown('<div class="card-heading">Tambah siswa baru</div>', unsafe_allow_html=True)
+            col1, col2, col3, col4, col5 = st.columns([3.2, 1.8, 3.0, 2.2, 1.8])
+            with col1:
+                nama_siswa_baru = st.text_input("Nama siswa", placeholder="contoh: Alya Putri")
+            with col2:
+                jenjang_siswa_baru = st.selectbox("Jenjang", ["SD", "SMP", "SMA"])
+            with col3:
+                wali_siswa_baru = st.text_input("Nama orang tua/wali", placeholder="contoh: Ibu Ratna")
+            with col4:
+                telp_siswa_baru = st.text_input("No. telepon wali", placeholder="08...")
+            with col5:
+                btn_simpan_siswa = st.form_submit_button("Simpan", type="primary", use_container_width=True)
+
+            if btn_simpan_siswa:
+                if not nama_siswa_baru.strip() or not wali_siswa_baru.strip() or not telp_siswa_baru.strip():
+                    st.warning("Nama siswa, jenjang, nama orang tua/wali, dan no. telepon wajib diisi.")
+                else:
+                    try:
+                        database.add_student(
+                            nama_siswa_baru.strip(),
+                            level=jenjang_siswa_baru,
+                            guardian_name=wali_siswa_baru.strip(),
+                            phone=telp_siswa_baru.strip()
+                        )
+                        try:
+                            database.sync_siswa_ke_html()
+                        except Exception:
+                            pass
+                        st.toast(f"✓ Siswa '{nama_siswa_baru.strip()}' berhasil ditambahkan ke Neon!", icon="🎉")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Gagal menambahkan siswa: {e}")
+
+    # FILTER PENCARIAN
+    display_students = students
+    if search_query and search_query.strip():
+        q = search_query.strip().lower()
+        display_students = [
+            s for s in students
+            if q in str(s.get("name", "")).lower()
+            or q in str(s.get("guardian_name", "")).lower()
+            or q in str(s.get("phone", "")).lower()
+            or q in str(s.get("nis", "")).lower()
+            or q in str(s.get("level", "")).lower()
+        ]
+
+    # CARD 2: TABEL DATA SISWA
+    with st.container(border=True):
+        st.markdown('<div class="table-card-marker"></div>', unsafe_allow_html=True)
+
+        # Header Tabel
+        th1, th2, th3, th4, th5 = st.columns([3.0, 1.5, 2.6, 2.1, 1.8])
+        with th1:
+            st.markdown('<div class="table-th table-header-marker">SISWA</div>', unsafe_allow_html=True)
+        with th2:
+            st.markdown('<div class="table-th">JENJANG</div>', unsafe_allow_html=True)
+        with th3:
+            st.markdown('<div class="table-th">ORANG TUA/WALI</div>', unsafe_allow_html=True)
+        with th4:
+            st.markdown('<div class="table-th">TELEPON</div>', unsafe_allow_html=True)
+        with th5:
+            st.markdown('<div class="table-th" style="text-align: right;">AKSI</div>', unsafe_allow_html=True)
+
+        if student_load_error is not None:
+            st.error(f"Gagal mengambil data siswa dari database Neon: {student_load_error}")
+        elif not display_students:
+            msg = "Tidak ada siswa yang cocok dengan pencarian." if search_query else "Belum ada data siswa di database Neon."
+            st.markdown(
+                f"<p style='text-align: center; color: #64748b; padding: 28px 20px; margin: 0;'>{msg}</p>",
+                unsafe_allow_html=True,
+            )
+        else:
+            for s in display_students:
+                r1, r2, r3, r4, r5 = st.columns([3.0, 1.5, 2.6, 2.1, 1.8])
+                with r1:
+                    safe_name = html.escape(str(s["name"]))
+                    safe_nis = html.escape(str(s.get("nis") or ""))
+                    nis_html = f' <span style="font-size: 11px; color: #94a3b8; font-weight: normal;">({safe_nis})</span>' if safe_nis else ""
+                    st.markdown(f'<div class="program-name-cell">{safe_name}{nis_html}</div>', unsafe_allow_html=True)
+                with r2:
+                    lvl = str(s.get("level") or "SD").upper()
+                    badge_class = "badge-level"
+                    if lvl == "SMP":
+                        badge_class += " badge-smp"
+                    elif lvl == "SMA":
+                        badge_class += " badge-sma"
+                    st.markdown(f'<span class="{badge_class}">{html.escape(lvl)}</span>', unsafe_allow_html=True)
+                with r3:
+                    st.markdown(
+                        f'<div class="table-text-cell">{html.escape(str(s.get("guardian_name") or "-"))}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with r4:
+                    st.markdown(
+                        f'<div class="table-text-cell">{html.escape(str(s.get("phone") or "-"))}</div>',
+                        unsafe_allow_html=True,
+                    )
+                with r5:
+                    btn_c1, btn_c2 = st.columns(2)
+                    with btn_c1:
+                        if st.button("Edit", key=f"btn_edit_student_{s['id']}"):
+                            st.session_state["editing_student_id"] = s["id"]
+                            st.rerun()
+                    with btn_c2:
+                        if st.button("Hapus", key=f"btn_del_student_{s['id']}", type="secondary"):
+                            try:
+                                database.delete_student(s["id"])
+                                try:
+                                    database.sync_siswa_ke_html()
+                                except Exception:
+                                    pass
+                                if st.session_state.get("editing_student_id") == s["id"]:
+                                    st.session_state["editing_student_id"] = None
+                                st.toast(f"✓ Siswa '{s['name']}' berhasil dihapus dari Neon!", icon="🗑️")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"Gagal menghapus siswa: {e}")
+
+
+# =============================================================================
+# 3H. KONTEN UTAMA: HALAMAN KELOMPOK BELAJAR & KONSULTASI JADWAL PENGGANTI (INHAL)
+# =============================================================================
+elif menu == "Kelompok Belajar":
+    # 1. Inisialisasi State Kelompok & Inhal jika belum ada
+    if "kelompok_state" not in st.session_state:
+        st.session_state["kelompok_state"] = {
+            "matematika": [
+                {"name": "Dimas Aditya", "isInhal": False},
+                {"name": "Fikri Ramadhan", "isInhal": False},
+                {"name": "Citra Maharani", "isInhal": False},
+            ],
+            "calistung": [
+                {"name": "Alya Putri", "isInhal": False},
+                {"name": "Eka Lestari", "isInhal": False},
+            ],
+            "ipa": [
+                {"name": "Bagas Pratama", "isInhal": False},
+                {"name": "Gita Permata", "isInhal": False},
+            ],
+        }
+    if "inhal_records" not in st.session_state:
+        st.session_state["inhal_records"] = []
+    if "inhal_search_result" not in st.session_state:
+        st.session_state["inhal_search_result"] = None
+
+    # Ambil daftar siswa dan program dari database jika tersedia
+    student_names = ["Bagas Pratama", "Ahmad Farhan", "Dimas Aditya", "Alya Putri", "Citra Maharani", "Eka Lestari"]
+    try:
+        db_students = database.get_students()
+        if db_students:
+            student_names = [str(s["name"]) for s in db_students]
+    except Exception:
+        pass
+
+    programs_list = ["Matematika SMP", "Calistung", "IPA Terpadu", "Persiapan UTBK", "Matematika SD"]
+    try:
+        db_progs = database.get_programs()
+        if db_progs:
+            programs_list = [str(p["name"]) for p in db_progs]
+    except Exception:
+        pass
+
+    # TOP HEADER
+    st.markdown("""
+        <div class="top-header">
+            <div>
+                <h1 class="page-title">Kelompok Belajar & Konsultasi Jadwal Pengganti</h1>
+                <p class="page-subtitle">Pencocokan ruangan dan jadwal bebas bentrok untuk siswa yang berhalangan hadir (inhal) serta manajemen kuota kelompok (maks. 5 siswa).</p>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # CARD 1: FORM KONSULTASI SISWA & PENCOCOKAN JADWAL PENGGANTI (ANTI-BENTROK)
+    with st.container(border=True):
+        st.markdown('<div class="card-box-marker"></div>', unsafe_allow_html=True)
+        st.markdown("""
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="font-size: 16px; font-weight: 700; color: #1e50bb;">
+                    🔍 Konsultasi Jadwal & Ruang Pengganti (Siswa Inhal)
+                </div>
+                <span style="background-color: #eff6ff; color: #1d4ed8; font-weight: 600; border: 1px solid #bfdbfe; padding: 4px 12px; border-radius: 20px; font-size: 12px;">
+                    🛡️ Sistem Anti-Bentrok & Cek Ruang
+                </span>
+            </div>
+            <p style="font-size: 13.5px; color: #64748b; margin-bottom: 18px;">
+                <strong>Studi Kasus:</strong> Siswa A tidak masuk hari <strong>Senin</strong> (misal sakit). Di hari <strong>Selasa</strong>, siswa & orang tua berkonsultasi ke admin untuk mencocokkan jadwal dan ruangan pengganti agar tidak ketinggalan materi dan <strong>tidak bentrok</strong> dengan kelas yang akan dimulai di hari Selasa.
+            </p>
+        """, unsafe_allow_html=True)
+
+        with st.form("form_konsultasi_inhal"):
+            c1, c2, c3, c4 = st.columns([3, 3, 2, 2])
+            with c1:
+                sel_siswa = st.selectbox("Nama siswa", student_names, index=0 if "Bagas Pratama" in student_names else 0)
+            with c2:
+                sel_program = st.selectbox("Materi yang terlewat", programs_list, index=0 if "Matematika SMP" in programs_list else 0)
+            with c3:
+                sel_hari_asal = st.selectbox("Hari absen", ["Senin (Sakit)", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"], index=0)
+            with c4:
+                sel_hari_tujuan = st.selectbox("Cari jadwal di hari", ["Selasa (Hari Ini)", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"], index=0)
+
+            btn_cek_ruang = st.form_submit_button("Cocokkan Ruang & Cek Bentrok", type="primary", use_container_width=True)
+
+            if btn_cek_ruang:
+                st.session_state["inhal_search_result"] = {
+                    "siswa": sel_siswa,
+                    "program": sel_program,
+                    "hari_asal": sel_hari_asal.split()[0],
+                    "hari_tujuan": sel_hari_tujuan.split()[0],
+                }
+
+        # TAMPILKAN HASIL PENCOCOKAN JIKA ADA PENCARIAN
+        inhal_search = st.session_state.get("inhal_search_result")
+        if inhal_search:
+            st.markdown(f"""
+                <div style="margin-top: 18px; padding-top: 14px; border-top: 1.5px solid #edf2f7;">
+                    <div style="font-size: 14.5px; font-weight: 700; color: #1e293b; margin-bottom: 12px;">
+                        🎯 Hasil Pengecekan Ruangan & Kelas di Hari <span style="color: #1e50bb;">{inhal_search['hari_tujuan']}</span> untuk Siswa <strong>{html.escape(inhal_search['siswa'])}</strong>:
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
+
+            # Hitung ketersediaan kelompok terkait
+            prog_name = inhal_search["program"]
+            target_key = "matematika"
+            target_group_name = "Matematika SMP · Kelompok 1"
+            ruang_name = "Ruang Alpha (Lt. 1)"
+            jam_str = "15:30 – 17:00"
+            tutor_name = "Kak Rina Wijaya"
+
+            if "calistung" in prog_name.lower():
+                target_key = "calistung"
+                target_group_name = "Calistung · Kelompok 1"
+                ruang_name = "Ruang Beta (Lt. 1)"
+                tutor_name = "Kak Yoga Saputra"
+            elif "ipa" in prog_name.lower():
+                target_key = "ipa"
+                target_group_name = "IPA Terpadu · Kelompok 1"
+                ruang_name = "Ruang Alpha (Lt. 1)"
+                jam_str = "17:15 – 18:45"
+                tutor_name = "Kak Fajar Nugroho"
+
+            current_mems = st.session_state["kelompok_state"].get(target_key, [])
+            sisa_kursi = 5 - len(current_mems)
+
+            # OPSI 1: KELAS PARALEL REGULER
+            with st.container(border=True):
+                col_info, col_act = st.columns([4, 1.8])
+                with col_info:
+                    if sisa_kursi > 0:
+                        st.markdown(f"""
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <strong style="font-size: 15px; color: #1e293b;">{target_group_name} ({inhal_search['hari_tujuan']})</strong>
+                                <span style="background-color: #dcfce7; color: #15803d; font-size: 11.5px; font-weight: 700; padding: 2px 9px; border-radius: 9999px;">
+                                    ✓ Aman · Tidak Bentrok
+                                </span>
+                            </div>
+                            <div style="font-size: 13.5px; color: #64748b; margin-bottom: 4px;">
+                                📍 <strong>{ruang_name}</strong> · ⏰ <strong>{jam_str}</strong> · 👨‍🏫 Tutor: <strong>{tutor_name}</strong>
+                            </div>
+                            <div style="font-size: 13px; color: #15803d;">
+                                Ruangan dan tutor tidak bentrok dengan jadwal lain di hari {inhal_search['hari_tujuan']}. Sisa kuota: <strong>{sisa_kursi} kursi</strong> (muat untuk siswa inhal).
+                            </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"""
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <strong style="font-size: 15px; color: #1e293b;">{target_group_name}</strong>
+                                <span style="background-color: #fee2e2; color: #dc2626; font-size: 11.5px; font-weight: 700; padding: 2px 9px; border-radius: 9999px;">
+                                    ⚠️ Kuota Penuh (5/5)
+                                </span>
+                            </div>
+                            <div style="font-size: 13.5px; color: #dc2626;">
+                                Kelompok ini sudah penuh 5/5 siswa. Silakan pilih opsi ruang cadangan di bawah.
+                            </div>
+                        """, unsafe_allow_html=True)
+
+                with col_act:
+                    if sisa_kursi > 0:
+                        if st.button("Daftarkan ke Kelas Ini", key="btn_daftar_inhal_1", type="primary", use_container_width=True):
+                            # Masukkan ke kelompok
+                            siswa_obj = {
+                                "name": inhal_search["siswa"],
+                                "isInhal": True,
+                                "hariAsal": inhal_search["hari_asal"],
+                                "hariTujuan": inhal_search["hari_tujuan"],
+                                "ruang": ruang_name,
+                            }
+                            # Cek duplikat
+                            already_in = any(m["name"].lower() == inhal_search["siswa"].lower() for m in current_mems)
+                            if already_in:
+                                st.warning(f"Siswa '{inhal_search['siswa']}' sudah terdaftar di kelompok ini.")
+                            else:
+                                current_mems.append(siswa_obj)
+                                st.session_state["kelompok_state"][target_key] = current_mems
+                                st.session_state["inhal_records"].insert(0, {
+                                    "student": inhal_search["siswa"],
+                                    "program": inhal_search["program"],
+                                    "hariAsal": inhal_search["hari_asal"],
+                                    "hariTujuan": inhal_search["hari_tujuan"],
+                                    "jam": jam_str,
+                                    "ruang": ruang_name,
+                                    "tutor": tutor_name,
+                                    "groupKey": target_key,
+                                })
+                                st.toast(f"✓ Siswa '{inhal_search['siswa']}' berhasil dijadwalkan ke {ruang_name} tanpa bentrok!", icon="🎉")
+                                st.rerun()
+
+            # OPSI 2: RUANG CADANGAN KOSONG
+            with st.container(border=True):
+                col_info2, col_act2 = st.columns([4, 1.8])
+                with col_info2:
+                    st.markdown(f"""
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <strong style="font-size: 15px; color: #1e293b;">Sesi Inhal Mandiri di Ruang Beta</strong>
+                            <span style="background-color: #dcfce7; color: #15803d; font-size: 11.5px; font-weight: 700; padding: 2px 9px; border-radius: 9999px;">
+                                ✓ Ruang Kosong · Aman
+                            </span>
+                        </div>
+                        <div style="font-size: 13.5px; color: #64748b; margin-bottom: 4px;">
+                            📍 <strong>Ruang Beta (Lt. 1)</strong> · ⏰ <strong>17:15 – 18:45</strong> · 👨‍🏫 Tutor: <strong>Kak Budi Santoso</strong>
+                        </div>
+                        <div style="font-size: 13px; color: #1e50bb;">
+                            Ruang Beta tidak digunakan di jam ini pada hari {inhal_search['hari_tujuan']}. Sangat cocok untuk sesi inhal privat bebas bentrok.
+                        </div>
+                    """, unsafe_allow_html=True)
+                with col_act2:
+                    if st.button("Buka Sesi Ruang Beta", key="btn_daftar_inhal_2", use_container_width=True):
+                        cal_mems = st.session_state["kelompok_state"].get("calistung", [])
+                        if len(cal_mems) < 5:
+                            cal_mems.append({
+                                "name": inhal_search["siswa"],
+                                "isInhal": True,
+                                "hariAsal": inhal_search["hari_asal"],
+                                "hariTujuan": inhal_search["hari_tujuan"],
+                                "ruang": "Ruang Beta (Lt. 1)",
+                            })
+                            st.session_state["kelompok_state"]["calistung"] = cal_mems
+                            st.session_state["inhal_records"].insert(0, {
+                                "student": inhal_search["siswa"],
+                                "program": inhal_search["program"],
+                                "hariAsal": inhal_search["hari_asal"],
+                                "hariTujuan": inhal_search["hari_tujuan"],
+                                "jam": "17:15 – 18:45",
+                                "ruang": "Ruang Beta (Lt. 1)",
+                                "tutor": "Kak Budi Santoso",
+                                "groupKey": "calistung",
+                            })
+                            st.toast(f"✓ Sesi inhal di Ruang Beta untuk '{inhal_search['siswa']}' berhasil dijadwalkan!", icon="🎉")
+                            st.rerun()
+
+            # OPSI 3: SIMULASI BENTROK JADWAL
+            with st.container(border=True):
+                col_info3, col_act3 = st.columns([4, 1.8])
+                with col_info3:
+                    st.markdown(f"""
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <strong style="font-size: 15px; color: #94a3b8;">Ruang Alpha (Sesi Sore)</strong>
+                            <span style="background-color: #fee2e2; color: #b91c1c; font-size: 11.5px; font-weight: 700; padding: 2px 9px; border-radius: 9999px;">
+                                ✗ Bentrok Ruangan
+                            </span>
+                        </div>
+                        <div style="font-size: 13.5px; color: #dc2626;">
+                            JADWAL BENTROK: Ruang Alpha di jam 17:15–18:45 sudah digunakan oleh kelas reguler lain. Sistem melarang penempatan di jam ini.
+                        </div>
+                    """, unsafe_allow_html=True)
+                with col_act3:
+                    st.button("Tidak Tersedia", key="btn_daftar_inhal_3", disabled=True, use_container_width=True)
+
+    # CARD 2: FORM TAMBAH SISWA REGULER KE KELOMPOK
+    with st.form("form_add_reguler_member", clear_on_submit=True):
+        st.markdown('<div class="card-heading">Tambah siswa ke kelompok reguler</div>', unsafe_allow_html=True)
+        col_grp, col_std, col_btn = st.columns([5, 5, 2])
+        with col_grp:
+            sel_target_grp = st.selectbox(
+                "Pilih kelompok",
+                [
+                    ("matematika", "Matematika SMP · Kelompok 1 (Kak Rina Wijaya)"),
+                    ("calistung", "Calistung · Kelompok 1 (Kak Yoga Saputra)"),
+                    ("ipa", "IPA Terpadu · Kelompok 1 (Kak Fajar Nugroho)"),
+                ],
+                format_func=lambda x: x[1],
+            )
+        with col_std:
+            reg_siswa_name = st.selectbox("Pilih siswa", student_names, key="sel_reg_siswa")
+        with col_btn:
+            btn_tambah_reg = st.form_submit_button("Tambahkan", type="primary", use_container_width=True)
+
+        if btn_tambah_reg:
+            grp_key = sel_target_grp[0]
+            current_grp_list = st.session_state["kelompok_state"].get(grp_key, [])
+            if len(current_grp_list) >= 5:
+                st.error(f"❌ Sistem Menolak: Kelompok {sel_target_grp[1]} sudah penuh (5/5 siswa). Sesuai aturan, anggota ke-6 tidak dapat ditambahkan!")
+            elif any(m["name"].lower() == reg_siswa_name.lower() for m in current_grp_list):
+                st.warning(f"Siswa '{reg_siswa_name}' sudah terdaftar di kelompok ini!")
+            else:
+                current_grp_list.append({"name": reg_siswa_name, "isInhal": False})
+                st.session_state["kelompok_state"][grp_key] = current_grp_list
+                st.toast(f"✓ Siswa '{reg_siswa_name}' berhasil ditambahkan ke kelompok reguler!", icon="🎉")
+                st.rerun()
+
+    # CARD 3: GRID KARTU KELOMPOK BELAJAR (KUOTA MAKSIMAL 5 SISWA)
+    col_k1, col_k2, col_k3 = st.columns(3)
+    group_configs = [
+        (col_k1, "matematika", "Matematika SMP · Kelompok 1", "Kak Rina Wijaya", "Ruang Alpha (Lt. 1)"),
+        (col_k2, "calistung", "Calistung · Kelompok 1", "Kak Yoga Saputra", "Ruang Beta (Lt. 1)"),
+        (col_k3, "ipa", "IPA Terpadu · Kelompok 1", "Kak Fajar Nugroho", "Ruang Alpha (Lt. 1)"),
+    ]
+
+    for col, key, title, tutor, room in group_configs:
+        with col:
+            with st.container(border=True):
+                mems = st.session_state["kelompok_state"].get(key, [])
+                count = len(mems)
+                badge_style = "background-color: #fee2e2; color: #dc2626;" if count >= 5 else "background-color: #e0f2fe; color: #0284c7;"
+                badge_text = "5/5 (Penuh)" if count >= 5 else f"{count}/5"
+
+                st.markdown(f"""
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                        <div>
+                            <div style="font-weight: 700; font-size: 15.5px; color: #1e293b;">{title}</div>
+                            <div style="font-size: 12.5px; color: #64748b; margin-top: 2px;">
+                                👨‍🏫 {tutor}<br>📍 {room}
+                            </div>
+                        </div>
+                        <span style="{badge_style} border-radius: 9999px; font-weight: 700; padding: 3px 10px; font-size: 12px;">
+                            {badge_text}
+                        </span>
+                    </div>
+                    <div style="border-top: 1px solid #f1f5f9; padding-top: 8px; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: #8292a8; letter-spacing: 0.5px;">
+                        ANGGOTA SISWA
+                    </div>
+                """, unsafe_allow_html=True)
+
+                if not mems:
+                    st.markdown("<p style='color: #94a3b8; font-size: 13px; text-align: center; margin: 16px 0;'>Belum ada anggota.</p>", unsafe_allow_html=True)
+                else:
+                    for idx, m in enumerate(mems):
+                        c_name, c_del = st.columns([3.8, 1.4])
+                        with c_name:
+                            inhal_tag = f'<span class="badge-inhal-st">Inhal: Ganti {m.get("hariAsal", "Senin")}</span>' if m.get("isInhal") else ""
+                            st.markdown(f'<div style="font-size: 13.5px; font-weight: 500; color: #1e293b; padding-top: 4px;">{html.escape(m["name"])}{inhal_tag}</div>', unsafe_allow_html=True)
+                        with c_del:
+                            if st.button("Keluarkan", key=f"btn_rem_{key}_{idx}", type="secondary"):
+                                removed_name = m["name"]
+                                mems.pop(idx)
+                                st.session_state["kelompok_state"][key] = mems
+                                # Hapus juga dari inhal records jika ada
+                                st.session_state["inhal_records"] = [
+                                    r for r in st.session_state["inhal_records"]
+                                    if not (r["student"] == removed_name and r.get("groupKey") == key)
+                                ]
+                                st.toast(f"✓ Siswa '{removed_name}' dikeluarkan dari kelompok.")
+                                st.rerun()
+
+    # CARD 4: TABEL RIWAYAT PENJADWALAN KELAS PENGGANTI (INHAL) AKTIF
+    with st.container(border=True):
+        st.markdown("""
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div>
+                    <span style="font-weight: 700; font-size: 15px; color: #1e293b;">📋 Daftar Siswa Mengikuti Kelas Pengganti (Inhal)</span>
+                    <p style="font-size: 13px; color: #64748b; margin: 2px 0 0 0;">Catatan resmi bagi siswa yang absen dan telah ditempatkan pada kelas pengganti bebas bentrok.</p>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+
+        inhal_recs = st.session_state.get("inhal_records", [])
+        if not inhal_recs:
+            st.markdown(
+                "<p style='text-align: center; color: #64748b; padding: 24px 20px; margin: 0; font-size: 13.5px;'>"
+                "Belum ada siswa yang dijadwalkan kelas pengganti. Gunakan form konsultasi di atas untuk mencocokkan jadwal.</p>",
+                unsafe_allow_html=True,
+            )
+        else:
+            # Header Tabel Inhal
+            st.markdown('<div class="table-card-marker"></div>', unsafe_allow_html=True)
+            th1, th2, th3, th4, th5, th6 = st.columns([2.5, 2.0, 1.6, 2.3, 2.2, 1.4])
+            with th1:
+                st.markdown('<div class="table-th table-header-marker">SISWA</div>', unsafe_allow_html=True)
+            with th2:
+                st.markdown('<div class="table-th">MATERI</div>', unsafe_allow_html=True)
+            with th3:
+                st.markdown('<div class="table-th">HARI ABSEN</div>', unsafe_allow_html=True)
+            with th4:
+                st.markdown('<div class="table-th">JADWAL PENGGANTI</div>', unsafe_allow_html=True)
+            with th5:
+                st.markdown('<div class="table-th">RUANG & TUTOR</div>', unsafe_allow_html=True)
+            with th6:
+                st.markdown('<div class="table-th"></div>', unsafe_allow_html=True)
+
+            for i, r in enumerate(inhal_recs):
+                r1, r2, r3, r4, r5, r6 = st.columns([2.5, 2.0, 1.6, 2.3, 2.2, 1.4])
+                with r1:
+                    st.markdown(f'<div class="program-name-cell">{html.escape(r["student"])}</div>', unsafe_allow_html=True)
+                with r2:
+                    st.markdown(f'<span class="badge-level">{html.escape(r["program"])}</span>', unsafe_allow_html=True)
+                with r3:
+                    st.markdown(f'<div class="table-text-cell" style="color: #dc2626; font-weight: 600;">{html.escape(r["hariAsal"])}</div>', unsafe_allow_html=True)
+                with r4:
+                    st.markdown(f'<div class="table-text-cell"><strong>{html.escape(r["hariTujuan"])}</strong> · {html.escape(r["jam"])}</div>', unsafe_allow_html=True)
+                with r5:
+                    st.markdown(f'<div class="table-text-cell">{html.escape(r["ruang"])}<br><small style="color:#64748b;">{html.escape(r["tutor"])}</small></div>', unsafe_allow_html=True)
+                with r6:
+                    if st.button("Batalkan", key=f"btn_canc_inhal_{i}", type="secondary"):
+                        # Hapus dari kelompok
+                        g_key = r.get("groupKey")
+                        if g_key and g_key in st.session_state["kelompok_state"]:
+                            st.session_state["kelompok_state"][g_key] = [
+                                m for m in st.session_state["kelompok_state"][g_key]
+                                if m["name"] != r["student"]
+                            ]
+                        inhal_recs.pop(i)
+                        st.session_state["inhal_records"] = inhal_recs
+                        st.toast(f"✓ Jadwal inhal untuk '{r['student']}' dibatalkan.")
+                        st.rerun()
+
+
+# =============================================================================
 # 4. MENU LAINNYA: TAMPILKAN FILE HTML DARI FOLDER PUBLIC/
 # =============================================================================
 else:
     file_map = {
         "Dashboard": "dashboard.html",
-        "Siswa dan Wali": "siswa.html",
-        "Kelompok Belajar": "kelompok_belajar.html"
     }
 
     target_file = file_map.get(menu, "dashboard.html")
